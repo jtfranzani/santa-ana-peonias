@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santa Ana Peonías · Plataforma de Gestión</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --rosa:#e8a7b8; --rosa-d:#c97a90; --verde:#4a7c59; --verde-d:#2f5d3a;
+  --crema:#faf7f2; --gris:#6b7280; --gris-l:#e5e7eb; --blanco:#fff;
+  --alerta:#dc2626; --warn:#f59e0b; --ok:#059669; --info:#2563eb;
+  --sombra:0 2px 8px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--crema);color:#1f2937;line-height:1.5}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,var(--verde-d),var(--verde));color:#fff;padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h1{font-size:18px;padding:0 20px 15px;border-bottom:1px solid rgba(255,255,255,.2);margin-bottom:15px}
+.sidebar h1 small{display:block;font-size:11px;opacity:.8;font-weight:normal;margin-top:3px}
+.nav a{display:block;padding:10px 20px;color:#fff;text-decoration:none;font-size:14px;border-left:3px solid transparent;cursor:pointer;transition:all .15s}
+.nav a:hover{background:rgba(255,255,255,.1)}
+.nav a.active{background:rgba(255,255,255,.15);border-left-color:var(--rosa)}
+.nav-section{font-size:11px;text-transform:uppercase;padding:15px 20px 5px;opacity:.7;letter-spacing:.5px}
+.main{padding:25px 35px;overflow-x:hidden}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;flex-wrap:wrap;gap:15px}
+.page-header h2{color:var(--verde-d);font-size:24px}
+.page-header .sub{color:var(--gris);font-size:13px;margin-top:2px}
+.btn{background:var(--verde);color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn:hover{background:var(--verde-d)}
+.btn.secondary{background:var(--rosa-d)}
+.btn.secondary:hover{background:#a85a70}
+.btn.ghost{background:transparent;color:var(--verde-d);border:1px solid var(--verde)}
+.btn.ghost:hover{background:var(--verde);color:#fff}
+.btn.danger{background:var(--alerta)}
+.btn.small{padding:5px 10px;font-size:12px}
+.card{background:#fff;border-radius:10px;padding:20px;box-shadow:var(--sombra);margin-bottom:20px}
+.card h3{color:var(--verde-d);font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.grid{display:grid;gap:20px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.kpi{background:#fff;padding:18px;border-radius:10px;box-shadow:var(--sombra);border-left:4px solid var(--verde)}
+.kpi.rosa{border-left-color:var(--rosa-d)}
+.kpi.warn{border-left-color:var(--warn)}
+.kpi.info{border-left-color:var(--info)}
+.kpi .label{font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px}
+.kpi .value{font-size:26px;font-weight:700;color:var(--verde-d);margin-top:4px}
+.kpi .foot{font-size:11px;color:var(--gris);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+table th{text-align:left;padding:10px 8px;background:var(--crema);color:var(--verde-d);font-weight:600;font-size:12px;text-transform:uppercase}
+table td{padding:10px 8px;border-bottom:1px solid var(--gris-l)}
+table tr:hover{background:#faf7f2}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--gris-l);border-radius:6px;font-size:13px;font-family:inherit;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--verde)}
+label{display:block;margin-bottom:5px;font-size:12px;color:var(--gris);font-weight:500}
+.form-row{margin-bottom:15px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+.tag.sarah{background:#fce7f3;color:#be185d}
+.tag.bowl{background:#fef9c3;color:#a16207}
+.tag.festiva{background:#f0fdf4;color:#166534}
+.tag.ok{background:#d1fae5;color:#065f46}
+.tag.warn{background:#fef3c7;color:#92400e}
+.tag.alert{background:#fee2e2;color:#991b1b}
+.tag.info{background:#dbeafe;color:#1e40af}
+.empty{text-align:center;padding:40px 20px;color:var(--gris)}
+.empty svg{opacity:.4;margin-bottom:10px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:10px;padding:25px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{color:var(--verde-d);margin-bottom:15px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.photo-thumb{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;cursor:pointer;background:#f3f4f6}
+.photo-card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--sombra);cursor:pointer;transition:transform .15s}
+.photo-card:hover{transform:translateY(-2px)}
+.photo-card .info{padding:10px 12px;font-size:12px}
+.photo-card .info strong{color:var(--verde-d);display:block;margin-bottom:2px}
+.photo-card .info span{color:var(--gris)}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.compare-col img{width:100%;border-radius:8px}
+.compare-col .meta{padding:10px;font-size:12px;background:#f9fafb;border-radius:0 0 8px 8px;margin-top:-4px}
+.phase{display:flex;gap:5px;margin-bottom:5px}
+.phase-bar{flex:1;height:6px;border-radius:3px;background:var(--gris-l)}
+.phase-bar.active{background:var(--verde)}
+.alert-box{padding:12px 15px;border-radius:8px;border-left:4px solid;margin-bottom:15px;font-size:13px}
+.alert-box.info{background:#eff6ff;border-color:var(--info);color:#1e3a8a}
+.alert-box.warn{background:#fffbeb;border-color:var(--warn);color:#92400e}
+.alert-box.ok{background:#f0fdf4;border-color:var(--ok);color:#166534}
+.alert-box.danger{background:#fef2f2;border-color:var(--alerta);color:#991b1b}
+.toolbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+.toolbar input,.toolbar select{max-width:220px}
+.timeline{border-left:2px solid var(--gris-l);padding-left:20px;margin-left:10px}
+.timeline-item{margin-bottom:20px;position:relative}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--verde);border:2px solid #fff;box-shadow:0 0 0 2px var(--verde)}
+.timeline-item .date{font-size:11px;color:var(--gris);text-transform:uppercase}
+.timeline-item h4{font-size:14px;color:var(--verde-d);margin:2px 0}
+.photo-protocol{background:linear-gradient(135deg,#fff 0%,var(--crema) 100%);border:1px dashed var(--verde);padding:15px;border-radius:8px;margin-bottom:15px;font-size:13px}
+.photo-protocol ul{margin-left:20px;margin-top:5px}
+.photo-protocol li{margin-bottom:3px}
+@media(max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .main{padding:15px}
+}
+.hidden{display:none!important}
+.chart-container{position:relative;height:280px}
+.pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
+.search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
+/* Login overlay */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--verde-d),var(--verde));display:flex;align-items:center;justify-content:center;z-index:300;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px;max-width:520px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.2);text-align:center}
+.login-card h1{color:var(--verde-d);font-size:26px;margin-bottom:8px}
+.login-card p{color:var(--gris);margin-bottom:25px;font-size:14px}
+.user-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.user-tile{background:var(--crema);border:2px solid transparent;border-radius:10px;padding:18px 10px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.user-tile:hover{border-color:var(--verde);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.user-avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px}
+.user-tile .user-name{font-size:13px;color:#1f2937;font-weight:500}
+/* User pill in sidebar */
+.user-pill{display:flex;align-items:center;gap:8px;padding:10px 20px;border-top:1px solid rgba(255,255,255,.2);margin-top:10px;cursor:pointer;font-size:12px}
+.user-pill:hover{background:rgba(255,255,255,.1)}
+.user-pill .av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;color:#fff;flex-shrink:0}
+.user-pill .info{flex:1;min-width:0}
+.user-pill .info b{display:block;font-size:13px;color:#fff}
+.user-pill .info small{font-size:10px;opacity:.7}
+.user-pill .switch{font-size:14px;opacity:.6}
+.user-badge-mini{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 6px;border-radius:8px;color:#fff;font-weight:500;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="login" style="display:none">
+  <div class="login-card">
+    <h1>🌸 Santa Ana Peonías</h1>
+    <p>Ingresa con tu correo y contraseña para acceder a la plataforma</p>
+    <div style="text-align:left;margin-top:20px">
+      <label style="display:block;margin-bottom:5px;font-size:12px;color:#6b7280;font-weight:500">Correo electrónico</label>
+      <select id="login-email" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:14px;margin-bottom:12px">
+        <option value="">-- Selecciona tu usuario --</option>
+        <option value="atocornal@santaana.cl">A. Tocornal (atocornal@santaana.cl)</option>
+        <option value="sserrano@santaana.cl">S. Serrano (sserrano@santaana.cl)</option>
+        <option value="jtfranzani@santaana.cl">JT. Franzani (jtfranzani@santaana.cl)</option>
+        <option value="cafranzani@santaana.cl">CA. Franzani (cafranzani@santaana.cl)</option>
+      </select>
+      <label style="display:block;margin-bottom:5px;font-size:12px;color:#6b7280;font-weight:500">Contraseña</label>
+      <input type="password" id="login-password" placeholder="Tu contraseña" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:14px;margin-bottom:15px" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="login-error" style="color:#dc2626;font-size:12px;margin-bottom:10px;display:none"></div>
+      <button class="btn" onclick="doLogin()" style="width:100%;padding:11px;font-size:14px;justify-content:center">Ingresar</button>
+    </div>
+    <p style="font-size:11px;color:#9ca3af;margin-top:15px">¿Olvidaste tu contraseña? Contacta al administrador (JT. Franzani).</p>
+  </div>
+</div>
+<div class="app" id="app" style="display:none">
+  <nav class="sidebar">
+    <h1>🌸 Santa Ana Peonías<small>San Clemente · Región del Maule</small></h1>
+    <div class="nav">
+      <div class="nav-section">General</div>
+      <a onclick="nav('dashboard')" id="nav-dashboard" class="active">📊 Dashboard</a>
+      <a onclick="nav('blocks')" id="nav-blocks">🌱 Cuarteles</a>
+      <div class="nav-section">Registro fotográfico</div>
+      <a onclick="nav('photopoints')" id="nav-photopoints">📍 Puntos de foto</a>
+      <a onclick="nav('photos')" id="nav-photos">📸 Galería</a>
+      <a onclick="nav('compare')" id="nav-compare">🔍 Comparador</a>
+      <div class="nav-section">Manejo</div>
+      <a onclick="nav('tasks')" id="nav-tasks">🧑‍🌾 Bitácora labores</a>
+      <a onclick="nav('applications')" id="nav-applications">💧 Aplicaciones</a>
+      <div class="nav-section">Análisis</div>
+      <a onclick="nav('reports')" id="nav-reports">📈 Informes</a>
+      <a onclick="nav('settings')" id="nav-settings">⚙️ Respaldo</a>
+    </div>
+    <div class="user-pill" id="user-pill" onclick="logout()" title="Cambiar usuario"></div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+<div class="modal-bg" id="modal"><div class="modal" id="modal-content"></div></div>
+
+<script>
+/* ============ CONFIGURACIÓN FIREBASE ============
+ * Reemplaza este objeto por el que te entrega Firebase Console.
+ * Paso 5-6 de la Guía de Instalación. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCGnR9z-CD4HlYaKwG71PqhDcZrpLU9dVw",
+  authDomain: "santa-ana-peonias.firebaseapp.com",
+  projectId: "santa-ana-peonias",
+  storageBucket: "santa-ana-peonias.firebasestorage.app",
+  messagingSenderId: "1024922362326",
+  appId: "1:1024922362326:web:52b78f627b830cc1378477"
+};
+
+/* ============ USUARIOS ============ */
+const USERS=[
+  {id:'atocornal',  nombre:'A. Tocornal',  email:'atocornal@santaana.cl',  color:'#2563eb', avatar:'AT'},
+  {id:'sserrano',   nombre:'S. Serrano',   email:'sserrano@santaana.cl',   color:'#059669', avatar:'SS'},
+  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@santaana.cl', color:'#c97a90', avatar:'JT'},
+  {id:'cafranzani', nombre:'CA. Franzani', email:'cafranzani@santaana.cl', color:'#f59e0b', avatar:'CA'}
+];
+let CURRENT_USER=null;
+function userById(id){return USERS.find(u=>u.id===id)||{id:id||'?',nombre:id||'Desconocido',color:'#999',avatar:'?'}}
+function userByEmail(email){return USERS.find(u=>u.email===email)||null}
+function userBadgeHTML(id){if(!id)return '';const u=userById(id);return `<span class="user-badge-mini" style="background:${u.color}"><b>${u.avatar}</b></span>`}
+function userBadgeFull(id){if(!id)return '';const u=userById(id);return `<span class="user-badge-mini" style="background:${u.color}"><b>${u.avatar}</b> ${u.nombre}</span>`}
+
+/* ============ FIREBASE ============ */
+let FB_APP=null, FB_DB=null, FB_AUTH=null;
+let CONN_STATUS='offline';
+const STORES=['blocks','photopoints','photos','tasks','applications'];
+const LISTENERS={}; /* onSnapshot unsubscribers */
+
+function fbInit(){
+  if(FIREBASE_CONFIG.apiKey==='REEMPLAZAR_CON_TU_APIKEY'){
+    document.body.innerHTML='<div style="max-width:640px;margin:50px auto;padding:30px;font-family:system-ui;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)"><h1 style="color:#2f5d3a">⚠️ Falta configurar Firebase</h1><p>El archivo HTML aún no tiene las credenciales de Firebase. Sigue los pasos 1-6 de la <b>Guía de Instalación Firebase + GitHub Pages</b>.</p><p>Busca en el código la línea <code>const FIREBASE_CONFIG</code> y reemplázala por el objeto <code>firebaseConfig</code> que te da Firebase Console.</p></div>';
+    return false;
+  }
+  FB_APP=firebase.initializeApp(FIREBASE_CONFIG);
+  FB_DB=firebase.firestore();
+  FB_AUTH=firebase.auth();
+  FB_DB.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Persistencia offline no disponible:',e.code));
+  return true;
+}
+
+/* Capa unificada de datos (compatible con la API anterior) */
+async function getAll(store){
+  const snap=await FB_DB.collection(store).get();
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+async function add(store,obj){
+  const ref=await FB_DB.collection(store).add(obj);
+  return ref.id;
+}
+async function put(store,obj){
+  const {id,...data}=obj;
+  await FB_DB.collection(store).doc(String(id)).set(data,{merge:true});
+  return id;
+}
+async function del(store,id){
+  await FB_DB.collection(store).doc(String(id)).delete();
+}
+async function get(store,id){
+  const doc=await FB_DB.collection(store).doc(String(id)).get();
+  return doc.exists?{id:doc.id,...doc.data()}:null;
+}
+/* Escuchar cambios en tiempo real en una colección */
+function subscribe(store,callback){
+  if(LISTENERS[store])LISTENERS[store]();
+  LISTENERS[store]=FB_DB.collection(store).onSnapshot(snap=>{
+    const items=snap.docs.map(d=>({id:d.id,...d.data()}));
+    callback(items);
+  },err=>console.warn('Listener error',store,err));
+}
+function unsubscribeAll(){Object.values(LISTENERS).forEach(un=>un&&un());}
+
+/* ============ SEED DATA (solo si está vacío en la nube) ============ */
+async function seedIfEmpty(){
+  const blocks=await getAll('blocks');
+  if(blocks.length===0){
+    await add('blocks',{nombre:'Sarah Bernhardt',variedad:'Paeonia lactiflora Sarah Bernhardt',cantidad:40000,plantacion:'2025-01-15',tipo:'Floral rosa doble',notas:'Variedad referente exportación. Vida en florero 7-10 días. Aroma suave.',color:'#e8a7b8'});
+    await add('blocks',{nombre:'Bowl of Cream',variedad:'Paeonia lactiflora Bowl of Cream',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral crema doble',notas:'Botón grande, muy productiva. Recién plantada (temporada 0).',color:'#faf0cc'});
+    await add('blocks',{nombre:'Festiva Maxima',variedad:'Paeonia lactiflora Festiva Maxima',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral blanca con tintes rojos',notas:'Variedad histórica (1851). Muy fragante. Recién plantada.',color:'#fff8f0'});
+  }
+  const pp=await getAll('photopoints');
+  if(pp.length===0){
+    const recomendados=[
+      {codigo:'P1',nombre:'Sarah Bernhardt - Acceso norte',bloque:'Sarah Bernhardt',orientacion:'Sur (hacia hilera)',descripcion:'Al inicio del cuartel, desde la cabecera mirando hacia el sur. Poste de estaca con cinta roja como referencia. Tomar a 1.7m altura.',hora:'10:00-11:00'},
+      {codigo:'P2',nombre:'Sarah Bernhardt - Centro',bloque:'Sarah Bernhardt',orientacion:'Oeste',descripcion:'Mitad del cuartel, vista panorámica de 3 hileras. Incluir poste de tutor con referencia graduada.',hora:'10:00-11:00'},
+      {codigo:'P3',nombre:'Sarah Bernhardt - Zona sur',bloque:'Sarah Bernhardt',orientacion:'Norte',descripcion:'Extremo sur del cuartel, zona más expuesta al sol. Foto hacia el norte.',hora:'10:00-11:00'},
+      {codigo:'P4',nombre:'Bowl of Cream - Cuartel completo',bloque:'Bowl of Cream',orientacion:'Este',descripcion:'Vista general del cuartel, incluir camellón y orientación de la hilera.',hora:'10:00-11:00'},
+      {codigo:'P5',nombre:'Bowl of Cream - Detalle planta',bloque:'Bowl of Cream',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca amarilla. Foto desde arriba para medir cobertura foliar.',hora:'10:00-11:00'},
+      {codigo:'P6',nombre:'Festiva Maxima - Cuartel completo',bloque:'Festiva Maxima',orientacion:'Este',descripcion:'Vista general, incluir camellón, mulch y zona de acceso.',hora:'10:00-11:00'},
+      {codigo:'P7',nombre:'Festiva Maxima - Detalle planta',bloque:'Festiva Maxima',orientacion:'Cenital',descripcion:'Planta individual marcada con estaca verde. Vista cenital para cobertura.',hora:'10:00-11:00'},
+      {codigo:'P8',nombre:'Panorámica general huerto',bloque:'Todos',orientacion:'Variable',descripcion:'Vista desde punto alto (ej. bodega) mostrando los tres cuarteles. Mismo encuadre cada vez.',hora:'10:00-11:00'}
+    ];
+    for(const p of recomendados){await add('photopoints',p)}
+  }
+}
+
+/* ============ HELPERS ============ */
+const fmt=d=>new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
+const fmtLong=d=>new Date(d).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const today=()=>new Date().toISOString().split('T')[0];
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/(1000*60*60*24));
+function fileToDataURL(file,maxW=1600){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const scale=Math.min(1,maxW/img.width);
+        canvas.width=img.width*scale;canvas.height=img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        res(canvas.toDataURL('image/jpeg',0.85));
+      };
+      img.src=e.target.result;
+    };
+    reader.onerror=rej;
+    reader.readAsDataURL(file);
+  });
+}
+function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className='alert-box '+type;t.style.cssText='position:fixed;bottom:20px;right:20px;z-index:200;min-width:250px;box-shadow:0 4px 12px rgba(0,0,0,.15)';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+/* Fenología hemisferio sur para Paeonia lactiflora */
+function fenologia(mes){
+  const tabla={
+    1:{fase:'Crecimiento radicular',desc:'Almacenamiento de reservas. Riego moderado.'},
+    2:{fase:'Crecimiento radicular',desc:'Período crítico para reserva. Evitar estrés hídrico.'},
+    3:{fase:'Senescencia inicial',desc:'Comienza amarillamiento del follaje.'},
+    4:{fase:'Senescencia',desc:'Podar follaje al nivel suelo, sanitización preventiva.'},
+    5:{fase:'Dormancia',desc:'Aplicación de mulch, descanso del cultivo.'},
+    6:{fase:'Dormancia plena',desc:'Reposo. Mantener huerto limpio. Frío necesario.'},
+    7:{fase:'Dormancia tardía',desc:'Últimas horas-frío. Monitoreo de roedores.'},
+    8:{fase:'Pre-brotación',desc:'Rompen yemas rojas en cuello.'},
+    9:{fase:'Brotación y crecimiento vegetativo',desc:'Fertilización arranque. Riego creciente.'},
+    10:{fase:'Botoneo',desc:'Formación de botones florales. Crítico para calidad.'},
+    11:{fase:'Floración',desc:'COSECHA principal. Corte en estado marshmallow.'},
+    12:{fase:'Post-floración',desc:'Alimentar planta para próxima temporada. K+Ca.'}
+  };
+  return tabla[mes]||{fase:'-',desc:'-'};
+}
+
+/* ============ TEMPLATES CONOCIMIENTO PEONÍAS ============ */
+const LABOR_TEMPLATES=[
+  {cat:'Preparación',nombre:'Poda de follaje otoñal',desc:'Cortar follaje a ras de suelo. Retirar todo residuo del campo (no compostar in situ). Previene Botrytis en temporada siguiente.',mes:[4,5]},
+  {cat:'Preparación',nombre:'Aplicación de mulch',desc:'Capa 5-7cm. Evitar contacto directo con corona. Paja, viruta o corteza pino descompuesta.',mes:[5,6]},
+  {cat:'Preparación',nombre:'Análisis de suelo (NPK, pH, MO)',desc:'Tomar muestras compuestas por cuartel. pH óptimo 6.5-7.0. MO >3%.',mes:[6,7]},
+  {cat:'Preparación',nombre:'Aplicación de enmiendas',desc:'Cal agrícola si pH<6.5. Materia orgánica compostada.',mes:[6,7]},
+  {cat:'Sanidad',nombre:'Monitoreo fitosanitario',desc:'Recorrido sistemático, revisión de hojas, tallos, botones. Bitácora de incidencias.',mes:[9,10,11]},
+  {cat:'Sanidad',nombre:'Control malezas mecánico',desc:'Azadón o herramienta manual. Evitar dañar corona y raíces superficiales.',mes:[8,9,10,11]},
+  {cat:'Sanidad',nombre:'Control malezas químico selectivo',desc:'Graminicida si corresponde. Respetar distancia de carencia.',mes:[9,10]},
+  {cat:'Nutrición',nombre:'Fertilización arranque',desc:'N-P-K balanceado o 10-20-10 (alto P para raíz). 30-40 g/planta establecida.',mes:[8,9]},
+  {cat:'Nutrición',nombre:'Fertilización post-floración',desc:'Énfasis en K+Ca para fortalecer corona y reserva próxima temporada. Sulfato de K.',mes:[11,12]},
+  {cat:'Nutrición',nombre:'Fertilización foliar micros',desc:'Mg, B, Zn según análisis foliar. Aplicar temprano mañana o tarde.',mes:[9,10,11]},
+  {cat:'Riego',nombre:'Chequeo de sistema de riego',desc:'Verificar goteros, presión, cobertura. Revisar filtros.',mes:[8,9,10,11]},
+  {cat:'Riego',nombre:'Programa de riego activo',desc:'25-30 L/m²/semana en temporada activa. Ajustar según ET₀.',mes:[9,10,11,12]},
+  {cat:'Cultivo',nombre:'Desbotonado (disbudding)',desc:'Retirar botones laterales para concentrar vigor en botón terminal. Para flor premium.',mes:[10]},
+  {cat:'Cultivo',nombre:'Tutorado / Mallas de soporte',desc:'Instalar soporte antes del llenado de botón para evitar tumbado.',mes:[9,10]},
+  {cat:'Cosecha',nombre:'Cosecha flor marshmallow',desc:'Corte estado marshmallow (botón coloreado, suave como malvavisco). Mañana temprano. Tallo 45-60cm.',mes:[11]},
+  {cat:'Cosecha',nombre:'Postcosecha - hidratación',desc:'Hidratar en agua fría + biocida + nutriente. Cámara 2-4°C.',mes:[11]},
+  {cat:'Cosecha',nombre:'Cosecha de rizomas (división)',desc:'Temporada 3+. Dividir con 3-5 yemas por división. Tratamiento fungicida en corte.',mes:[4,5]}
+];
+
+const PRODUCT_TEMPLATES=[
+  {cat:'Fungicida',nombre:'Oxicloruro de cobre',tipo:'Preventivo amplio espectro',dosis_rec:'2-3 g/L',motivo:'Prevención Botrytis paeoniae, mancha foliar, quemaduras. Aplicar en dormancia y pre-brotación.',carencia:'15 días'},
+  {cat:'Fungicida',nombre:'Captan 80 WG',tipo:'Preventivo multisitio',dosis_rec:'1.5-2 g/L',motivo:'Botrytis, Cladosporium paeoniae (leaf blotch). Inicio brotación.',carencia:'21 días'},
+  {cat:'Fungicida',nombre:'Iprodione (Rovral)',tipo:'Curativo/preventivo',dosis_rec:'1-1.5 g/L',motivo:'Botrytis cinerea y paeoniae. Intervenir al primer síntoma. Rotar con otros modos de acción.',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Boscalid (Cantus)',tipo:'Sistémico SDHI',dosis_rec:'1-1.2 g/L',motivo:'Botrytis específico. Alta eficacia. Rotar obligatorio (resistencia FRAC 7).',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Fludioxonil + Ciprodinil (Switch)',tipo:'Combinado FRAC 12+9',dosis_rec:'0.8-1 g/L',motivo:'Botrytis. Excelente en condiciones de alta humedad. Pre-cosecha.',carencia:'7-14 días'},
+  {cat:'Fungicida',nombre:'Azoxistrobina (Amistar)',tipo:'Sistémico QoI',dosis_rec:'0.25 ml/L',motivo:'Cladosporium, Ramularia. Amplio espectro. No repetir consecutivo.',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Mancozeb',tipo:'Preventivo multisitio',dosis_rec:'2-2.5 g/L',motivo:'Mancha foliar, roya. Preventivo en temporada húmeda.',carencia:'28 días'},
+  {cat:'Insecticida',nombre:'Imidacloprid',tipo:'Sistémico neonicotinoide',dosis_rec:'0.5 ml/L',motivo:'Pulgones (Macrosiphum), thrips. Vectores de virus. CUIDADO con abejas.',carencia:'14 días'},
+  {cat:'Insecticida',nombre:'Spinosad',tipo:'Biológico',dosis_rec:'0.5-0.8 ml/L',motivo:'Thrips (Frankliniella) en botón floral. Compatible con MIP.',carencia:'7 días'},
+  {cat:'Insecticida',nombre:'Abamectina',tipo:'Translaminar',dosis_rec:'0.4 ml/L',motivo:'Ácaros, thrips. Aplicar con aceite agrícola para mejorar penetración.',carencia:'14 días'},
+  {cat:'Nematicida',nombre:'Oxamil',tipo:'Sistémico',dosis_rec:'Según indicaciones',motivo:'Nematodos Meloidogyne, Pratylenchus. Solo si análisis nematológico lo justifica.',carencia:'Consultar etiqueta'},
+  {cat:'Fertilizante',nombre:'NPK 15-15-15',tipo:'Granulado',dosis_rec:'30-40 g/planta',motivo:'Fertilización base brotación. Aplicar en corona, no directo sobre planta.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'NPK 10-20-10',tipo:'Arranque alto P',dosis_rec:'25-35 g/planta',motivo:'Favorecer enraizamiento. Especial temporada 1 plantación.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Sulfato de potasio',tipo:'K₂O 50%',dosis_rec:'15-25 g/planta',motivo:'Post-floración. Fortalece corona y reserva. Mejora calidad flor.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Nitrato de calcio',tipo:'Ca + N nítrico',dosis_rec:'20-30 g/planta',motivo:'Ca fortalece pared celular. Prevención Botrytis indirecta. Foliar 3-5 g/L.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Ácidos húmicos + fúlvicos',tipo:'Bioestimulante',dosis_rec:'2-5 ml/L suelo',motivo:'Activación microbiológica, mejor uso de nutrientes. Post-plantación.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Algas marinas (Ascophyllum)',tipo:'Bioestimulante foliar',dosis_rec:'2-3 ml/L',motivo:'Citoquininas naturales, mayor floración y calidad. Pre-botón.',carencia:'-'},
+  {cat:'Herbicida',nombre:'Glifosato',tipo:'Sistémico no selectivo',dosis_rec:'3-4 L/ha',motivo:'Solo pre-plantación o entre hilera con protección. NUNCA sobre planta.',carencia:'-'},
+  {cat:'Herbicida',nombre:'Haloxifop',tipo:'Graminicida selectivo',dosis_rec:'0.5-1 L/ha',motivo:'Control gramíneas sin dañar peonías. Post-emergente.',carencia:'60 días'},
+  {cat:'Herbicida',nombre:'Pendimetalin',tipo:'Pre-emergente',dosis_rec:'3-4 L/ha',motivo:'Pre-brotación peonías. Control malezas anuales en pre-emergencia.',carencia:'-'}
+];
+
+/* ============ NAVIGATION ============ */
+const PAGES={dashboard:renderDashboard,blocks:renderBlocks,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,tasks:renderTasks,applications:renderApplications,reports:renderReports,settings:renderSettings};
+let currentPage='dashboard';
+function nav(page){
+  currentPage=page;
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+  const el=document.getElementById('nav-'+page);if(el)el.classList.add('active');
+  PAGES[page]();
+}
+
+/* ============ DASHBOARD ============ */
+async function renderDashboard(){
+  const [blocks,photos,tasks,apps,points]=await Promise.all([getAll('blocks'),getAll('photos'),getAll('tasks'),getAll('applications'),getAll('photopoints')]);
+  const totalRiz=blocks.reduce((s,b)=>s+(b.cantidad||0),0);
+  const mesActual=new Date().getMonth()+1;
+  const fen=fenologia(mesActual);
+  const ultimasTareas=tasks.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  const ultimasApp=apps.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  const fotosMes=photos.filter(p=>new Date(p.fecha).getMonth()===new Date().getMonth()&&new Date(p.fecha).getFullYear()===new Date().getFullYear()).length;
+  const hoy=new Date();
+  const alertas=[];
+  /* Alertas fenológicas inteligentes */
+  if(mesActual===4||mesActual===5){alertas.push({tipo:'warn',txt:'🧹 Período de poda de follaje. Recuerda retirar todos los residuos del campo (no compostar in situ) para prevenir Botrytis la próxima temporada.'})}
+  if(mesActual>=8&&mesActual<=10){alertas.push({tipo:'info',txt:'🌱 Período crítico de botoneo. Intensifica monitoreo fitosanitario cada 5-7 días.'})}
+  if(mesActual===11){alertas.push({tipo:'ok',txt:'🌸 Ventana de cosecha. Cosechar en estado "marshmallow" (botón coloreado, suave al tacto). Flujo mañana temprano.'})}
+  /* Alertas por punto foto sin actualizar */
+  for(const pt of points){
+    const ultFoto=photos.filter(p=>p.pointId===pt.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    const diasSin=ultFoto?daysBetween(ultFoto.fecha,hoy):999;
+    if(diasSin>21&&mesActual>=8&&mesActual<=12){alertas.push({tipo:'warn',txt:`📸 Punto ${pt.codigo} (${pt.nombre}) sin foto hace ${diasSin>100?'más de 100':diasSin} días. Frecuencia sugerida: 14 días en temporada activa.`})}
+  }
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Dashboard</h2><div class="sub">${fmtLong(hoy)} · ${fen.fase}</div></div>
+      <div><button class="btn" onclick="nav('photos')">+ Registrar foto</button> <button class="btn ghost" onclick="nav('tasks')">+ Labor</button></div>
+    </div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="label">Total rizomas</div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${blocks.length} cuarteles activos</div></div>
+      <div class="kpi rosa"><div class="label">Fotos registradas</div><div class="value">${photos.length}</div><div class="foot">${fotosMes} este mes · ${points.length} puntos fijos</div></div>
+      <div class="kpi info"><div class="label">Labores registradas</div><div class="value">${tasks.length}</div><div class="foot">Últimos 30 días: ${tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).length}</div></div>
+      <div class="kpi warn"><div class="label">Aplicaciones</div><div class="value">${apps.length}</div><div class="foot">Últimos 30 días: ${apps.filter(a=>daysBetween(a.fecha,hoy)<=30).length}</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>📅 Fase actual &amp; recomendaciones</h3>
+        <div class="alert-box info"><strong>${fen.fase}</strong><br>${fen.desc}</div>
+        <div style="margin-top:10px"><strong style="font-size:13px;color:var(--verde-d)">Calendario fenológico anual:</strong>
+          <div class="phase" style="margin-top:8px">${Array.from({length:12},(_,i)=>`<div class="phase-bar ${i+1===mesActual?'active':''}" title="${fenologia(i+1).fase}"></div>`).join('')}</div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--gris);margin-top:2px"><span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🌱 Cuarteles</h3>
+        ${blocks.map(b=>`<div style="padding:10px;border:1px solid var(--gris-l);border-radius:6px;margin-bottom:8px"><strong>${b.nombre}</strong> <span class="tag ${b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva'}">${b.cantidad.toLocaleString()} rizomas</span><br><span style="font-size:12px;color:var(--gris)">Plantado ${fmt(b.plantacion)} · Temporada ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</span></div>`).join('')}
+      </div>
+    </div>
+    ${alertas.length?`<div class="card"><h3>⚠️ Alertas y recomendaciones</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}">${a.txt}</div>`).join('')}</div>`:''}
+    <div class="grid grid-2">
+      <div class="card"><h3>📈 Actividad últimos 6 meses</h3><div class="chart-container"><canvas id="chart1"></canvas></div></div>
+      <div class="card"><h3>💧 Aplicaciones por categoría</h3><div class="chart-container"><canvas id="chart2"></canvas></div></div>
+    </div>
+    <div class="card">
+      <h3>👥 Actividad por usuario (últimos 30 días)</h3>
+      <div class="grid grid-4">
+      ${USERS.map(u=>{const nTareas=tasks.filter(t=>t.createdBy===u.id&&daysBetween(t.fecha,hoy)<=30).length;const nApps=apps.filter(a=>a.createdBy===u.id&&daysBetween(a.fecha,hoy)<=30).length;const nFotos=photos.filter(p=>p.createdBy===u.id&&daysBetween(p.fecha,hoy)<=30).length;return `<div style="padding:12px;border:1px solid var(--gris-l);border-radius:8px;text-align:center"><div class="user-avatar" style="background:${u.color};margin:0 auto 8px">${u.avatar}</div><strong style="font-size:13px">${u.nombre}</strong><div style="margin-top:8px;font-size:11px;color:var(--gris)"><div>${nTareas} labores</div><div>${nApps} aplicaciones</div><div>${nFotos} fotos</div></div></div>`}).join('')}
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><h3>🧑‍🌾 Últimas labores</h3>${ultimasTareas.length?ultimasTareas.map(t=>`<div style="padding:8px 0;border-bottom:1px solid var(--gris-l)"><strong style="font-size:13px">${t.nombre}</strong> ${userBadgeHTML(t.createdBy)}<br><span style="font-size:11px;color:var(--gris)">${fmt(t.fecha)} · ${t.bloque||'General'} · ${t.responsable||'-'}</span></div>`).join(''):'<div class="empty">Aún no hay labores registradas</div>'}</div>
+      <div class="card"><h3>💧 Últimas aplicaciones</h3>${ultimasApp.length?ultimasApp.map(a=>`<div style="padding:8px 0;border-bottom:1px solid var(--gris-l)"><strong style="font-size:13px">${a.producto}</strong> <span class="tag info">${a.categoria}</span> ${userBadgeHTML(a.createdBy)}<br><span style="font-size:11px;color:var(--gris)">${fmt(a.fecha)} · ${a.dosis} · ${a.bloque||'General'}</span></div>`).join(''):'<div class="empty">Aún no hay aplicaciones registradas</div>'}</div>
+    </div>`;
+  /* CHARTS */
+  const now=new Date();
+  const meses=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);return d});
+  const mesLabels=meses.map(d=>d.toLocaleDateString('es-CL',{month:'short'}));
+  const tareasMes=meses.map(d=>tasks.filter(t=>new Date(t.fecha).getMonth()===d.getMonth()&&new Date(t.fecha).getFullYear()===d.getFullYear()).length);
+  const appMes=meses.map(d=>apps.filter(a=>new Date(a.fecha).getMonth()===d.getMonth()&&new Date(a.fecha).getFullYear()===d.getFullYear()).length);
+  const fotosMesArr=meses.map(d=>photos.filter(p=>new Date(p.fecha).getMonth()===d.getMonth()&&new Date(p.fecha).getFullYear()===d.getFullYear()).length);
+  new Chart(document.getElementById('chart1'),{type:'bar',data:{labels:mesLabels,datasets:[{label:'Labores',data:tareasMes,backgroundColor:'#4a7c59'},{label:'Aplicaciones',data:appMes,backgroundColor:'#c97a90'},{label:'Fotos',data:fotosMesArr,backgroundColor:'#f59e0b'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const cats={};apps.forEach(a=>{cats[a.categoria]=(cats[a.categoria]||0)+1});
+  new Chart(document.getElementById('chart2'),{type:'doughnut',data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:['#4a7c59','#c97a90','#f59e0b','#2563eb','#8b5cf6','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+}
+
+/* ============ BLOQUES ============ */
+async function renderBlocks(){
+  const blocks=await getAll('blocks');
+  const hoy=new Date();
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Cuarteles</h2><div class="sub">Gestión por variedad de peonía</div></div>
+    <button class="btn" onclick="editBlock()">+ Nuevo cuartel</button></div>
+    <div class="grid grid-3">
+      ${blocks.map(b=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><h3 style="margin:0">${b.nombre}</h3><div style="font-size:11px;color:var(--gris)">${b.variedad}</div></div>
+          <span class="tag ${b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva'}">${b.cantidad.toLocaleString()}</span>
+        </div>
+        <div style="margin-top:15px;font-size:13px"><div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Plantación:</strong> ${fmt(b.plantacion)}</div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Temporada actual:</strong> ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Tipo:</strong> ${b.tipo||'-'}</div>
+        <div style="padding:6px 0"><strong>Notas:</strong> ${b.notas||'-'}</div></div>
+        <div style="margin-top:12px;display:flex;gap:8px"><button class="btn small ghost" onclick="editBlock('${b.id}')">Editar</button><button class="btn small danger" onclick="delBlock('${b.id}')">Eliminar</button></div>
+      </div>`).join('')}
+    </div>`;
+}
+async function editBlock(id){
+  const b=id?await get('blocks',id):{nombre:'',variedad:'',cantidad:0,plantacion:today(),tipo:'',notas:''};
+  openModal(`<h3>${id?'Editar':'Nuevo'} cuartel</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre</label><input id="f-nombre" value="${b.nombre||''}"></div>
+      <div class="form-row"><label>Variedad botánica</label><input id="f-variedad" value="${b.variedad||''}"></div>
+      <div class="form-row"><label>Cantidad rizomas</label><input id="f-cant" type="number" value="${b.cantidad||0}"></div>
+      <div class="form-row"><label>Fecha plantación</label><input id="f-plant" type="date" value="${b.plantacion||today()}"></div>
+      <div class="form-row"><label>Tipo de flor</label><input id="f-tipo" value="${b.tipo||''}"></div>
+    </div>
+    <div class="form-row"><label>Notas</label><textarea id="f-notas" rows="3">${b.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveBlock(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function saveBlock(id){
+  const data={nombre:document.getElementById('f-nombre').value,variedad:document.getElementById('f-variedad').value,cantidad:parseInt(document.getElementById('f-cant').value)||0,plantacion:document.getElementById('f-plant').value,tipo:document.getElementById('f-tipo').value,notas:document.getElementById('f-notas').value};
+  if(id){data.id=id;await put('blocks',data)}else{await add('blocks',data)}
+  closeModal();toast('Cuartel guardado');renderBlocks();
+}
+async function delBlock(id){if(!confirm('¿Eliminar cuartel?'))return;await del('blocks',id);toast('Eliminado');renderBlocks();}
+
+/* ============ PUNTOS DE FOTO ============ */
+async function renderPhotoPoints(){
+  const points=await getAll('photopoints');
+  const blocks=await getAll('blocks');
+  const photos=await getAll('photos');
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Puntos de fotografía fijos</h2><div class="sub">Ubicaciones marcadas para fotos comparativas reales</div></div>
+    <button class="btn" onclick="editPoint()">+ Nuevo punto</button></div>
+    <div class="photo-protocol">
+      <strong>📐 Protocolo estándar (obligatorio para comparaciones válidas):</strong>
+      <ul>
+        <li><strong>Ubicación:</strong> Marcar físicamente cada punto con estaca pintada o cinta de color. Registrar coordenadas GPS si es posible.</li>
+        <li><strong>Altura:</strong> Siempre a 1.70m (altura de pecho) o usar trípode con la misma altura. Considerar comprar un <em>bastón de fotografía graduado</em>.</li>
+        <li><strong>Orientación:</strong> Respetar la dirección indicada por cada punto (Norte/Sur/Este/Oeste o cenital).</li>
+        <li><strong>Hora:</strong> Mismas 2 horas cada vez (preferente 10:00-11:00 AM: luz pareja, sin sombras duras).</li>
+        <li><strong>Condiciones:</strong> Evitar días con lluvia activa o viento fuerte. Día nublado uniforme es ideal.</li>
+        <li><strong>Distancia focal:</strong> Celular en modo normal 1x (no zoom digital). Si usas cámara, mismo foco siempre.</li>
+        <li><strong>Referencia en cuadro:</strong> Incluir siempre un elemento de referencia (regla, poste graduado, estaca marcada) para escalar crecimiento.</li>
+        <li><strong>Frecuencia:</strong> Cada 14 días en temporada activa (Ago-Dic), mensual en dormancia (Jun-Jul).</li>
+        <li><strong>Qué fotografiar:</strong> Misma encuadre cada vez (ni panorámica ni detalle). Incluir parte del suelo para referencia.</li>
+      </ul>
+    </div>
+    <div class="grid grid-2">
+      ${points.map(p=>{const fotosP=photos.filter(f=>f.pointId===p.id);const ult=fotosP.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+      const dias=ult?daysBetween(ult.fecha,new Date()):null;
+      return `<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><h3 style="margin:0">📍 ${p.codigo} · ${p.nombre}</h3><span class="tag info">${p.bloque}</span></div>
+          <div style="text-align:right"><div style="font-size:20px;font-weight:bold;color:var(--verde-d)">${fotosP.length}</div><div style="font-size:10px;color:var(--gris)">fotos</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px">
+          <div><strong>Orientación:</strong> ${p.orientacion}</div>
+          <div><strong>Hora sugerida:</strong> ${p.hora||'10:00-11:00'}</div>
+          <div style="margin-top:6px;color:var(--gris)">${p.descripcion}</div>
+          ${ult?`<div style="margin-top:8px"><span class="tag ${dias>21?'warn':'ok'}">Última foto: hace ${dias} días</span></div>`:`<div style="margin-top:8px"><span class="tag alert">Sin fotos aún</span></div>`}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" onclick="nav('photos');setTimeout(()=>quickUpload('${p.id}'),100)">📸 Tomar foto</button><button class="btn small ghost" onclick="editPoint('${p.id}')">Editar</button><button class="btn small danger" onclick="delPoint('${p.id}')">Eliminar</button></div>
+      </div>`}).join('')}
+    </div>`;
+}
+async function editPoint(id){
+  const blocks=await getAll('blocks');
+  const p=id?await get('photopoints',id):{codigo:'',nombre:'',bloque:blocks[0]?.nombre||'',orientacion:'Norte',descripcion:'',hora:'10:00-11:00'};
+  openModal(`<h3>${id?'Editar':'Nuevo'} punto de foto</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Código (ej. P9)</label><input id="f-cod" value="${p.codigo||''}"></div>
+      <div class="form-row"><label>Nombre</label><input id="f-nom" value="${p.nombre||''}"></div>
+      <div class="form-row"><label>Cuartel/Bloque</label><select id="f-bloq">${['Todos',...blocks.map(b=>b.nombre)].map(n=>`<option ${p.bloque===n?'selected':''}>${n}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Orientación</label><select id="f-ori">${['Norte','Sur','Este','Oeste','Noreste','Noroeste','Sureste','Suroeste','Cenital','Variable'].map(o=>`<option ${p.orientacion===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Hora sugerida</label><input id="f-hora" value="${p.hora||'10:00-11:00'}"></div>
+    </div>
+    <div class="form-row"><label>Descripción / Referencia física</label><textarea id="f-desc" rows="3">${p.descripcion||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="savePoint(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function savePoint(id){
+  const data={codigo:document.getElementById('f-cod').value,nombre:document.getElementById('f-nom').value,bloque:document.getElementById('f-bloq').value,orientacion:document.getElementById('f-ori').value,hora:document.getElementById('f-hora').value,descripcion:document.getElementById('f-desc').value};
+  if(id){data.id=id;await put('photopoints',data)}else{await add('photopoints',data)}
+  closeModal();toast('Punto guardado');renderPhotoPoints();
+}
+async function delPoint(id){if(!confirm('¿Eliminar punto de foto?'))return;await del('photopoints',id);toast('Eliminado');renderPhotoPoints();}
+
+/* ============ GALERÍA FOTOS ============ */
+let fotoFiltro={point:'all',text:''};
+async function renderPhotos(){
+  const [photos,points]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  let fotos=[...photos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if(fotoFiltro.point!=='all')fotos=fotos.filter(f=>f.pointId==fotoFiltro.point);
+  if(fotoFiltro.text)fotos=fotos.filter(f=>(f.notas||'').toLowerCase().includes(fotoFiltro.text.toLowerCase()));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Galería fotográfica</h2><div class="sub">${photos.length} fotos registradas · ${points.length} puntos fijos</div></div>
+    <button class="btn" onclick="uploadPhoto()">📸 Subir foto(s)</button></div>
+    <div class="toolbar">
+      <select id="filt-point" onchange="fotoFiltro.point=this.value;renderPhotos()"><option value="all">Todos los puntos</option>${points.map(p=>`<option value="${p.id}" ${fotoFiltro.point==p.id?'selected':''}>${p.codigo} · ${p.nombre}</option>`).join('')}</select>
+      <input class="search-input" placeholder="Buscar en notas..." value="${fotoFiltro.text}" oninput="fotoFiltro.text=this.value;clearTimeout(window._t);window._t=setTimeout(renderPhotos,300)">
+    </div>
+    ${fotos.length?`<div class="grid grid-3">${fotos.map(f=>{const p=pointsMap[f.pointId];return `<div class="photo-card" onclick="viewPhoto('${f.id}')"><img src="${f.img}" class="photo-thumb" loading="lazy"><div class="info"><strong>${p?p.codigo+' · '+p.nombre:'Sin punto'}</strong><span>${fmt(f.fecha)}${f.fase?' · '+f.fase:''}</span>${f.createdBy?'<div style="margin-top:4px">'+userBadgeHTML(f.createdBy)+'</div>':''}${f.notas?'<div style="margin-top:4px;color:#374151">'+f.notas.substring(0,60)+(f.notas.length>60?'...':'')+'</div>':''}</div></div>`}).join('')}</div>`:'<div class="empty"><div style="font-size:48px;margin-bottom:10px">📸</div><h3>Sin fotos aún</h3><p>Comienza subiendo la primera foto de un punto fijo</p><button class="btn" onclick="uploadPhoto()" style="margin-top:15px">Subir primera foto</button></div>'}`;
+}
+
+async function uploadPhoto(pointId){
+  const points=await getAll('photopoints');
+  const mesActual=new Date().getMonth()+1;
+  const faseActual=fenologia(mesActual).fase;
+  openModal(`<h3>📸 Subir foto(s) del huerto</h3>
+    <div class="alert-box info">Recuerda el protocolo: mismo punto, misma altura, misma orientación, misma hora (±1h).</div>
+    <div class="form-row"><label>Punto de foto</label><select id="f-point"><option value="">Seleccionar punto...</option>${points.map(p=>`<option value="${p.id}" ${pointId==p.id?'selected':''}>${p.codigo} · ${p.nombre} (${p.bloque})</option>`).join('')}</select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha</label><input id="f-fecha" type="date" value="${today()}"></div>
+      <div class="form-row"><label>Fase fenológica</label><select id="f-fase"><option>${faseActual}</option><option>Dormancia</option><option>Pre-brotación</option><option>Brotación</option><option>Crecimiento vegetativo</option><option>Botoneo</option><option>Pre-floración</option><option>Floración</option><option>Post-floración</option><option>Senescencia</option></select></div>
+    </div>
+    <div class="form-row"><label>Notas (opcional: clima, observaciones, estado fitosanitario)</label><textarea id="f-notas" rows="2" placeholder="Ej: Día nublado 18°C, se observan primeros botones rosados..."></textarea></div>
+    <div class="form-row"><label>Archivo(s) de imagen (puedes seleccionar varios)</label><input id="f-file" type="file" accept="image/*" multiple></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="savePhoto()">Guardar foto(s)</button></div>`);
+}
+function quickUpload(pointId){uploadPhoto(pointId)}
+
+async function savePhoto(){
+  const pointId=parseInt(document.getElementById('f-point').value);
+  if(!pointId){toast('Selecciona un punto','warn');return}
+  const fecha=document.getElementById('f-fecha').value;
+  const fase=document.getElementById('f-fase').value;
+  const notas=document.getElementById('f-notas').value;
+  const files=document.getElementById('f-file').files;
+  if(!files.length){toast('Selecciona al menos una imagen','warn');return}
+  toast('Procesando '+files.length+' imagen(es)...');
+  for(const f of files){
+    const img=await fileToDataURL(f);
+    await add('photos',{pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()});
+  }
+  closeModal();toast(files.length+' foto(s) guardada(s)');renderPhotos();
+}
+
+async function viewPhoto(id){
+  const f=await get('photos',id);
+  const p=f.pointId?await get('photopoints',f.pointId):null;
+  openModal(`<h3>${p?p.codigo+' · '+p.nombre:'Foto'}</h3>
+    <img src="${f.img}" style="width:100%;border-radius:8px;margin-bottom:15px">
+    <div class="form-grid">
+      <div><span class="tag info">${fmt(f.fecha)}</span> <span class="tag ok">${f.fase||'-'}</span> ${userBadgeFull(f.createdBy)||''}</div>
+    </div>
+    ${f.notas?`<div class="form-row" style="margin-top:10px"><label>Notas</label><p>${f.notas}</p></div>`:''}
+    <div class="modal-actions"><button class="btn danger" onclick="delPhoto('${id}')">Eliminar</button><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+async function delPhoto(id){if(!confirm('¿Eliminar foto?'))return;await del('photos',id);closeModal();toast('Eliminada');renderPhotos();}
+
+/* ============ COMPARADOR ============ */
+let compareState={pointId:null,leftId:null,rightId:null};
+async function renderCompare(){
+  const [photos,points]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Comparador fotográfico</h2><div class="sub">Visualiza la evolución de un mismo punto en distintas fechas</div></div></div>
+    <div class="card">
+      <h3>Selecciona un punto de foto</h3>
+      <select id="cmp-point" onchange="cmpPoint(this.value)">
+        <option value="">-- Elegir punto --</option>
+        ${points.map(p=>{const n=photos.filter(f=>f.pointId===p.id).length;return `<option value="${p.id}" ${compareState.pointId==p.id?'selected':''}>${p.codigo} · ${p.nombre} (${n} fotos)</option>`}).join('')}
+      </select>
+    </div>
+    <div id="cmp-area"></div>`;
+  if(compareState.pointId)cmpPoint(compareState.pointId);
+}
+
+async function cmpPoint(pointId){
+  compareState.pointId=pointId;
+  if(!pointId){document.getElementById('cmp-area').innerHTML='';return}
+  const photos=await getAll('photos');
+  const fotos=photos.filter(f=>f.pointId==pointId).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  if(fotos.length<2){document.getElementById('cmp-area').innerHTML='<div class="alert-box warn">Este punto necesita al menos 2 fotos para comparar. Actualmente tiene '+fotos.length+'.</div>';return}
+  if(!compareState.leftId||!fotos.find(f=>f.id==compareState.leftId))compareState.leftId=fotos[0].id;
+  if(!compareState.rightId||!fotos.find(f=>f.id==compareState.rightId))compareState.rightId=fotos[fotos.length-1].id;
+  const left=fotos.find(f=>f.id==compareState.leftId);
+  const right=fotos.find(f=>f.id==compareState.rightId);
+  const dias=daysBetween(left.fecha,right.fecha);
+  document.getElementById('cmp-area').innerHTML=`
+    <div class="card">
+      <div class="form-grid">
+        <div><label>Foto izquierda (antes)</label><select onchange="compareState.leftId=this.value;cmpPoint('${pointId}')">${fotos.map(f=>`<option value="${f.id}" ${f.id==left.id?'selected':''}>${fmt(f.fecha)} · ${f.fase||'-'}</option>`).join('')}</select></div>
+        <div><label>Foto derecha (después)</label><select onchange="compareState.rightId=this.value;cmpPoint('${pointId}')">${fotos.map(f=>`<option value="${f.id}" ${f.id==right.id?'selected':''}>${fmt(f.fecha)} · ${f.fase||'-'}</option>`).join('')}</select></div>
+      </div>
+      <div class="alert-box info" style="margin-top:10px">📅 Diferencia: <strong>${dias} días</strong> entre ambas fotos · ${left.fase||'?'} → ${right.fase||'?'}</div>
+      <div class="compare-grid">
+        <div class="compare-col"><img src="${left.img}"><div class="meta"><strong>${fmt(left.fecha)}</strong> · ${left.fase||'-'}<br>${left.notas||'Sin notas'}</div></div>
+        <div class="compare-col"><img src="${right.img}"><div class="meta"><strong>${fmt(right.fecha)}</strong> · ${right.fase||'-'}<br>${right.notas||'Sin notas'}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📋 Línea de tiempo completa del punto</h3>
+      <div class="timeline">${fotos.map(f=>`<div class="timeline-item"><div class="date">${fmt(f.fecha)}</div><h4>${f.fase||'Sin fase'}</h4><img src="${f.img}" style="max-width:150px;border-radius:6px;margin-top:5px;cursor:pointer" onclick="viewPhoto('${f.id}')"><div style="font-size:12px;color:var(--gris);margin-top:4px">${f.notas||''}</div></div>`).join('')}</div>
+    </div>`;
+}
+
+/* ============ BITÁCORA DE LABORES ============ */
+async function renderTasks(){
+  const [tasks,blocks]=await Promise.all([getAll('tasks'),getAll('blocks')]);
+  const mesActual=new Date().getMonth()+1;
+  const sugeridas=LABOR_TEMPLATES.filter(l=>l.mes.includes(mesActual));
+  const sorted=[...tasks].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const cats=[...new Set(LABOR_TEMPLATES.map(l=>l.cat))];
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Bitácora de labores</h2><div class="sub">Registro cronológico de todas las faenas</div></div>
+    <button class="btn" onclick="editTask()">+ Nueva labor</button></div>
+    ${sugeridas.length?`<div class="card"><h3>💡 Sugeridas para este mes (${new Date().toLocaleDateString('es-CL',{month:'long'})})</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${sugeridas.map(s=>`<button class="btn small ghost" onclick='quickTask(${JSON.stringify(s).replace(/'/g,"&apos;")})'>+ ${s.nombre}</button>`).join('')}</div></div>`:''}
+    <div class="card">
+      <div class="toolbar">
+        <input class="search-input" id="lab-search" placeholder="Buscar..." oninput="filterTasks(this.value)">
+      </div>
+      <table id="tbl-tasks">
+        <thead><tr><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Horas</th><th>Responsable</th><th>Registrado por</th><th>Notas</th><th></th></tr></thead>
+        <tbody>${sorted.length?sorted.map(t=>`<tr><td>${fmt(t.fecha)}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td style="max-width:250px;font-size:12px">${t.notas||''}</td><td><button class="btn small ghost" onclick="editTask('${t.id}')">✎</button> <button class="btn small danger" onclick="delTask('${t.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="9" class="empty">Sin labores registradas</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+function filterTasks(v){const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none'})}
+function quickTask(template){editTask(null,template)}
+
+async function editTask(id,template){
+  const blocks=await getAll('blocks');
+  const curName=userById(CURRENT_USER).nombre;
+  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:today(),bloque:'',horas:'',responsable:curName}:{nombre:'',categoria:'',notas:'',fecha:today(),bloque:'',horas:'',responsable:curName});
+  const cats=[...new Set(LABOR_TEMPLATES.map(l=>l.cat))];
+  openModal(`<h3>${id?'Editar':'Registrar'} labor</h3>
+    <div class="form-row"><label>Plantilla rápida (opcional)</label><select onchange="if(this.value){const t=LABOR_TEMPLATES[this.value];document.getElementById('f-nom').value=t.nombre;document.getElementById('f-cat').value=t.cat;document.getElementById('f-notas').value=t.desc}">
+      <option value="">-- Elegir plantilla --</option>
+      ${LABOR_TEMPLATES.map((l,i)=>`<option value="${i}">${l.cat}: ${l.nombre}</option>`).join('')}
+    </select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre de la labor</label><input id="f-nom" value="${t.nombre||''}"></div>
+      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Fecha</label><input id="f-fecha" type="date" value="${t.fecha||today()}"></div>
+      <div class="form-row"><label>Cuartel</label><select id="f-bloq"><option value="">General / Todos</option>${blocks.map(b=>`<option ${t.bloque===b.nombre?'selected':''}>${b.nombre}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Horas-hombre</label><input id="f-horas" type="number" step="0.5" value="${t.horas||''}"></div>
+      <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
+    </div>
+    <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveTask(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function saveTask(id){
+  const data={nombre:document.getElementById('f-nom').value,categoria:document.getElementById('f-cat').value,fecha:document.getElementById('f-fecha').value,bloque:document.getElementById('f-bloq').value,horas:parseFloat(document.getElementById('f-horas').value)||null,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
+  if(!data.nombre){toast('Nombre requerido','warn');return}
+  if(id){data.id=id;await put('tasks',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
+  closeModal();toast('Labor guardada');renderTasks();
+}
+async function delTask(id){if(!confirm('¿Eliminar labor?'))return;await del('tasks',id);toast('Eliminada');renderTasks();}
+
+/* ============ APLICACIONES ============ */
+async function renderApplications(){
+  const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
+  const sorted=[...apps].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Productos fitosanitarios, fertilizantes y bioestimulantes aplicados</div></div>
+    <button class="btn" onclick="editApp()">+ Nueva aplicación</button></div>
+    <div class="alert-box warn">⚠️ <strong>Importante:</strong> Registra TODA aplicación incluyendo dosis exacta, motivo y período de carencia. Esto es obligatorio para certificaciones (GlobalG.A.P., MPS) y trazabilidad de exportación.</div>
+    <div class="card">
+      <div class="toolbar">
+        <input class="search-input" placeholder="Buscar producto..." oninput="filterApps(this.value)">
+      </div>
+      <table id="tbl-apps">
+        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuartel</th><th>Dosis</th><th>Volumen</th><th>Motivo</th><th>Carencia</th><th>Responsable</th><th>Registrado por</th><th></th></tr></thead>
+        <tbody>${sorted.length?sorted.map(a=>`<tr><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong></td><td><span class="tag info">${a.categoria}</span></td><td>${a.bloque||'-'}</td><td>${a.dosis||'-'}</td><td>${a.volumen||'-'}</td><td style="max-width:200px;font-size:12px">${a.motivo||''}</td><td>${a.carencia||'-'}</td><td>${a.responsable||'-'}</td><td>${userBadgeFull(a.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td><button class="btn small ghost" onclick="editApp('${a.id}')">✎</button> <button class="btn small danger" onclick="delApp('${a.id}')">×</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Sin aplicaciones</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+function filterApps(v){document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+
+async function editApp(id){
+  const blocks=await getAll('blocks');
+  const curName=userById(CURRENT_USER).nombre;
+  const a=id?await get('applications',id):{fecha:today(),producto:'',categoria:'',bloque:'',dosis:'',volumen:'',motivo:'',carencia:'',responsable:curName,ingrediente:''};
+  const cats=[...new Set(PRODUCT_TEMPLATES.map(p=>p.cat))];
+  openModal(`<h3>${id?'Editar':'Registrar'} aplicación</h3>
+    <div class="form-row"><label>Seleccionar producto conocido (opcional)</label><select onchange="if(this.value){const p=PRODUCT_TEMPLATES[this.value];document.getElementById('f-prod').value=p.nombre;document.getElementById('f-cat').value=p.cat;document.getElementById('f-ing').value=p.tipo;document.getElementById('f-dos').value=p.dosis_rec;document.getElementById('f-mot').value=p.motivo;document.getElementById('f-car').value=p.carencia}">
+      <option value="">-- Buscar en biblioteca --</option>
+      ${cats.map(c=>`<optgroup label="${c}">${PRODUCT_TEMPLATES.map((p,i)=>p.cat===c?`<option value="${i}">${p.nombre}</option>`:'').join('')}</optgroup>`).join('')}
+    </select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha</label><input id="f-fecha" type="date" value="${a.fecha}"></div>
+      <div class="form-row"><label>Producto comercial</label><input id="f-prod" value="${a.producto||''}"></div>
+      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${a.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Ingrediente activo / Tipo</label><input id="f-ing" value="${a.ingrediente||''}"></div>
+      <div class="form-row"><label>Cuartel</label><select id="f-bloq"><option value="">General / Todos</option>${blocks.map(b=>`<option ${a.bloque===b.nombre?'selected':''}>${b.nombre}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Dosis</label><input id="f-dos" value="${a.dosis||''}" placeholder="ej. 2 g/L"></div>
+      <div class="form-row"><label>Volumen aplicado</label><input id="f-vol" value="${a.volumen||''}" placeholder="ej. 500 L total"></div>
+      <div class="form-row"><label>Período de carencia</label><input id="f-car" value="${a.carencia||''}" placeholder="ej. 14 días"></div>
+      <div class="form-row"><label>Responsable</label><input id="f-resp" value="${a.responsable||''}"></div>
+    </div>
+    <div class="form-row"><label>Motivo / plaga o enfermedad objetivo</label><textarea id="f-mot" rows="2">${a.motivo||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveApp(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function saveApp(id){
+  const data={fecha:document.getElementById('f-fecha').value,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloque:document.getElementById('f-bloq').value,dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,responsable:document.getElementById('f-resp').value,motivo:document.getElementById('f-mot').value};
+  if(!data.producto){toast('Producto requerido','warn');return}
+  if(id){data.id=id;await put('applications',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('applications',data)}
+  closeModal();toast('Aplicación guardada');renderApplications();
+}
+async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+
+/* ============ INFORMES ============ */
+async function renderReports(){
+  const [tasks,apps,photos,points,blocks]=await Promise.all([getAll('tasks'),getAll('applications'),getAll('photos'),getAll('photopoints'),getAll('blocks')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  const hoy=new Date();
+  /* Análisis fenológico */
+  const fasesPorPunto={};
+  points.forEach(p=>{
+    const fp=photos.filter(f=>f.pointId===p.id).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+    fasesPorPunto[p.id]=fp;
+  });
+  /* Alertas sanitarias automáticas */
+  const alertasSanitarias=[];
+  const mes=hoy.getMonth()+1;
+  const ultAppMonth=apps.filter(a=>daysBetween(a.fecha,hoy)<=30);
+  blocks.forEach(b=>{
+    const appBlock=ultAppMonth.filter(a=>a.bloque===b.nombre||a.bloque==='Todos'||!a.bloque);
+    if(mes>=9&&mes<=11){
+      const fung=appBlock.filter(a=>a.categoria==='Fungicida');
+      if(fung.length===0)alertasSanitarias.push({tipo:'warn',bloque:b.nombre,msg:'Sin fungicida preventivo en últimos 30 días durante período crítico (botoneo/floración). Considerar aplicación preventiva contra Botrytis.'});
+    }
+  });
+  /* Labores sin frecuencia esperada */
+  const monitoreos=tasks.filter(t=>t.nombre&&t.nombre.toLowerCase().includes('monitoreo')&&daysBetween(t.fecha,hoy)<=14);
+  if(mes>=9&&mes<=11&&monitoreos.length===0)alertasSanitarias.push({tipo:'warn',bloque:'General',msg:'No hay monitoreos fitosanitarios en últimas 2 semanas. En temporada activa se recomienda monitoreo semanal.'});
+  /* Costos horas-hombre */
+  const hhUltMes=tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).reduce((s,t)=>s+(parseFloat(t.horas)||0),0);
+  const hhPorCat={};
+  tasks.forEach(t=>{hhPorCat[t.categoria||'Sin categoría']=(hhPorCat[t.categoria||'Sin categoría']||0)+(parseFloat(t.horas)||0)});
+  /* Total aplicaciones por categoría */
+  const appPorCat={};apps.forEach(a=>{appPorCat[a.categoria||'Otro']=(appPorCat[a.categoria||'Otro']||0)+1});
+
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Informes comparativos</h2><div class="sub">Análisis automatizado de datos registrados</div></div>
+    <button class="btn secondary" onclick="exportReport()">📄 Exportar informe</button></div>
+
+    <div class="card" id="report-printable">
+      <h3>🌸 Informe general Santa Ana Peonías</h3>
+      <p style="font-size:12px;color:var(--gris)">Generado el ${fmtLong(hoy)}</p>
+
+      <h3 style="margin-top:20px">🌿 Evolución fenológica por punto</h3>
+      ${points.map(p=>{const fs=fasesPorPunto[p.id];if(!fs.length)return `<div class="alert-box warn"><strong>${p.codigo} · ${p.nombre}</strong>: Sin fotografías registradas.</div>`;
+        const fases=[...new Set(fs.map(f=>f.fase).filter(Boolean))];
+        const primera=fs[0],ultima=fs[fs.length-1];
+        const dias=daysBetween(primera.fecha,ultima.fecha);
+        return `<div style="padding:12px;border:1px solid var(--gris-l);border-radius:8px;margin-bottom:10px">
+          <strong>${p.codigo} · ${p.nombre}</strong> <span class="tag info">${p.bloque}</span>
+          <div style="font-size:12px;margin-top:5px;color:var(--gris)">${fs.length} fotografías · ${dias} días cubiertos · Desde ${fmt(primera.fecha)} hasta ${fmt(ultima.fecha)}</div>
+          <div style="margin-top:6px;font-size:12px"><strong>Fases observadas:</strong> ${fases.length?fases.map(f=>`<span class="tag ok">${f}</span>`).join(' '):'<em>sin fase registrada</em>'}</div>
+        </div>`}).join('')}
+
+      <h3 style="margin-top:20px">🧑‍🌾 Bitácora de labores</h3>
+      <div class="grid grid-2">
+        <div><strong>Resumen total</strong><table style="margin-top:8px"><tr><th>Categoría</th><th>Horas-hombre</th></tr>${Object.entries(hhPorCat).map(([k,v])=>`<tr><td>${k}</td><td>${v.toFixed(1)} h</td></tr>`).join('')}</table></div>
+        <div><strong>Últimos 30 días</strong><div class="kpi" style="margin-top:8px"><div class="label">Horas-hombre</div><div class="value">${hhUltMes.toFixed(1)}</div><div class="foot">${tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).length} labores</div></div></div>
+      </div>
+
+      <h3 style="margin-top:20px">💧 Aplicaciones</h3>
+      <table><tr><th>Categoría</th><th>Total aplicaciones</th><th>Últimos 30 días</th></tr>
+      ${Object.entries(appPorCat).map(([cat,n])=>{const n30=apps.filter(a=>a.categoria===cat&&daysBetween(a.fecha,hoy)<=30).length;return `<tr><td>${cat}</td><td>${n}</td><td>${n30}</td></tr>`}).join('')}
+      </table>
+
+      <h3 style="margin-top:20px">⚠️ Alertas sanitarias y recomendaciones</h3>
+      ${alertasSanitarias.length?alertasSanitarias.map(a=>`<div class="alert-box ${a.tipo}"><strong>${a.bloque}:</strong> ${a.msg}</div>`).join(''):'<div class="alert-box ok">✓ Sin alertas sanitarias automatizadas detectadas en este momento.</div>'}
+
+      <h3 style="margin-top:20px">📋 Recomendaciones del mes actual</h3>
+      <div class="alert-box info"><strong>${fenologia(mes).fase}</strong><br>${fenologia(mes).desc}</div>
+      <div style="font-size:12px">
+        <strong>Labores típicas para ${new Date().toLocaleDateString('es-CL',{month:'long'})}:</strong>
+        <ul style="margin-left:20px;margin-top:5px">${LABOR_TEMPLATES.filter(l=>l.mes.includes(mes)).map(l=>`<li><strong>${l.nombre}</strong> (${l.cat}): ${l.desc}</li>`).join('')}</ul>
+      </div>
+
+      <h3 style="margin-top:20px">📸 Comparador de puntos (vista reducida)</h3>
+      ${points.filter(p=>fasesPorPunto[p.id].length>=2).slice(0,4).map(p=>{const fs=fasesPorPunto[p.id];const first=fs[0],last=fs[fs.length-1];return `<div style="margin-bottom:15px"><strong>${p.codigo} · ${p.nombre}</strong>
+        <div class="compare-grid" style="margin-top:8px"><div class="compare-col"><img src="${first.img}"><div class="meta"><strong>${fmt(first.fecha)}</strong> · ${first.fase||''}</div></div><div class="compare-col"><img src="${last.img}"><div class="meta"><strong>${fmt(last.fecha)}</strong> · ${last.fase||''} (${daysBetween(first.fecha,last.fecha)} días después)</div></div></div></div>`}).join('')}
+    </div>`;
+}
+
+async function exportReport(){
+  const div=document.getElementById('report-printable');
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Informe Santa Ana Peonías</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:30px;max-width:900px;margin:auto;line-height:1.5;color:#333}h3{color:#2f5d3a;margin-top:20px;border-bottom:1px solid #ddd;padding-bottom:4px}img{max-width:100%;border-radius:4px}table{border-collapse:collapse;width:100%}th,td{padding:6px;border:1px solid #ddd;font-size:12px;text-align:left}th{background:#faf7f2}.alert-box{padding:10px;border-left:4px solid #4a7c59;margin:8px 0;font-size:13px;background:#f9fafb}.alert-box.warn{border-color:#f59e0b}.alert-box.danger{border-color:#dc2626}.alert-box.ok{border-color:#059669;background:#f0fdf4}.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:#eef;margin-right:4px}.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:10px;background:#fafafa;border-radius:6px}.kpi .label{font-size:11px;color:#666}.kpi .value{font-size:24px;font-weight:bold;color:#2f5d3a}.kpi .foot{font-size:11px;color:#666}.grid{display:grid;gap:15px}.grid-2{grid-template-columns:1fr 1fr}</style></head><body>${div.innerHTML}<script>window.print()<\/script></body></html>`);
+}
+
+/* ============ RESPALDO / CONFIGURACIÓN ============ */
+async function renderSettings(){
+  const [blocks,points,photos,tasks,apps]=await Promise.all([getAll('blocks'),getAll('photopoints'),getAll('photos'),getAll('tasks'),getAll('applications')]);
+  let sizeEst=0;photos.forEach(p=>{sizeEst+=(p.img||'').length*0.75});
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Respaldo y configuración</h2><div class="sub">Exporta e importa todos los datos del huerto</div></div></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>📤 Exportar respaldo completo</h3>
+        <p style="font-size:13px;color:var(--gris)">Descarga un archivo JSON con toda tu información (cuarteles, puntos, fotos, labores, aplicaciones). Guárdalo en Google Drive o disco externo mensualmente.</p>
+        <div style="margin:15px 0;font-size:12px;background:var(--crema);padding:10px;border-radius:6px">
+          <strong>Contenido del respaldo:</strong><br>
+          • ${blocks.length} cuarteles<br>
+          • ${points.length} puntos de foto<br>
+          • ${photos.length} fotografías (~${(sizeEst/1024/1024).toFixed(1)} MB)<br>
+          • ${tasks.length} labores<br>
+          • ${apps.length} aplicaciones
+        </div>
+        <button class="btn" onclick="exportAll()">📥 Descargar respaldo JSON</button>
+      </div>
+      <div class="card">
+        <h3>📥 Importar respaldo</h3>
+        <p style="font-size:13px;color:var(--gris)">Restaura datos desde un archivo JSON. <strong style="color:var(--alerta)">Atención:</strong> Esto agregará los datos al actual (no los reemplaza).</p>
+        <input type="file" id="imp-file" accept=".json" style="margin-top:10px">
+        <div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="importAll(false)">Agregar</button><button class="btn danger" onclick="importAll(true)">Reemplazar todo</button></div>
+      </div>
+      <div class="card">
+        <h3>🗑️ Limpiar datos</h3>
+        <p style="font-size:13px;color:var(--gris)">Elimina todos los datos permanentemente. Usa con precaución.</p>
+        <button class="btn danger" onclick="wipeAll()" style="margin-top:10px">Borrar toda la base</button>
+      </div>
+      <div class="card">
+        <h3>ℹ️ Información</h3>
+        <div style="font-size:13px">
+          <p><strong>Almacenamiento:</strong> Firebase Firestore (Google) + caché local offline.</p>
+          <p><strong>Proyecto:</strong> ${FIREBASE_CONFIG.projectId}</p>
+          <p><strong>Sincronización:</strong> Tiempo real entre los 4 usuarios. Funciona offline y se sincroniza al recuperar señal.</p>
+          <p><strong>Respaldo sugerido:</strong> Descargar JSON mensualmente aunque Firebase sea confiable.</p>
+          <p><strong>Versión:</strong> 2.0 Cloud · Abril 2026</p>
+        </div>
+      </div>
+    </div>`;
+}
+async function exportAll(){
+  const data={exported:new Date().toISOString(),version:1};
+  for(const s of STORES)data[s]=await getAll(s);
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`santaana_backup_${today()}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Respaldo descargado');
+}
+async function importAll(replace){
+  const f=document.getElementById('imp-file').files[0];
+  if(!f){toast('Selecciona un archivo','warn');return}
+  if(replace&&!confirm('¿Reemplazar TODO? Esto borrará los datos actuales.'))return;
+  const text=await f.text();
+  const data=JSON.parse(text);
+  if(replace){for(const s of STORES){const items=await getAll(s);for(const i of items)await del(s,i.id)}}
+  for(const s of STORES){if(data[s])for(const item of data[s]){delete item.id;await add(s,item)}}
+  toast('Importación completada');renderSettings();
+}
+async function wipeAll(){
+  if(!confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.'))return;
+  if(!confirm('¿Estás absolutamente seguro?'))return;
+  for(const s of STORES){const items=await getAll(s);for(const i of items)await del(s,i.id)}
+  toast('Base vaciada');await seedIfEmpty();renderSettings();
+}
+
+/* ============ LOGIN / LOGOUT (Firebase Auth) ============ */
+function renderLogin(){
+  document.getElementById('login').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('login-password').value='';
+}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  if(!email||!pw){errEl.textContent='Selecciona usuario e ingresa contraseña';errEl.style.display='block';return}
+  try{
+    errEl.textContent='Conectando...';errEl.style.color='#6b7280';errEl.style.display='block';
+    await FB_AUTH.signInWithEmailAndPassword(email,pw);
+    errEl.style.display='none';
+    /* onAuthStateChanged se encargará de entrar */
+  }catch(e){
+    errEl.style.color='#dc2626';
+    let msg='Error de login';
+    if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')msg='Contraseña incorrecta';
+    else if(e.code==='auth/user-not-found')msg='Usuario no existe en el sistema';
+    else if(e.code==='auth/too-many-requests')msg='Demasiados intentos. Espera unos minutos.';
+    else if(e.code==='auth/network-request-failed')msg='Sin conexión a internet';
+    else msg='Error: '+(e.message||e.code);
+    errEl.textContent=msg;errEl.style.display='block';
+  }
+}
+function renderUserPill(){
+  const u=userById(CURRENT_USER);
+  const status=CONN_STATUS==='online'?'<span style="color:#86efac">● online</span>':'<span style="color:#fde68a">● offline</span>';
+  document.getElementById('user-pill').innerHTML=`<div class="av" style="background:${u.color}">${u.avatar}</div><div class="info"><b>${u.nombre}</b><small>${status} · cerrar sesión</small></div>`;
+}
+async function logout(){
+  if(!confirm('¿Cerrar sesión?'))return;
+  unsubscribeAll();
+  await FB_AUTH.signOut();
+  CURRENT_USER=null;
+}
+
+/* ============ SINCRONIZACIÓN EN TIEMPO REAL ============ */
+function setupRealtimeSync(){
+  /* Refresca la página actual cuando cambian datos en cualquier colección */
+  STORES.forEach(store=>{
+    subscribe(store,()=>{
+      if(PAGES[currentPage])PAGES[currentPage]();
+    });
+  });
+  /* Estado de conexión visible */
+  FB_DB.collection('_status').doc('heartbeat').onSnapshot({includeMetadataChanges:true},snap=>{
+    CONN_STATUS=snap.metadata.fromCache?'offline':'online';
+    if(CURRENT_USER)renderUserPill();
+  },()=>{CONN_STATUS='online';if(CURRENT_USER)renderUserPill();});
+}
+
+/* ============ INIT ============ */
+(async()=>{
+  if(!fbInit())return;
+  FB_AUTH.onAuthStateChanged(async user=>{
+    if(user){
+      const profile=userByEmail(user.email);
+      if(!profile){
+        alert('Tu email ('+user.email+') no está registrado en la plataforma. Contacta al administrador.');
+        await FB_AUTH.signOut();
+        renderLogin();
+        return;
+      }
+      CURRENT_USER=profile.id;
+      document.getElementById('login').style.display='none';
+      document.getElementById('app').style.display='grid';
+      await seedIfEmpty();
+      renderUserPill();
+      setupRealtimeSync();
+      nav('dashboard');
+    } else {
+      CURRENT_USER=null;
+      renderLogin();
+    }
+  });
+})();
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+</script>
+</body>
+</html>
+
+
+
+
+
