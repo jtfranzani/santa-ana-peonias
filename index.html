@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santa Ana Peonías · Plataforma de Gestión</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rosa:#e8a7b8; --rosa-d:#c97a90; --rosa-l:#fbe4eb;
+  --verde:#3f7a52; --verde-d:#24482f; --verde-l:#e8f1eb;
+  --crema:#faf7f2; --fondo:#f5f3ef;
+  --gris:#64748b; --gris-m:#94a3b8; --gris-l:#e2e8f0; --gris-xl:#f1f5f9;
+  --blanco:#fff; --texto:#0f172a; --texto-m:#334155;
+  --alerta:#dc2626; --warn:#f59e0b; --ok:#059669; --info:#2563eb;
+  --sombra-sm:0 1px 2px rgba(15,23,42,.04);
+  --sombra:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sombra-md:0 4px 6px -1px rgba(15,23,42,.08),0 2px 4px -2px rgba(15,23,42,.04);
+  --sombra-lg:0 10px 15px -3px rgba(15,23,42,.08),0 4px 6px -4px rgba(15,23,42,.05);
+  --radio:10px; --radio-sm:6px; --radio-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--fondo);color:var(--texto);line-height:1.55;-webkit-font-smoothing:antialiased;font-feature-settings:'cv02','cv03','cv04','cv11'}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#1a3522 0%,#24482f 50%,#2e5c3a 100%);color:#fff;padding:24px 0 0;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:4px 0 15px rgba(0,0,0,.05)}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+.sidebar-brand{padding:0 22px 20px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.sidebar-brand .logo-box{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--rosa) 0%,var(--rosa-d) 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(232,167,184,.3);flex-shrink:0}
+.sidebar-brand .logo-box svg{color:#fff;width:22px;height:22px;stroke-width:2.2}
+.sidebar-brand h1{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.sidebar-brand h1 small{display:block;font-size:10.5px;opacity:.65;font-weight:400;font-family:'Inter',sans-serif;margin-top:3px;letter-spacing:.3px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 22px;color:rgba(255,255,255,.82);text-decoration:none;font-size:13.5px;font-weight:500;border-left:3px solid transparent;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1)}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:rgba(255,255,255,.1);border-left-color:var(--rosa);color:#fff;box-shadow:inset 0 0 25px rgba(232,167,184,.08)}
+.nav a svg{width:17px;height:17px;stroke-width:2;flex-shrink:0;opacity:.85}
+.nav a.active svg{opacity:1}
+.nav-section{font-size:10px;text-transform:uppercase;padding:18px 22px 6px;opacity:.5;letter-spacing:1.2px;font-weight:600}
+.main{padding:28px 38px;overflow-x:hidden;max-width:1600px}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;flex-wrap:wrap;gap:15px}
+.page-header h2{color:var(--texto);font-size:26px;font-weight:700;letter-spacing:-.02em;font-family:'Playfair Display',serif}
+.page-header .sub{color:var(--gris);font-size:13px;margin-top:4px;font-weight:400}
+.page-header .actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{background:var(--verde);color:#fff;border:none;padding:9px 16px;border-radius:var(--radio-sm);font-size:13px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:7px;transition:all .15s ease;font-family:inherit;letter-spacing:.01em;box-shadow:var(--sombra-sm)}
+.btn:hover{background:var(--verde-d);box-shadow:var(--sombra-md);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn svg{width:15px;height:15px;stroke-width:2.2}
+.btn.secondary{background:var(--rosa-d)}
+.btn.secondary:hover{background:#a85a70}
+.btn.ghost{background:#fff;color:var(--verde-d);border:1px solid var(--gris-l);box-shadow:var(--sombra-sm)}
+.btn.ghost:hover{background:var(--verde-l);border-color:var(--verde);color:var(--verde-d)}
+.btn.danger{background:var(--alerta)}
+.btn.danger:hover{background:#b91c1c}
+.btn.small{padding:5px 10px;font-size:12px;gap:4px}
+.btn.small svg{width:13px;height:13px}
+.card{background:#fff;border-radius:var(--radio);padding:22px;box-shadow:var(--sombra);margin-bottom:20px;border:1px solid rgba(226,232,240,.5)}
+.card h3{color:var(--texto);font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.01em}
+.card h3 svg{width:17px;height:17px;color:var(--verde);stroke-width:2}
+.grid{display:grid;gap:18px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.kpi{background:#fff;padding:20px;border-radius:var(--radio);box-shadow:var(--sombra);border:1px solid rgba(226,232,240,.6);position:relative;overflow:hidden;transition:all .2s ease}
+.kpi:hover{box-shadow:var(--sombra-md);transform:translateY(-2px)}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--verde)}
+.kpi.rosa::before{background:var(--rosa-d)}
+.kpi.warn::before{background:var(--warn)}
+.kpi.info::before{background:var(--info)}
+.kpi-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.kpi .kpi-icon{width:36px;height:36px;border-radius:10px;background:var(--verde-l);display:flex;align-items:center;justify-content:center;color:var(--verde-d)}
+.kpi.rosa .kpi-icon{background:var(--rosa-l);color:var(--rosa-d)}
+.kpi.warn .kpi-icon{background:#fef3c7;color:#b45309}
+.kpi.info .kpi-icon{background:#dbeafe;color:#1d4ed8}
+.kpi .kpi-icon svg{width:18px;height:18px;stroke-width:2}
+.kpi .label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.kpi .value{font-size:28px;font-weight:700;color:var(--texto);margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi .foot{font-size:11.5px;color:var(--gris);margin-top:6px;font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px}
+table th{text-align:left;padding:11px 10px;background:var(--gris-xl);color:var(--texto-m);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gris-l)}
+table td{padding:11px 10px;border-bottom:1px solid var(--gris-xl);color:var(--texto-m)}
+table td strong{color:var(--texto);font-weight:600}
+table tr{transition:background .1s}
+table tr:hover{background:var(--gris-xl)}
+input,select,textarea{width:100%;padding:10px 13px;border:1px solid var(--gris-l);border-radius:var(--radio-sm);font-size:13px;font-family:inherit;background:#fff;color:var(--texto);transition:all .15s;font-feature-settings:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 3px rgba(63,122,82,.12)}
+input:hover:not(:focus),select:hover:not(:focus),textarea:hover:not(:focus){border-color:var(--gris-m)}
+label{display:block;margin-bottom:6px;font-size:12px;color:var(--texto-m);font-weight:600;letter-spacing:.01em}
+.form-row{margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.tag svg{width:11px;height:11px;stroke-width:2.5}
+.tag.sarah{background:#fce7f3;color:#9f1239}
+.tag.bowl{background:#fef9c3;color:#854d0e}
+.tag.festiva{background:#dcfce7;color:#15803d}
+.tag.ok{background:#d1fae5;color:#065f46}
+.tag.warn{background:#fef3c7;color:#92400e}
+.tag.alert{background:#fee2e2;color:#991b1b}
+.tag.info{background:#dbeafe;color:#1e40af}
+.tag.pendiente{background:#fef3c7;color:#92400e}
+.tag.curso{background:#dbeafe;color:#1e40af}
+.tag.realizada{background:#d1fae5;color:#065f46}
+.tag.cancelada{background:#e2e8f0;color:#475569}
+.tag.atrasada{background:#fee2e2;color:#991b1b;animation:pulso 1.8s infinite}
+@keyframes pulso{0%,100%{opacity:1}50%{opacity:.65}}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:18px;font-size:12px;font-weight:500;background:#fff;color:var(--texto-m);cursor:pointer;border:1px solid var(--gris-l);margin-right:6px;margin-bottom:5px;transition:all .15s;box-shadow:var(--sombra-sm)}
+.chip:hover{border-color:var(--verde);color:var(--verde-d);transform:translateY(-1px)}
+.chip.active{background:var(--verde);color:#fff;border-color:var(--verde);box-shadow:0 2px 8px rgba(63,122,82,.25)}
+.chip strong{font-weight:700;font-variant-numeric:tabular-nums}
+tr.fila-atrasada{background:linear-gradient(90deg,#fef2f2,transparent)}
+tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
+.empty{text-align:center;padding:50px 20px;color:var(--gris-m);font-size:13px}
+.empty svg{opacity:.35;margin-bottom:12px;width:40px;height:40px;color:var(--gris-m)}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fadeIn .2s ease}
+.modal-bg.open{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal{background:#fff;border-radius:var(--radio-lg);padding:28px;max-width:620px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);animation:slideUp .25s ease}
+.modal h3{color:var(--texto);margin-bottom:18px;font-size:19px;font-weight:700;letter-spacing:-.01em;font-family:'Playfair Display',serif}
+.modal h4{color:var(--verde-d);margin:15px 0 8px;font-size:13px;font-weight:600;letter-spacing:.01em}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;padding-top:18px;border-top:1px solid var(--gris-xl)}
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;background:var(--gris-xl);padding:12px;border-radius:var(--radio-sm);border:1px solid var(--gris-l)}
+.check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-radius:var(--radio-sm);cursor:pointer;font-size:13px;border:1px solid transparent;transition:all .15s}
+.check-item:hover{border-color:var(--verde-l);background:var(--verde-l)}
+.check-item input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:var(--verde);cursor:pointer}
+.check-item input[type=checkbox]:checked+label{color:var(--verde-d);font-weight:600}
+.check-item label{margin:0;cursor:pointer;flex:1;font-weight:500;color:var(--texto-m)}
+.photo-thumb{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;cursor:pointer;background:#f3f4f6}
+.photo-card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--sombra);cursor:pointer;transition:transform .15s}
+.photo-card:hover{transform:translateY(-2px)}
+.photo-card .info{padding:10px 12px;font-size:12px}
+.photo-card .info strong{color:var(--verde-d);display:block;margin-bottom:2px}
+.photo-card .info span{color:var(--gris)}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.compare-col img{width:100%;border-radius:8px}
+.compare-col .meta{padding:10px;font-size:12px;background:#f9fafb;border-radius:0 0 8px 8px;margin-top:-4px}
+.phase{display:flex;gap:5px;margin-bottom:5px}
+.phase-bar{flex:1;height:6px;border-radius:3px;background:var(--gris-l)}
+.phase-bar.active{background:var(--verde)}
+.alert-box{padding:13px 16px;border-radius:var(--radio-sm);border-left:3px solid;margin-bottom:14px;font-size:13px;display:flex;align-items:flex-start;gap:10px;line-height:1.55}
+.alert-box svg{width:18px;height:18px;flex-shrink:0;margin-top:1px;stroke-width:2.2}
+.alert-box .ab-content{flex:1}
+.alert-box.info{background:#eff6ff;border-color:var(--info);color:#1e3a8a}
+.alert-box.warn{background:#fffbeb;border-color:var(--warn);color:#92400e}
+.alert-box.ok{background:#f0fdf4;border-color:var(--ok);color:#166534}
+.alert-box.danger{background:#fef2f2;border-color:var(--alerta);color:#991b1b}
+.toolbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{max-width:240px}
+.filters-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gris-xl)}
+.timeline{border-left:2px solid var(--gris-l);padding-left:20px;margin-left:10px}
+.timeline-item{margin-bottom:20px;position:relative}
+.timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--verde);border:2px solid #fff;box-shadow:0 0 0 2px var(--verde)}
+.timeline-item .date{font-size:11px;color:var(--gris);text-transform:uppercase}
+.timeline-item h4{font-size:14px;color:var(--verde-d);margin:2px 0}
+.photo-protocol{background:linear-gradient(135deg,#fff 0%,var(--crema) 100%);border:1px dashed var(--verde);padding:15px;border-radius:8px;margin-bottom:15px;font-size:13px}
+.photo-protocol ul{margin-left:20px;margin-top:5px}
+.photo-protocol li{margin-bottom:3px}
+@media(max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .main{padding:15px}
+}
+.hidden{display:none!important}
+.chart-container{position:relative;height:280px}
+.pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
+.search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
+/* Login overlay */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--verde-d),var(--verde));display:flex;align-items:center;justify-content:center;z-index:300;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px;max-width:520px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.2);text-align:center}
+.login-card h1{color:var(--verde-d);font-size:26px;margin-bottom:8px}
+.login-card p{color:var(--gris);margin-bottom:25px;font-size:14px}
+.user-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.user-tile{background:var(--crema);border:2px solid transparent;border-radius:10px;padding:18px 10px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.user-tile:hover{border-color:var(--verde);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.user-avatar{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px}
+.user-tile .user-name{font-size:13px;color:#1f2937;font-weight:500}
+/* User pill in sidebar */
+.user-pill{display:flex;align-items:center;gap:8px;padding:10px 20px;border-top:1px solid rgba(255,255,255,.2);margin-top:10px;cursor:pointer;font-size:12px}
+.user-pill:hover{background:rgba(255,255,255,.1)}
+.user-pill .av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;color:#fff;flex-shrink:0}
+.user-pill .info{flex:1;min-width:0}
+.user-pill .info b{display:block;font-size:13px;color:#fff}
+.user-pill .info small{font-size:10px;opacity:.7}
+.user-pill .switch{font-size:14px;opacity:.6}
+.user-badge-mini{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 6px;border-radius:8px;color:#fff;font-weight:500;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="login-overlay" id="login" style="display:none">
+  <div class="login-card">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:18px">
+      <div style="width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,var(--rosa) 0%,var(--rosa-d) 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(232,167,184,.4);margin-bottom:14px"><i data-lucide="flower-2" style="color:#fff;width:32px;height:32px"></i></div>
+      <h1 style="font-family:'Playfair Display',serif;margin:0">Santa Ana Peonías</h1>
+    </div>
+    <p>Ingresa con tu correo y contraseña para acceder a la plataforma</p>
+    <div style="text-align:left;margin-top:20px">
+      <label style="display:block;margin-bottom:5px;font-size:12px;color:#6b7280;font-weight:500">Correo electrónico</label>
+      <select id="login-email" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:14px;margin-bottom:12px">
+        <option value="">-- Selecciona tu usuario --</option>
+        <option value="atocornal@santaana.cl">A. Tocornal (atocornal@santaana.cl)</option>
+        <option value="sserrano@santaana.cl">S. Serrano (sserrano@santaana.cl)</option>
+        <option value="jtfranzani@santaana.cl">JT. Franzani (jtfranzani@santaana.cl)</option>
+        <option value="cafranzani@santaana.cl">CA. Franzani (cafranzani@santaana.cl)</option>
+      </select>
+      <label style="display:block;margin-bottom:5px;font-size:12px;color:#6b7280;font-weight:500">Contraseña</label>
+      <input type="password" id="login-password" placeholder="Tu contraseña" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:14px;margin-bottom:15px" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="login-error" style="color:#dc2626;font-size:12px;margin-bottom:10px;display:none"></div>
+      <button class="btn" onclick="doLogin()" style="width:100%;padding:11px;font-size:14px;justify-content:center">Ingresar</button>
+    </div>
+    <p style="font-size:11px;color:#9ca3af;margin-top:15px">¿Olvidaste tu contraseña? Contacta al administrador (JT. Franzani).</p>
+  </div>
+</div>
+<div class="app" id="app" style="display:none">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-box"><i data-lucide="flower-2"></i></div>
+      <h1>Santa Ana<small>San Clemente · Maule</small></h1>
+    </div>
+    <div class="nav">
+      <div class="nav-section">General</div>
+      <a onclick="nav('dashboard')" id="nav-dashboard" class="active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+      <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
+      <a onclick="nav('weather')" id="nav-weather"><i data-lucide="cloud-rain"></i><span>Clima y lluvias</span></a>
+      <div class="nav-section">Registro fotográfico</div>
+      <a onclick="nav('photopoints')" id="nav-photopoints"><i data-lucide="map-pin"></i><span>Puntos de foto</span></a>
+      <a onclick="nav('photos')" id="nav-photos"><i data-lucide="image"></i><span>Galería</span></a>
+      <a onclick="nav('compare')" id="nav-compare"><i data-lucide="git-compare"></i><span>Comparador</span></a>
+      <div class="nav-section">Manejo</div>
+      <a onclick="nav('tasks')" id="nav-tasks"><i data-lucide="clipboard-list"></i><span>Bitácora labores</span></a>
+      <a onclick="nav('applications')" id="nav-applications"><i data-lucide="droplet"></i><span>Aplicaciones</span></a>
+      <a onclick="nav('inventory')" id="nav-inventory"><i data-lucide="package"></i><span>Inventario</span></a>
+      <a onclick="nav('studies')" id="nav-studies"><i data-lucide="flask-conical"></i><span>Estudios</span></a>
+      <a onclick="nav('advisors')" id="nav-advisors"><i data-lucide="user-check"></i><span>Asesores</span></a>
+      <div class="nav-section">Mercado</div>
+      <a onclick="nav('prices')" id="nav-prices"><i data-lucide="line-chart"></i><span>Precios</span></a>
+      <div class="nav-section">Análisis</div>
+      <a onclick="nav('reports')" id="nav-reports"><i data-lucide="trending-up"></i><span>Informes</span></a>
+      <a onclick="nav('settings')" id="nav-settings"><i data-lucide="settings"></i><span>Respaldo y avisos</span></a>
+    </div>
+    <div class="user-pill" id="user-pill" onclick="logout()" title="Cambiar usuario"></div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+<div class="modal-bg" id="modal"><div class="modal" id="modal-content"></div></div>
+
+<script>
+/* ============ CONFIGURACIÓN FIREBASE ============
+ * Reemplaza este objeto por el que te entrega Firebase Console.
+ * Paso 5-6 de la Guía de Instalación. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCGnR9z-CD4HlYaKwG71PqhDcZrpLU9dVw",
+  authDomain: "santa-ana-peonias.firebaseapp.com",
+  projectId: "santa-ana-peonias",
+  storageBucket: "santa-ana-peonias.firebasestorage.app",
+  messagingSenderId: "1024922362326",
+  appId: "1:1024922362326:web:52b78f627b830cc1378477"
+};
+
+/* ============ USUARIOS ============ */
+const USERS=[
+  {id:'atocornal',  nombre:'A. Tocornal',  email:'atocornal@santaana.cl',  color:'#2563eb', avatar:'AT'},
+  {id:'sserrano',   nombre:'S. Serrano',   email:'sserrano@santaana.cl',   color:'#059669', avatar:'SS'},
+  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@santaana.cl', color:'#c97a90', avatar:'JT'},
+  {id:'cafranzani', nombre:'CA. Franzani', email:'cafranzani@santaana.cl', color:'#f59e0b', avatar:'CA'}
+];
+let CURRENT_USER=null;
+function userById(id){return USERS.find(u=>u.id===id)||{id:id||'?',nombre:id||'Desconocido',color:'#999',avatar:'?'}}
+function userByEmail(email){return USERS.find(u=>u.email===email)||null}
+function userBadgeHTML(id){if(!id)return '';const u=userById(id);return `<span class="user-badge-mini" style="background:${u.color}"><b>${u.avatar}</b></span>`}
+function userBadgeFull(id){if(!id)return '';const u=userById(id);return `<span class="user-badge-mini" style="background:${u.color}"><b>${u.avatar}</b> ${u.nombre}</span>`}
+
+/* ============ FIREBASE ============ */
+let FB_APP=null, FB_DB=null, FB_AUTH=null;
+let CONN_STATUS='offline';
+const STORES=['blocks','photopoints','photos','tasks','applications','inventory','invmoves','advisors','advisorfiles','weather','studies','prices','hitos','config'];
+const LISTENERS={}; /* onSnapshot unsubscribers */
+
+function fbInit(){
+  if(FIREBASE_CONFIG.apiKey==='REEMPLAZAR_CON_TU_APIKEY'){
+    document.body.innerHTML='<div style="max-width:640px;margin:50px auto;padding:30px;font-family:system-ui;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)"><h1 style="color:#2f5d3a">⚠️ Falta configurar Firebase</h1><p>El archivo HTML aún no tiene las credenciales de Firebase. Sigue los pasos 1-6 de la <b>Guía de Instalación Firebase + GitHub Pages</b>.</p><p>Busca en el código la línea <code>const FIREBASE_CONFIG</code> y reemplázala por el objeto <code>firebaseConfig</code> que te da Firebase Console.</p></div>';
+    return false;
+  }
+  FB_APP=firebase.initializeApp(FIREBASE_CONFIG);
+  FB_DB=firebase.firestore();
+  FB_AUTH=firebase.auth();
+  FB_DB.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Persistencia offline no disponible:',e.code));
+  return true;
+}
+
+/* Capa unificada de datos (compatible con la API anterior) */
+async function getAll(store){
+  const snap=await FB_DB.collection(store).get();
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+async function add(store,obj){
+  const ref=await FB_DB.collection(store).add(obj);
+  return ref.id;
+}
+async function put(store,obj){
+  const {id,...data}=obj;
+  await FB_DB.collection(store).doc(String(id)).set(data,{merge:true});
+  return id;
+}
+async function del(store,id){
+  await FB_DB.collection(store).doc(String(id)).delete();
+}
+async function get(store,id){
+  const doc=await FB_DB.collection(store).doc(String(id)).get();
+  return doc.exists?{id:doc.id,...doc.data()}:null;
+}
+/* Escuchar cambios en tiempo real en una colección */
+function subscribe(store,callback){
+  if(LISTENERS[store])LISTENERS[store]();
+  LISTENERS[store]=FB_DB.collection(store).onSnapshot(snap=>{
+    const items=snap.docs.map(d=>({id:d.id,...d.data()}));
+    callback(items);
+  },err=>console.warn('Listener error',store,err));
+}
+function unsubscribeAll(){Object.values(LISTENERS).forEach(un=>un&&un());}
+
+/* ============ SEED DATA (solo si está vacío en la nube) ============ */
+async function seedIfEmpty(){
+  const blocks=await getAll('blocks');
+  if(blocks.length===0){
+    await add('blocks',{nombre:'Sarah Bernhardt',variedad:'Paeonia lactiflora Sarah Bernhardt',cantidad:40000,plantacion:'2025-01-15',tipo:'Floral rosa doble',notas:'Variedad referente exportación. Vida en florero 7-10 días. Aroma suave.',color:'#e8a7b8'});
+    await add('blocks',{nombre:'Bowl of Cream',variedad:'Paeonia lactiflora Bowl of Cream',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral crema doble',notas:'Botón grande, muy productiva. Recién plantada (temporada 0).',color:'#faf0cc'});
+    await add('blocks',{nombre:'Festiva Maxima',variedad:'Paeonia lactiflora Festiva Maxima',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral blanca con tintes rojos',notas:'Variedad histórica (1851). Muy fragante. Recién plantada.',color:'#fff8f0'});
+  }
+  const pp=await getAll('photopoints');
+  if(pp.length===0){
+    const recomendados=[
+      {codigo:'P1',nombre:'Sarah Bernhardt - Acceso norte',bloque:'Sarah Bernhardt',orientacion:'Sur (hacia hilera)',descripcion:'Al inicio del cuartel, desde la cabecera mirando hacia el sur. Poste de estaca con cinta roja como referencia. Tomar a 1.7m altura.',hora:'10:00-11:00'},
+      {codigo:'P2',nombre:'Sarah Bernhardt - Centro',bloque:'Sarah Bernhardt',orientacion:'Oeste',descripcion:'Mitad del cuartel, vista panorámica de 3 hileras. Incluir poste de tutor con referencia graduada.',hora:'10:00-11:00'},
+      {codigo:'P3',nombre:'Sarah Bernhardt - Zona sur',bloque:'Sarah Bernhardt',orientacion:'Norte',descripcion:'Extremo sur del cuartel, zona más expuesta al sol. Foto hacia el norte.',hora:'10:00-11:00'},
+      {codigo:'P4',nombre:'Bowl of Cream - Cuartel completo',bloque:'Bowl of Cream',orientacion:'Este',descripcion:'Vista general del cuartel, incluir camellón y orientación de la hilera.',hora:'10:00-11:00'},
+      {codigo:'P5',nombre:'Bowl of Cream - Detalle planta',bloque:'Bowl of Cream',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca amarilla. Foto desde arriba para medir cobertura foliar.',hora:'10:00-11:00'},
+      {codigo:'P6',nombre:'Festiva Maxima - Cuartel completo',bloque:'Festiva Maxima',orientacion:'Este',descripcion:'Vista general, incluir camellón, mulch y zona de acceso.',hora:'10:00-11:00'},
+      {codigo:'P7',nombre:'Festiva Maxima - Detalle planta',bloque:'Festiva Maxima',orientacion:'Cenital',descripcion:'Planta individual marcada con estaca verde. Vista cenital para cobertura.',hora:'10:00-11:00'},
+      {codigo:'P8',nombre:'Panorámica general huerto',bloque:'Todos',orientacion:'Variable',descripcion:'Vista desde punto alto (ej. bodega) mostrando los tres cuarteles. Mismo encuadre cada vez.',hora:'10:00-11:00'}
+    ];
+    for(const p of recomendados){await add('photopoints',p)}
+  }
+}
+
+/* ============ HELPERS ============ */
+const fmt=d=>new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
+const fmtLong=d=>new Date(d).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const today=()=>new Date().toISOString().split('T')[0];
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/(1000*60*60*24));
+/* Labores: helpers de estado */
+const estadoLabor=t=>t.estado||'realizada';
+const ESTADO_LBL={pendiente:'Pendiente',en_curso:'En curso',realizada:'Realizada',cancelada:'Cancelada'};
+const ESTADO_CLS={pendiente:'pendiente',en_curso:'curso',realizada:'realizada',cancelada:'cancelada'};
+function laborAtrasada(t){if(estadoLabor(t)!=='pendiente')return false;const fp=t.fechaPlanificada||t.fecha;if(!fp)return false;return new Date(fp)<new Date(today())}
+/* Aplicaciones: helpers de carencia */
+function parseCarenciaDias(x){if(x==null)return null;if(typeof x==='number')return x;const m=String(x).match(/(\d+)/);return m?parseInt(m[1],10):null}
+function addDays(dateStr,days){const d=new Date(dateStr);d.setDate(d.getDate()+days);return d.toISOString().split('T')[0]}
+function fechaFinCarencia(app){const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d?addDays(app.fecha,d):null}
+function carenciaActiva(app){const f=fechaFinCarencia(app);return f?new Date(f)>=new Date(today()):false}
+function fileToDataURL(file,maxW=1600){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const scale=Math.min(1,maxW/img.width);
+        canvas.width=img.width*scale;canvas.height=img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        res(canvas.toDataURL('image/jpeg',0.85));
+      };
+      img.src=e.target.result;
+    };
+    reader.onerror=rej;
+    reader.readAsDataURL(file);
+  });
+}
+function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function viewImage(src){if(!src)return;const existing=document.getElementById('img-viewer');if(existing)existing.remove();const div=document.createElement('div');div.id='img-viewer';div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';div.onclick=()=>div.remove();div.innerHTML=`<img src="${src}" style="max-width:95%;max-height:95%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5)"><button style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.9);border:none;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:bold">×</button>`;document.body.appendChild(div);}
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  t.className='alert-box '+type;t.style.cssText='position:fixed;bottom:20px;right:20px;z-index:200;min-width:250px;box-shadow:0 4px 12px rgba(0,0,0,.15)';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+/* Fenología hemisferio sur para Paeonia lactiflora */
+function fenologia(mes){
+  const tabla={
+    1:{fase:'Crecimiento radicular',desc:'Almacenamiento de reservas. Riego moderado.'},
+    2:{fase:'Crecimiento radicular',desc:'Período crítico para reserva. Evitar estrés hídrico.'},
+    3:{fase:'Senescencia inicial',desc:'Comienza amarillamiento del follaje.'},
+    4:{fase:'Senescencia',desc:'Podar follaje al nivel suelo, sanitización preventiva.'},
+    5:{fase:'Dormancia',desc:'Aplicación de mulch, descanso del cultivo.'},
+    6:{fase:'Dormancia plena',desc:'Reposo. Mantener huerto limpio. Frío necesario.'},
+    7:{fase:'Dormancia tardía',desc:'Últimas horas-frío. Monitoreo de roedores.'},
+    8:{fase:'Pre-brotación',desc:'Rompen yemas rojas en cuello.'},
+    9:{fase:'Brotación y crecimiento vegetativo',desc:'Fertilización arranque. Riego creciente.'},
+    10:{fase:'Botoneo',desc:'Formación de botones florales. Crítico para calidad.'},
+    11:{fase:'Floración',desc:'COSECHA principal. Corte en estado marshmallow.'},
+    12:{fase:'Post-floración',desc:'Alimentar planta para próxima temporada. K+Ca.'}
+  };
+  return tabla[mes]||{fase:'-',desc:'-'};
+}
+
+/* ============ TEMPLATES CONOCIMIENTO PEONÍAS ============ */
+const LABOR_TEMPLATES=[
+  {cat:'Preparación',nombre:'Poda de follaje otoñal',desc:'Cortar follaje a ras de suelo. Retirar todo residuo del campo (no compostar in situ). Previene Botrytis en temporada siguiente.',mes:[4,5]},
+  {cat:'Preparación',nombre:'Aplicación de mulch',desc:'Capa 5-7cm. Evitar contacto directo con corona. Paja, viruta o corteza pino descompuesta.',mes:[5,6]},
+  {cat:'Preparación',nombre:'Análisis de suelo (NPK, pH, MO)',desc:'Tomar muestras compuestas por cuartel. pH óptimo 6.5-7.0. MO >3%.',mes:[6,7]},
+  {cat:'Preparación',nombre:'Aplicación de enmiendas',desc:'Cal agrícola si pH<6.5. Materia orgánica compostada.',mes:[6,7]},
+  {cat:'Sanidad',nombre:'Monitoreo fitosanitario',desc:'Recorrido sistemático, revisión de hojas, tallos, botones. Bitácora de incidencias.',mes:[9,10,11]},
+  {cat:'Sanidad',nombre:'Control malezas mecánico',desc:'Azadón o herramienta manual. Evitar dañar corona y raíces superficiales.',mes:[8,9,10,11]},
+  {cat:'Sanidad',nombre:'Control malezas químico selectivo',desc:'Graminicida si corresponde. Respetar distancia de carencia.',mes:[9,10]},
+  {cat:'Nutrición',nombre:'Fertilización arranque',desc:'N-P-K balanceado o 10-20-10 (alto P para raíz). 30-40 g/planta establecida.',mes:[8,9]},
+  {cat:'Nutrición',nombre:'Fertilización post-floración',desc:'Énfasis en K+Ca para fortalecer corona y reserva próxima temporada. Sulfato de K.',mes:[11,12]},
+  {cat:'Nutrición',nombre:'Fertilización foliar micros',desc:'Mg, B, Zn según análisis foliar. Aplicar temprano mañana o tarde.',mes:[9,10,11]},
+  {cat:'Riego',nombre:'Chequeo de sistema de riego',desc:'Verificar goteros, presión, cobertura. Revisar filtros.',mes:[8,9,10,11]},
+  {cat:'Riego',nombre:'Programa de riego activo',desc:'25-30 L/m²/semana en temporada activa. Ajustar según ET₀.',mes:[9,10,11,12]},
+  {cat:'Cultivo',nombre:'Desbotonado (disbudding)',desc:'Retirar botones laterales para concentrar vigor en botón terminal. Para flor premium.',mes:[10]},
+  {cat:'Cultivo',nombre:'Tutorado / Mallas de soporte',desc:'Instalar soporte antes del llenado de botón para evitar tumbado.',mes:[9,10]},
+  {cat:'Cosecha',nombre:'Cosecha flor marshmallow',desc:'Corte estado marshmallow (botón coloreado, suave como malvavisco). Mañana temprano. Tallo 45-60cm.',mes:[11]},
+  {cat:'Cosecha',nombre:'Postcosecha - hidratación',desc:'Hidratar en agua fría + biocida + nutriente. Cámara 2-4°C.',mes:[11]},
+  {cat:'Cosecha',nombre:'Cosecha de rizomas (división)',desc:'Temporada 3+. Dividir con 3-5 yemas por división. Tratamiento fungicida en corte.',mes:[4,5]}
+];
+
+const PRODUCT_TEMPLATES=[
+  {cat:'Fungicida',nombre:'Oxicloruro de cobre',tipo:'Preventivo amplio espectro',dosis_rec:'2-3 g/L',motivo:'Prevención Botrytis paeoniae, mancha foliar, quemaduras. Aplicar en dormancia y pre-brotación.',carencia:'15 días'},
+  {cat:'Fungicida',nombre:'Captan 80 WG',tipo:'Preventivo multisitio',dosis_rec:'1.5-2 g/L',motivo:'Botrytis, Cladosporium paeoniae (leaf blotch). Inicio brotación.',carencia:'21 días'},
+  {cat:'Fungicida',nombre:'Iprodione (Rovral)',tipo:'Curativo/preventivo',dosis_rec:'1-1.5 g/L',motivo:'Botrytis cinerea y paeoniae. Intervenir al primer síntoma. Rotar con otros modos de acción.',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Boscalid (Cantus)',tipo:'Sistémico SDHI',dosis_rec:'1-1.2 g/L',motivo:'Botrytis específico. Alta eficacia. Rotar obligatorio (resistencia FRAC 7).',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Fludioxonil + Ciprodinil (Switch)',tipo:'Combinado FRAC 12+9',dosis_rec:'0.8-1 g/L',motivo:'Botrytis. Excelente en condiciones de alta humedad. Pre-cosecha.',carencia:'7-14 días'},
+  {cat:'Fungicida',nombre:'Azoxistrobina (Amistar)',tipo:'Sistémico QoI',dosis_rec:'0.25 ml/L',motivo:'Cladosporium, Ramularia. Amplio espectro. No repetir consecutivo.',carencia:'14 días'},
+  {cat:'Fungicida',nombre:'Mancozeb',tipo:'Preventivo multisitio',dosis_rec:'2-2.5 g/L',motivo:'Mancha foliar, roya. Preventivo en temporada húmeda.',carencia:'28 días'},
+  {cat:'Insecticida',nombre:'Imidacloprid',tipo:'Sistémico neonicotinoide',dosis_rec:'0.5 ml/L',motivo:'Pulgones (Macrosiphum), thrips. Vectores de virus. CUIDADO con abejas.',carencia:'14 días'},
+  {cat:'Insecticida',nombre:'Spinosad',tipo:'Biológico',dosis_rec:'0.5-0.8 ml/L',motivo:'Thrips (Frankliniella) en botón floral. Compatible con MIP.',carencia:'7 días'},
+  {cat:'Insecticida',nombre:'Abamectina',tipo:'Translaminar',dosis_rec:'0.4 ml/L',motivo:'Ácaros, thrips. Aplicar con aceite agrícola para mejorar penetración.',carencia:'14 días'},
+  {cat:'Nematicida',nombre:'Oxamil',tipo:'Sistémico',dosis_rec:'Según indicaciones',motivo:'Nematodos Meloidogyne, Pratylenchus. Solo si análisis nematológico lo justifica.',carencia:'Consultar etiqueta'},
+  {cat:'Fertilizante',nombre:'NPK 15-15-15',tipo:'Granulado',dosis_rec:'30-40 g/planta',motivo:'Fertilización base brotación. Aplicar en corona, no directo sobre planta.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'NPK 10-20-10',tipo:'Arranque alto P',dosis_rec:'25-35 g/planta',motivo:'Favorecer enraizamiento. Especial temporada 1 plantación.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Sulfato de potasio',tipo:'K₂O 50%',dosis_rec:'15-25 g/planta',motivo:'Post-floración. Fortalece corona y reserva. Mejora calidad flor.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Nitrato de calcio',tipo:'Ca + N nítrico',dosis_rec:'20-30 g/planta',motivo:'Ca fortalece pared celular. Prevención Botrytis indirecta. Foliar 3-5 g/L.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Ácidos húmicos + fúlvicos',tipo:'Bioestimulante',dosis_rec:'2-5 ml/L suelo',motivo:'Activación microbiológica, mejor uso de nutrientes. Post-plantación.',carencia:'-'},
+  {cat:'Fertilizante',nombre:'Algas marinas (Ascophyllum)',tipo:'Bioestimulante foliar',dosis_rec:'2-3 ml/L',motivo:'Citoquininas naturales, mayor floración y calidad. Pre-botón.',carencia:'-'},
+  {cat:'Herbicida',nombre:'Glifosato',tipo:'Sistémico no selectivo',dosis_rec:'3-4 L/ha',motivo:'Solo pre-plantación o entre hilera con protección. NUNCA sobre planta.',carencia:'-'},
+  {cat:'Herbicida',nombre:'Haloxifop',tipo:'Graminicida selectivo',dosis_rec:'0.5-1 L/ha',motivo:'Control gramíneas sin dañar peonías. Post-emergente.',carencia:'60 días'},
+  {cat:'Herbicida',nombre:'Pendimetalin',tipo:'Pre-emergente',dosis_rec:'3-4 L/ha',motivo:'Pre-brotación peonías. Control malezas anuales en pre-emergencia.',carencia:'-'}
+];
+
+/* ============ CONSTANTES CLIMA, ESTUDIOS, PRECIOS, NOTIFICACIONES ============ */
+/* Santa Ana - San Clemente, Región del Maule, Chile */
+const FINCA_COORDS={lat:-35.5341,lon:-71.4138,tz:'America/Santiago',nombre:'San Clemente, Maule'};
+const PLATAFORMA_URL='https://jtfranzani.github.io/santa-ana-peonias/';
+/* Requerimiento horas-frío (<7.2°C) por variedad segun Byrne/Coker peony literature */
+const HF_OBJETIVOS={'Sarah Bernhardt':{min:400,opt:500,max:600},'Bowl of Cream':{min:600,opt:700,max:800},'Festiva Maxima':{min:500,opt:600,max:700}};
+/* Tipos de estudios de laboratorio */
+const ESTUDIO_TIPOS=[
+  {key:'suelo',label:'Análisis de suelo',icon:'layers',campos:['pH','MO_%','CIC_cmol+/kg','P_Olsen_ppm','K_ppm','Ca_ppm','Mg_ppm','Na_ppm','CE_dS/m','N_total_%','S_ppm','B_ppm','textura']},
+  {key:'foliar',label:'Análisis foliar',icon:'leaf',campos:['N_%','P_%','K_%','Ca_%','Mg_%','S_%','B_ppm','Zn_ppm','Fe_ppm','Mn_ppm','Cu_ppm']},
+  {key:'nematodos',label:'Nematológico',icon:'bug',campos:['Meloidogyne_J2/100cc','Pratylenchus/100cc','Xiphinema/100cc','Helicotylenchus/100cc','Indice_riesgo','Recomendacion']},
+  {key:'virus',label:'Virus (PCR/ELISA)',icon:'microscope',campos:['PeRSV','TRV','TMV','CMV','BBWV','Metodo','Plantas_muestreadas','Plantas_positivas_%']},
+  {key:'agua',label:'Agua de riego',icon:'droplets',campos:['pH','CE_dS/m','Na_meq/L','Cl_meq/L','HCO3_meq/L','Ca_meq/L','Mg_meq/L','RAS','Dureza','Boro_ppm']},
+  {key:'rizoma',label:'Rizoma / Material',icon:'sprout',campos:['Peso_prom_g','Ojos_prom','Sanidad','Humedad_%','Origen']},
+  {key:'ambiental',label:'Ambiental',icon:'thermometer',campos:['Parametro','Valor','Unidad']},
+  {key:'otro',label:'Otro',icon:'file-text',campos:[]}
+];
+const MERCADOS=['Royal FloraHolland (subasta)','Aalsmeer directo','Mayorista EE.UU.','Mayorista Canadá','Chile exportador','Chile mayorista','Chile local / floristería','Otro'];
+const VARIEDADES_PRECIO=['Sarah Bernhardt','Bowl of Cream','Festiva Maxima','Red Charm','Duchesse de Nemours','Coral Charm','Kansas','Otra'];
+const GRADOS_PRECIO=[{key:'A',label:'A - Premium (60+ cm, botón ≥3cm)'},{key:'B',label:'B - Estándar (50-60 cm)'},{key:'C',label:'C - Corto (40-50 cm)'},{key:'D',label:'D - Descarte / uso local'}];
+const MONEDAS=['EUR','USD','CLP'];
+/* Fuentes de precios publicas (referenciales) */
+const FUENTES_PRECIOS=[
+  {nombre:'Royal FloraHolland - Cijfers & Trends',url:'https://www.royalfloraholland.com/en/the-marketplace/facts-and-figures',desc:'Estadísticas semanales subasta holandesa'},
+  {nombre:'Rabobank Flower Barometer',url:'https://research.rabobank.com/far/en/sectors/floriculture.html',desc:'Análisis mensual del mercado'},
+  {nombre:'USDA AMS Flower Market News',url:'https://www.ams.usda.gov/market-news/fruits-vegetables',desc:'Precios mayoristas EE.UU.'},
+  {nombre:'SAG Chile - Estadísticas Exportación',url:'https://www.sag.gob.cl/',desc:'Datos de exportación hortofrutícola Chile'}
+];
+/* ============ NOTIFICACIONES WEBHOOK (WhatsApp/Telegram) ============ */
+async function getNotifyConfig(){try{const c=await get('config','notifications');return c||{id:'notifications',enabled:false,webhookUrl:'',webhookType:'generic',events:{apps:true,tasks:true,inventory:false,studies:true,prices:false,hitos:true}};}catch(e){return{id:'notifications',enabled:false,webhookUrl:'',webhookType:'generic',events:{apps:true,tasks:true,inventory:false,studies:true,prices:false,hitos:true}};}}
+async function saveNotifyConfig(c){c.id='notifications';await put('config',c);}
+async function notifyHook(tipo,titulo,mensaje,eventKey){
+  try{
+    const cfg=await getNotifyConfig();
+    if(!cfg.enabled||!cfg.webhookUrl)return;
+    if(eventKey&&cfg.events&&cfg.events[eventKey]===false)return;
+    const usuario=userById(CURRENT_USER).nombre;
+    const fecha=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
+    const textPlain=`🌸 *Santa Ana Peonías* — ${tipo}\n*${titulo}*\n${mensaje}\n👤 ${usuario}  🕒 ${fecha}\n🔗 ${PLATAFORMA_URL}`;
+    const payload={tipo,titulo,mensaje,usuario,fecha,url:PLATAFORMA_URL,text:textPlain};
+    /* Adapta payload para servicios conocidos */
+    let body=payload;let headers={'Content-Type':'application/json'};
+    if(cfg.webhookType==='telegram'){body={chat_id:cfg.telegramChatId||'',text:textPlain,parse_mode:'Markdown',disable_web_page_preview:false};}
+    else if(cfg.webhookType==='slack'||cfg.webhookType==='discord'){body={text:textPlain,content:textPlain};}
+    else if(cfg.webhookType==='callmebot'){/* URL ya trae número y apikey; se envía como query */ return fetch(cfg.webhookUrl+'&text='+encodeURIComponent(textPlain),{method:'GET',mode:'no-cors'}).catch(()=>{});}
+    await fetch(cfg.webhookUrl,{method:'POST',mode:'no-cors',headers,body:JSON.stringify(body)});
+  }catch(e){console.warn('notifyHook falló:',e);}
+}
+async function testWebhook(){
+  const cfg=await getNotifyConfig();
+  if(!cfg.webhookUrl){toast('Primero ingresa un webhook URL','warn');return}
+  await notifyHook('Test','Mensaje de prueba','Esta es una notificación de prueba desde Santa Ana Peonías. Si llega, la integración está operativa.','hitos');
+  toast('Prueba enviada. Revisa el grupo ✓');
+}
+/* ============ NAVIGATION ============ */
+const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,prices:renderPrices,reports:renderReports,settings:renderSettings};
+let currentPage='dashboard';
+function lucideInit(){try{if(window.lucide)window.lucide.createIcons();}catch(e){}}
+async function nav(page){
+  currentPage=page;
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+  const el=document.getElementById('nav-'+page);if(el)el.classList.add('active');
+  await PAGES[page]();
+  lucideInit();
+}
+/* Helper: multi-cuartel backward-compatible */
+function getBloques(a){if(Array.isArray(a.bloques)&&a.bloques.length)return a.bloques;if(a.bloque&&a.bloque!=='')return[a.bloque];return[]}
+function bloquesTxt(a){const b=getBloques(a);return b.length?b.join(', '):'General'}
+function bloquesTags(a,cls='info'){const b=getBloques(a);if(!b.length)return `<span class="tag ${cls}">General</span>`;return b.map(n=>{const c=n.includes('Sarah')?'sarah':n.includes('Bowl')?'bowl':n.includes('Festiva')?'festiva':cls;return `<span class="tag ${c}">${n}</span>`}).join(' ')}
+function bloqueMatch(item,bloqueName){const b=getBloques(item);return b.includes(bloqueName)||b.includes('Todos')||b.length===0}
+
+/* ============ DASHBOARD ============ */
+async function renderDashboard(){
+  const [blocks,photos,tasks,apps,points,inv,weather,studies,hitos]=await Promise.all([getAll('blocks'),getAll('photos'),getAll('tasks'),getAll('applications'),getAll('photopoints'),getAll('inventory'),getAll('weather'),getAll('studies'),getAll('hitos')]);
+  const totalRiz=blocks.reduce((s,b)=>s+(b.cantidad||0),0);
+  const mesActual=new Date().getMonth()+1;
+  const fen=fenologia(mesActual);
+  const ultimasTareas=tasks.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  const ultimasApp=apps.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  const fotosMes=photos.filter(p=>new Date(p.fecha).getMonth()===new Date().getMonth()&&new Date(p.fecha).getFullYear()===new Date().getFullYear()).length;
+  const hoy=new Date();
+  const alertas=[];
+  /* Alertas fenológicas inteligentes */
+  if(mesActual===4||mesActual===5){alertas.push({tipo:'warn',txt:'🧹 Período de poda de follaje. Recuerda retirar todos los residuos del campo (no compostar in situ) para prevenir Botrytis la próxima temporada.'})}
+  if(mesActual>=8&&mesActual<=10){alertas.push({tipo:'info',txt:'🌱 Período crítico de botoneo. Intensifica monitoreo fitosanitario cada 5-7 días.'})}
+  if(mesActual===11){alertas.push({tipo:'ok',txt:'🌸 Ventana de cosecha. Cosechar en estado "marshmallow" (botón coloreado, suave al tacto). Flujo mañana temprano.'})}
+  /* Alertas por punto foto sin actualizar */
+  for(const pt of points){
+    const ultFoto=photos.filter(p=>p.pointId===pt.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    const diasSin=ultFoto?daysBetween(ultFoto.fecha,hoy):999;
+    if(diasSin>21&&mesActual>=8&&mesActual<=12){alertas.push({tipo:'warn',txt:`📸 Punto ${pt.codigo} (${pt.nombre}) sin foto hace ${diasSin>100?'más de 100':diasSin} días. Frecuencia sugerida: 14 días en temporada activa.`})}
+  }
+  /* Alertas de labores atrasadas (pendientes con fecha planificada vencida) */
+  const atrasadas=tasks.filter(t=>laborAtrasada(t));
+  if(atrasadas.length){
+    const lista=atrasadas.slice(0,5).map(t=>`<li><strong>${t.nombre}</strong> · ${t.bloque||'General'} · planificada ${fmt(t.fechaPlanificada||t.fecha)}</li>`).join('');
+    alertas.unshift({tipo:'danger',txt:`⏰ <strong>${atrasadas.length} labor${atrasadas.length>1?'es':''} pendiente${atrasadas.length>1?'s':''} atrasada${atrasadas.length>1?'s':''}</strong>:<ul style="margin:8px 0 0 18px">${lista}</ul>${atrasadas.length>5?`<div style="margin-top:5px;font-size:11px;color:var(--gris)">+ ${atrasadas.length-5} más en Bitácora de labores</div>`:''}`});
+  }
+  /* Alertas de cuarteles en carencia activa (soporta múltiples cuarteles por aplicación) */
+  const carenciasPorBloque={};
+  apps.forEach(a=>{
+    const fin=fechaFinCarencia(a);
+    if(fin&&new Date(fin)>=new Date(today())){
+      const bloques=getBloques(a);
+      const keys=bloques.length?bloques:['General'];
+      keys.forEach(k=>{if(!carenciasPorBloque[k]||new Date(carenciasPorBloque[k].fin)<new Date(fin))carenciasPorBloque[k]={fin:fin,producto:a.producto,fecha:a.fecha}});
+    }
+  });
+  Object.entries(carenciasPorBloque).forEach(([bloq,info])=>{const dias=daysBetween(today(),info.fin);alertas.unshift({tipo:'warn',txt:`<strong>${bloq}</strong> en carencia activa hasta <strong>${fmt(info.fin)}</strong> (${dias} día${dias!==1?'s':''}) por aplicación de ${info.producto} el ${fmt(info.fecha)}. No cosechar ni reingresar sin EPP hasta esa fecha.`})});
+  /* Alertas de inventario: stock bajo/agotado y vencimientos próximos */
+  const invAgotados=inv.filter(i=>(parseFloat(i.stock)||0)<=0);
+  const invBajo=inv.filter(i=>{const s=parseFloat(i.stock)||0;const m=parseFloat(i.stockMinimo)||0;return s>0&&m>0&&s<=m});
+  const invVencidos=inv.filter(i=>i.vencimiento&&daysBetween(today(),i.vencimiento)<0);
+  const invPorVencer=inv.filter(i=>i.vencimiento&&daysBetween(today(),i.vencimiento)>=0&&daysBetween(today(),i.vencimiento)<=30);
+  if(invAgotados.length){const lista=invAgotados.slice(0,4).map(i=>`<li><strong>${i.nombre}</strong> · ${i.categoria||'-'}${i.proveedor?` · ${i.proveedor}`:''}</li>`).join('');alertas.unshift({tipo:'danger',txt:`<strong>${invAgotados.length} producto${invAgotados.length>1?'s':''} agotado${invAgotados.length>1?'s':''} en bodega</strong><ul style="margin:6px 0 0 18px">${lista}</ul>${invAgotados.length>4?`<div style="font-size:11px;margin-top:4px;color:var(--gris)">+ ${invAgotados.length-4} más</div>`:''}`})}
+  if(invBajo.length){const lista=invBajo.slice(0,4).map(i=>`<li><strong>${i.nombre}</strong>: ${i.stock} ${i.unidad||''} (mínimo ${i.stockMinimo})</li>`).join('');alertas.push({tipo:'warn',txt:`<strong>${invBajo.length} producto${invBajo.length>1?'s':''} bajo mínimo</strong> en bodega<ul style="margin:6px 0 0 18px">${lista}</ul>`})}
+  if(invVencidos.length){alertas.unshift({tipo:'danger',txt:`<strong>${invVencidos.length} producto${invVencidos.length>1?'s':''} vencido${invVencidos.length>1?'s':''}</strong>: ${invVencidos.slice(0,3).map(i=>i.nombre).join(', ')}${invVencidos.length>3?' y más':''}. Retirar de bodega y gestionar disposición.`})}
+  if(invPorVencer.length){alertas.push({tipo:'warn',txt:`<strong>${invPorVencer.length} producto${invPorVencer.length>1?'s':''} vence${invPorVencer.length===1?'':'n'} en 30 días</strong>: ${invPorVencer.slice(0,3).map(i=>`${i.nombre} (${fmt(i.vencimiento)})`).join(', ')}${invPorVencer.length>3?' y más':''}.`})}
+  /* Clima: HF progreso + lluvia próxima */
+  const anioAct=hoy.getFullYear();
+  const inicioHF=(mesActual>=5?anioAct:anioAct-1)+'-05-01';
+  const hfAcum=weather.filter(w=>w.fecha>=inicioHF).reduce((s,w)=>s+computeHF(parseFloat(w.tmin),parseFloat(w.tmax)),0);
+  const lluvia7d=weather.filter(w=>w.fecha>=addDays(today(),-7)).reduce((s,w)=>s+(parseFloat(w.precipMm)||0),0);
+  const forecast=window._wForecast||[];
+  const lluviaProxFuerte=forecast.find(f=>f.precip>=15);
+  const lluviaProxTotal=forecast.slice(0,7).reduce((s,f)=>s+(f.precip||0),0);
+  if(lluviaProxFuerte)alertas.unshift({tipo:'danger',txt:`🌧️ <strong>Lluvia fuerte prevista</strong> (${lluviaProxFuerte.precip} mm) el ${fmt(lluviaProxFuerte.fecha)}. Revisa drenajes y aplica fungicida preventivo 48-72h antes. Ver recomendaciones completas en módulo <strong>Clima</strong>.`});
+  else if(lluviaProxTotal>=10)alertas.push({tipo:'warn',txt:`🌧️ Lluvia prevista próximos 7 días: ${lluviaProxTotal.toFixed(0)} mm. Considera aplicación preventiva de fungicida antes de la lluvia.`});
+  /* Estudios pendientes */
+  const sueloY=studies.filter(s=>s.tipo==='suelo'&&daysBetween(s.fecha,hoy)<=365).length;
+  if(!sueloY&&(mesActual===4||mesActual===5||mesActual===6))alertas.push({tipo:'info',txt:'🧪 Sin análisis de suelo en el último año. Ventana ideal ahora (abril-junio post-senescencia). Cargar resultados en módulo <strong>Estudios</strong>.'});
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Dashboard</h2><div class="sub">${fmtLong(hoy)} · <strong style="color:var(--verde-d)">${fen.fase}</strong></div></div>
+      <div class="actions"><button class="btn" onclick="openHitoModal()"><i data-lucide="megaphone"></i>Registrar hito</button><button class="btn secondary" onclick="nav('photos')"><i data-lucide="camera"></i>Foto</button><button class="btn ghost" onclick="nav('tasks')"><i data-lucide="plus"></i>Labor</button></div>
+    </div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${blocks.length} cuarteles activos</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Horas-frío acum.</div><div class="kpi-icon"><i data-lucide="snowflake"></i></div></div><div class="value">${Math.round(hfAcum)}</div><div class="foot">Desde 1-may · objetivo Sarah 500h</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Lluvia 7 días</div><div class="kpi-icon"><i data-lucide="cloud-rain"></i></div></div><div class="value">${lluvia7d.toFixed(1)}<small style="font-size:14px;color:var(--gris)"> mm</small></div><div class="foot">${lluviaProxTotal>0?'Pronóstico: '+lluviaProxTotal.toFixed(0)+' mm prox. 7d':'Sin pronóstico cargado'}</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Aplicaciones</div><div class="kpi-icon"><i data-lucide="droplet"></i></div></div><div class="value">${apps.length}</div><div class="foot">${apps.filter(a=>daysBetween(a.fecha,hoy)<=30).length} últimos 30 días</div></div>
+    </div>
+    ${alertas.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Alertas y recomendaciones</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}"><div class="ab-content">${a.txt}</div></div>`).join('')}</div>`:''}
+    <div class="grid grid-2" style="margin-top:0">
+      <div class="card">
+        <h3><i data-lucide="calendar"></i>Fase fenológica actual</h3>
+        <div class="alert-box info"><i data-lucide="leaf"></i><div class="ab-content"><strong>${fen.fase}</strong><br>${fen.desc}</div></div>
+        <div style="margin-top:14px"><strong style="font-size:12px;color:var(--texto-m);letter-spacing:.4px;text-transform:uppercase">Calendario anual</strong>
+          <div class="phase" style="margin-top:10px">${Array.from({length:12},(_,i)=>`<div class="phase-bar ${i+1===mesActual?'active':''}" title="${fenologia(i+1).fase}"></div>`).join('')}</div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gris);margin-top:4px;font-weight:600"><span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><i data-lucide="grid-3x3"></i>Cuarteles del huerto</h3>
+        ${blocks.map(b=>{const c=b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva';return `<div style="padding:12px 14px;border:1px solid var(--gris-xl);border-radius:var(--radio-sm);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:var(--gris-xl);transition:all .15s" onmouseover="this.style.borderColor='var(--verde)';this.style.background='#fff'" onmouseout="this.style.borderColor='var(--gris-xl)';this.style.background='var(--gris-xl)'"><div><strong style="font-size:14px;color:var(--texto)">${b.nombre}</strong><div style="font-size:11.5px;color:var(--gris);margin-top:2px">Plantado ${fmt(b.plantacion)} · Temporada ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</div></div><span class="tag ${c}">${b.cantidad.toLocaleString('es-CL')} rizomas</span></div>`}).join('')}
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><h3><i data-lucide="bar-chart-3"></i>Actividad últimos 6 meses</h3><div class="chart-container"><canvas id="chart1"></canvas></div></div>
+      <div class="card"><h3><i data-lucide="pie-chart"></i>Aplicaciones por categoría</h3><div class="chart-container"><canvas id="chart2"></canvas></div></div>
+    </div>
+    <div class="card">
+      <h3><i data-lucide="users"></i>Actividad del equipo <span style="font-size:11px;color:var(--gris);font-weight:400;margin-left:auto">Últimos 30 días</span></h3>
+      <div class="grid grid-4">
+      ${USERS.map(u=>{const nTareas=tasks.filter(t=>t.createdBy===u.id&&daysBetween(t.fecha,hoy)<=30).length;const nApps=apps.filter(a=>a.createdBy===u.id&&daysBetween(a.fecha,hoy)<=30).length;const nFotos=photos.filter(p=>p.createdBy===u.id&&daysBetween(p.fecha,hoy)<=30).length;const total=nTareas+nApps+nFotos;return `<div style="padding:16px;border:1px solid var(--gris-xl);border-radius:var(--radio);text-align:center;background:#fff;transition:all .2s" onmouseover="this.style.borderColor='var(--verde)';this.style.transform='translateY(-2px)';this.style.boxShadow='var(--sombra-md)'" onmouseout="this.style.borderColor='var(--gris-xl)';this.style.transform='none';this.style.boxShadow='none'"><div class="user-avatar" style="background:${u.color};margin:0 auto 10px;width:48px;height:48px;font-size:15px">${u.avatar}</div><strong style="font-size:13px;color:var(--texto)">${u.nombre}</strong><div style="font-size:20px;font-weight:700;color:var(--verde-d);margin-top:8px;font-variant-numeric:tabular-nums">${total}</div><div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:600">acciones</div><div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gris-xl);font-size:11px;color:var(--gris-m);display:flex;justify-content:space-around"><span title="Labores"><i data-lucide="clipboard-list" style="width:11px;height:11px;vertical-align:-2px"></i> ${nTareas}</span><span title="Aplicaciones"><i data-lucide="droplet" style="width:11px;height:11px;vertical-align:-2px"></i> ${nApps}</span><span title="Fotos"><i data-lucide="image" style="width:11px;height:11px;vertical-align:-2px"></i> ${nFotos}</span></div></div>`}).join('')}
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><h3><i data-lucide="clipboard-list"></i>Últimas labores</h3>${ultimasTareas.length?ultimasTareas.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px;color:var(--texto)">${t.nombre}</strong>${userBadgeHTML(t.createdBy)}</div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(t.fecha)} · ${t.bloque||'General'} · ${t.responsable||'-'}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay labores registradas</div></div>`}</div>
+      <div class="card"><h3><i data-lucide="droplet"></i>Últimas aplicaciones</h3>${ultimasApp.length?ultimasApp.map(a=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;color:var(--texto)">${a.producto}</strong><div style="display:flex;gap:4px;align-items:center"><span class="tag info">${a.categoria}</span>${userBadgeHTML(a.createdBy)}</div></div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(a.fecha)} · ${a.dosis} · ${bloquesTxt(a)}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay aplicaciones registradas</div></div>`}</div>
+    </div>`;
+  /* CHARTS */
+  const now=new Date();
+  const meses=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);return d});
+  const mesLabels=meses.map(d=>d.toLocaleDateString('es-CL',{month:'short'}));
+  const tareasMes=meses.map(d=>tasks.filter(t=>new Date(t.fecha).getMonth()===d.getMonth()&&new Date(t.fecha).getFullYear()===d.getFullYear()).length);
+  const appMes=meses.map(d=>apps.filter(a=>new Date(a.fecha).getMonth()===d.getMonth()&&new Date(a.fecha).getFullYear()===d.getFullYear()).length);
+  const fotosMesArr=meses.map(d=>photos.filter(p=>new Date(p.fecha).getMonth()===d.getMonth()&&new Date(p.fecha).getFullYear()===d.getFullYear()).length);
+  new Chart(document.getElementById('chart1'),{type:'bar',data:{labels:mesLabels,datasets:[{label:'Labores',data:tareasMes,backgroundColor:'#4a7c59'},{label:'Aplicaciones',data:appMes,backgroundColor:'#c97a90'},{label:'Fotos',data:fotosMesArr,backgroundColor:'#f59e0b'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const cats={};apps.forEach(a=>{cats[a.categoria]=(cats[a.categoria]||0)+1});
+  new Chart(document.getElementById('chart2'),{type:'doughnut',data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:['#4a7c59','#c97a90','#f59e0b','#2563eb','#8b5cf6','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+}
+
+/* ============ BLOQUES ============ */
+async function renderBlocks(){
+  const blocks=await getAll('blocks');
+  const hoy=new Date();
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Cuarteles</h2><div class="sub">Gestión por variedad de peonía</div></div>
+    <button class="btn" onclick="editBlock()">+ Nuevo cuartel</button></div>
+    <div class="grid grid-3">
+      ${blocks.map(b=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><h3 style="margin:0">${b.nombre}</h3><div style="font-size:11px;color:var(--gris)">${b.variedad}</div></div>
+          <span class="tag ${b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva'}">${b.cantidad.toLocaleString()}</span>
+        </div>
+        <div style="margin-top:15px;font-size:13px"><div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Plantación:</strong> ${fmt(b.plantacion)}</div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Temporada actual:</strong> ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Tipo:</strong> ${b.tipo||'-'}</div>
+        <div style="padding:6px 0"><strong>Notas:</strong> ${b.notas||'-'}</div></div>
+        <div style="margin-top:12px;display:flex;gap:8px"><button class="btn small ghost" onclick="editBlock('${b.id}')">Editar</button><button class="btn small danger" onclick="delBlock('${b.id}')">Eliminar</button></div>
+      </div>`).join('')}
+    </div>`;
+}
+async function editBlock(id){
+  const b=id?await get('blocks',id):{nombre:'',variedad:'',cantidad:0,plantacion:today(),tipo:'',notas:''};
+  openModal(`<h3>${id?'Editar':'Nuevo'} cuartel</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre</label><input id="f-nombre" value="${b.nombre||''}"></div>
+      <div class="form-row"><label>Variedad botánica</label><input id="f-variedad" value="${b.variedad||''}"></div>
+      <div class="form-row"><label>Cantidad rizomas</label><input id="f-cant" type="number" value="${b.cantidad||0}"></div>
+      <div class="form-row"><label>Fecha plantación</label><input id="f-plant" type="date" value="${b.plantacion||today()}"></div>
+      <div class="form-row"><label>Tipo de flor</label><input id="f-tipo" value="${b.tipo||''}"></div>
+    </div>
+    <div class="form-row"><label>Notas</label><textarea id="f-notas" rows="3">${b.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveBlock(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function saveBlock(id){
+  const data={nombre:document.getElementById('f-nombre').value,variedad:document.getElementById('f-variedad').value,cantidad:parseInt(document.getElementById('f-cant').value)||0,plantacion:document.getElementById('f-plant').value,tipo:document.getElementById('f-tipo').value,notas:document.getElementById('f-notas').value};
+  if(id){data.id=id;await put('blocks',data)}else{await add('blocks',data)}
+  closeModal();toast('Cuartel guardado');renderBlocks();
+}
+async function delBlock(id){if(!confirm('¿Eliminar cuartel?'))return;await del('blocks',id);toast('Eliminado');renderBlocks();}
+
+/* ============ PUNTOS DE FOTO ============ */
+async function renderPhotoPoints(){
+  const points=await getAll('photopoints');
+  const blocks=await getAll('blocks');
+  const photos=await getAll('photos');
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Puntos de fotografía fijos</h2><div class="sub">Ubicaciones marcadas para fotos comparativas reales</div></div>
+    <button class="btn" onclick="editPoint()">+ Nuevo punto</button></div>
+    <div class="photo-protocol">
+      <strong>📐 Protocolo estándar (obligatorio para comparaciones válidas):</strong>
+      <ul>
+        <li><strong>Ubicación:</strong> Marcar físicamente cada punto con estaca pintada o cinta de color. Registrar coordenadas GPS si es posible.</li>
+        <li><strong>Altura:</strong> Siempre a 1.70m (altura de pecho) o usar trípode con la misma altura. Considerar comprar un <em>bastón de fotografía graduado</em>.</li>
+        <li><strong>Orientación:</strong> Respetar la dirección indicada por cada punto (Norte/Sur/Este/Oeste o cenital).</li>
+        <li><strong>Hora:</strong> Mismas 2 horas cada vez (preferente 10:00-11:00 AM: luz pareja, sin sombras duras).</li>
+        <li><strong>Condiciones:</strong> Evitar días con lluvia activa o viento fuerte. Día nublado uniforme es ideal.</li>
+        <li><strong>Distancia focal:</strong> Celular en modo normal 1x (no zoom digital). Si usas cámara, mismo foco siempre.</li>
+        <li><strong>Referencia en cuadro:</strong> Incluir siempre un elemento de referencia (regla, poste graduado, estaca marcada) para escalar crecimiento.</li>
+        <li><strong>Frecuencia:</strong> Cada 14 días en temporada activa (Ago-Dic), mensual en dormancia (Jun-Jul).</li>
+        <li><strong>Qué fotografiar:</strong> Misma encuadre cada vez (ni panorámica ni detalle). Incluir parte del suelo para referencia.</li>
+      </ul>
+    </div>
+    <div class="grid grid-2">
+      ${points.map(p=>{const fotosP=photos.filter(f=>f.pointId===p.id);const ult=fotosP.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+      const dias=ult?daysBetween(ult.fecha,new Date()):null;
+      return `<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><h3 style="margin:0">📍 ${p.codigo} · ${p.nombre}</h3><span class="tag info">${p.bloque}</span></div>
+          <div style="text-align:right"><div style="font-size:20px;font-weight:bold;color:var(--verde-d)">${fotosP.length}</div><div style="font-size:10px;color:var(--gris)">fotos</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px">
+          <div><strong>Orientación:</strong> ${p.orientacion}</div>
+          <div><strong>Hora sugerida:</strong> ${p.hora||'10:00-11:00'}</div>
+          <div style="margin-top:6px;color:var(--gris)">${p.descripcion}</div>
+          ${ult?`<div style="margin-top:8px"><span class="tag ${dias>21?'warn':'ok'}">Última foto: hace ${dias} días</span></div>`:`<div style="margin-top:8px"><span class="tag alert">Sin fotos aún</span></div>`}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" onclick="nav('photos');setTimeout(()=>quickUpload('${p.id}'),100)">📸 Tomar foto</button><button class="btn small ghost" onclick="editPoint('${p.id}')">Editar</button><button class="btn small danger" onclick="delPoint('${p.id}')">Eliminar</button></div>
+      </div>`}).join('')}
+    </div>`;
+}
+async function editPoint(id){
+  const blocks=await getAll('blocks');
+  const p=id?await get('photopoints',id):{codigo:'',nombre:'',bloque:blocks[0]?.nombre||'',orientacion:'Norte',descripcion:'',hora:'10:00-11:00'};
+  openModal(`<h3>${id?'Editar':'Nuevo'} punto de foto</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Código (ej. P9)</label><input id="f-cod" value="${p.codigo||''}"></div>
+      <div class="form-row"><label>Nombre</label><input id="f-nom" value="${p.nombre||''}"></div>
+      <div class="form-row"><label>Cuartel/Bloque</label><select id="f-bloq">${['Todos',...blocks.map(b=>b.nombre)].map(n=>`<option ${p.bloque===n?'selected':''}>${n}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Orientación</label><select id="f-ori">${['Norte','Sur','Este','Oeste','Noreste','Noroeste','Sureste','Suroeste','Cenital','Variable'].map(o=>`<option ${p.orientacion===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Hora sugerida</label><input id="f-hora" value="${p.hora||'10:00-11:00'}"></div>
+    </div>
+    <div class="form-row"><label>Descripción / Referencia física</label><textarea id="f-desc" rows="3">${p.descripcion||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="savePoint(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function savePoint(id){
+  const data={codigo:document.getElementById('f-cod').value,nombre:document.getElementById('f-nom').value,bloque:document.getElementById('f-bloq').value,orientacion:document.getElementById('f-ori').value,hora:document.getElementById('f-hora').value,descripcion:document.getElementById('f-desc').value};
+  if(id){data.id=id;await put('photopoints',data)}else{await add('photopoints',data)}
+  closeModal();toast('Punto guardado');renderPhotoPoints();
+}
+async function delPoint(id){if(!confirm('¿Eliminar punto de foto?'))return;await del('photopoints',id);toast('Eliminado');renderPhotoPoints();}
+
+/* ============ GALERÍA FOTOS ============ */
+let fotoFiltro={point:'all',text:''};
+async function renderPhotos(){
+  const [photos,points]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  let fotos=[...photos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if(fotoFiltro.point!=='all')fotos=fotos.filter(f=>f.pointId==fotoFiltro.point);
+  if(fotoFiltro.text)fotos=fotos.filter(f=>(f.notas||'').toLowerCase().includes(fotoFiltro.text.toLowerCase()));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Galería fotográfica</h2><div class="sub">${photos.length} fotos registradas · ${points.length} puntos fijos</div></div>
+    <button class="btn" onclick="uploadPhoto()">📸 Subir foto(s)</button></div>
+    <div class="toolbar">
+      <select id="filt-point" onchange="fotoFiltro.point=this.value;renderPhotos()"><option value="all">Todos los puntos</option>${points.map(p=>`<option value="${p.id}" ${fotoFiltro.point==p.id?'selected':''}>${p.codigo} · ${p.nombre}</option>`).join('')}</select>
+      <input class="search-input" placeholder="Buscar en notas..." value="${fotoFiltro.text}" oninput="fotoFiltro.text=this.value;clearTimeout(window._t);window._t=setTimeout(renderPhotos,300)">
+    </div>
+    ${fotos.length?`<div class="grid grid-3">${fotos.map(f=>{const p=pointsMap[f.pointId];return `<div class="photo-card" onclick="viewPhoto('${f.id}')"><img src="${f.img}" class="photo-thumb" loading="lazy"><div class="info"><strong>${p?p.codigo+' · '+p.nombre:'Sin punto'}</strong><span>${fmt(f.fecha)}${f.fase?' · '+f.fase:''}</span>${f.createdBy?'<div style="margin-top:4px">'+userBadgeHTML(f.createdBy)+'</div>':''}${f.notas?'<div style="margin-top:4px;color:#374151">'+f.notas.substring(0,60)+(f.notas.length>60?'...':'')+'</div>':''}</div></div>`}).join('')}</div>`:'<div class="empty"><div style="font-size:48px;margin-bottom:10px">📸</div><h3>Sin fotos aún</h3><p>Comienza subiendo la primera foto de un punto fijo</p><button class="btn" onclick="uploadPhoto()" style="margin-top:15px">Subir primera foto</button></div>'}`;
+}
+
+async function uploadPhoto(pointId){
+  const points=await getAll('photopoints');
+  const mesActual=new Date().getMonth()+1;
+  const faseActual=fenologia(mesActual).fase;
+  openModal(`<h3>📸 Subir foto(s) del huerto</h3>
+    <div class="alert-box info">Recuerda el protocolo: mismo punto, misma altura, misma orientación, misma hora (±1h).</div>
+    <div class="form-row"><label>Punto de foto</label><select id="f-point"><option value="">Seleccionar punto...</option>${points.map(p=>`<option value="${p.id}" ${pointId==p.id?'selected':''}>${p.codigo} · ${p.nombre} (${p.bloque})</option>`).join('')}</select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha</label><input id="f-fecha" type="date" value="${today()}"></div>
+      <div class="form-row"><label>Fase fenológica</label><select id="f-fase"><option>${faseActual}</option><option>Dormancia</option><option>Pre-brotación</option><option>Brotación</option><option>Crecimiento vegetativo</option><option>Botoneo</option><option>Pre-floración</option><option>Floración</option><option>Post-floración</option><option>Senescencia</option></select></div>
+    </div>
+    <div class="form-row"><label>Notas (opcional: clima, observaciones, estado fitosanitario)</label><textarea id="f-notas" rows="2" placeholder="Ej: Día nublado 18°C, se observan primeros botones rosados..."></textarea></div>
+    <div class="form-row"><label>Archivo(s) de imagen (puedes seleccionar varios)</label><input id="f-file" type="file" accept="image/*" multiple></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="savePhoto()">Guardar foto(s)</button></div>`);
+}
+function quickUpload(pointId){uploadPhoto(pointId)}
+
+async function savePhoto(){
+  const pointId=parseInt(document.getElementById('f-point').value);
+  if(!pointId){toast('Selecciona un punto','warn');return}
+  const fecha=document.getElementById('f-fecha').value;
+  const fase=document.getElementById('f-fase').value;
+  const notas=document.getElementById('f-notas').value;
+  const files=document.getElementById('f-file').files;
+  if(!files.length){toast('Selecciona al menos una imagen','warn');return}
+  toast('Procesando '+files.length+' imagen(es)...');
+  for(const f of files){
+    const img=await fileToDataURL(f);
+    await add('photos',{pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()});
+  }
+  closeModal();toast(files.length+' foto(s) guardada(s)');renderPhotos();
+}
+
+async function viewPhoto(id){
+  const f=await get('photos',id);
+  const p=f.pointId?await get('photopoints',f.pointId):null;
+  openModal(`<h3>${p?p.codigo+' · '+p.nombre:'Foto'}</h3>
+    <img src="${f.img}" style="width:100%;border-radius:8px;margin-bottom:15px">
+    <div class="form-grid">
+      <div><span class="tag info">${fmt(f.fecha)}</span> <span class="tag ok">${f.fase||'-'}</span> ${userBadgeFull(f.createdBy)||''}</div>
+    </div>
+    ${f.notas?`<div class="form-row" style="margin-top:10px"><label>Notas</label><p>${f.notas}</p></div>`:''}
+    <div class="modal-actions"><button class="btn danger" onclick="delPhoto('${id}')">Eliminar</button><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+async function delPhoto(id){if(!confirm('¿Eliminar foto?'))return;await del('photos',id);closeModal();toast('Eliminada');renderPhotos();}
+
+/* ============ COMPARADOR ============ */
+let compareState={pointId:null,leftId:null,rightId:null};
+async function renderCompare(){
+  const [photos,points]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Comparador fotográfico</h2><div class="sub">Visualiza la evolución de un mismo punto en distintas fechas</div></div></div>
+    <div class="card">
+      <h3>Selecciona un punto de foto</h3>
+      <select id="cmp-point" onchange="cmpPoint(this.value)">
+        <option value="">-- Elegir punto --</option>
+        ${points.map(p=>{const n=photos.filter(f=>f.pointId===p.id).length;return `<option value="${p.id}" ${compareState.pointId==p.id?'selected':''}>${p.codigo} · ${p.nombre} (${n} fotos)</option>`}).join('')}
+      </select>
+    </div>
+    <div id="cmp-area"></div>`;
+  if(compareState.pointId)cmpPoint(compareState.pointId);
+}
+
+async function cmpPoint(pointId){
+  compareState.pointId=pointId;
+  if(!pointId){document.getElementById('cmp-area').innerHTML='';return}
+  const photos=await getAll('photos');
+  const fotos=photos.filter(f=>f.pointId==pointId).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  if(fotos.length<2){document.getElementById('cmp-area').innerHTML='<div class="alert-box warn">Este punto necesita al menos 2 fotos para comparar. Actualmente tiene '+fotos.length+'.</div>';return}
+  if(!compareState.leftId||!fotos.find(f=>f.id==compareState.leftId))compareState.leftId=fotos[0].id;
+  if(!compareState.rightId||!fotos.find(f=>f.id==compareState.rightId))compareState.rightId=fotos[fotos.length-1].id;
+  const left=fotos.find(f=>f.id==compareState.leftId);
+  const right=fotos.find(f=>f.id==compareState.rightId);
+  const dias=daysBetween(left.fecha,right.fecha);
+  document.getElementById('cmp-area').innerHTML=`
+    <div class="card">
+      <div class="form-grid">
+        <div><label>Foto izquierda (antes)</label><select onchange="compareState.leftId=this.value;cmpPoint('${pointId}')">${fotos.map(f=>`<option value="${f.id}" ${f.id==left.id?'selected':''}>${fmt(f.fecha)} · ${f.fase||'-'}</option>`).join('')}</select></div>
+        <div><label>Foto derecha (después)</label><select onchange="compareState.rightId=this.value;cmpPoint('${pointId}')">${fotos.map(f=>`<option value="${f.id}" ${f.id==right.id?'selected':''}>${fmt(f.fecha)} · ${f.fase||'-'}</option>`).join('')}</select></div>
+      </div>
+      <div class="alert-box info" style="margin-top:10px">📅 Diferencia: <strong>${dias} días</strong> entre ambas fotos · ${left.fase||'?'} → ${right.fase||'?'}</div>
+      <div class="compare-grid">
+        <div class="compare-col"><img src="${left.img}"><div class="meta"><strong>${fmt(left.fecha)}</strong> · ${left.fase||'-'}<br>${left.notas||'Sin notas'}</div></div>
+        <div class="compare-col"><img src="${right.img}"><div class="meta"><strong>${fmt(right.fecha)}</strong> · ${right.fase||'-'}<br>${right.notas||'Sin notas'}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📋 Línea de tiempo completa del punto</h3>
+      <div class="timeline">${fotos.map(f=>`<div class="timeline-item"><div class="date">${fmt(f.fecha)}</div><h4>${f.fase||'Sin fase'}</h4><img src="${f.img}" style="max-width:150px;border-radius:6px;margin-top:5px;cursor:pointer" onclick="viewPhoto('${f.id}')"><div style="font-size:12px;color:var(--gris);margin-top:4px">${f.notas||''}</div></div>`).join('')}</div>
+    </div>`;
+}
+
+/* ============ BITÁCORA DE LABORES ============ */
+let _tasksFiltroEstado='todas';
+async function renderTasks(){
+  const [tasks,blocks]=await Promise.all([getAll('tasks'),getAll('blocks')]);
+  const mesActual=new Date().getMonth()+1;
+  const sugeridas=LABOR_TEMPLATES.filter(l=>l.mes.includes(mesActual));
+  /* Orden: atrasadas -> pendientes -> en curso -> resto por fecha desc */
+  const priEst={pendiente:1,en_curso:2,realizada:3,cancelada:4};
+  const sorted=[...tasks].sort((a,b)=>{
+    const atA=laborAtrasada(a)?0:1,atB=laborAtrasada(b)?0:1;
+    if(atA!==atB)return atA-atB;
+    const pA=priEst[estadoLabor(a)]||9,pB=priEst[estadoLabor(b)]||9;
+    if(pA!==pB)return pA-pB;
+    const fA=a.fecha||a.fechaPlanificada,fB=b.fecha||b.fechaPlanificada;
+    return new Date(fB)-new Date(fA);
+  });
+  const counts={todas:tasks.length,pendiente:0,en_curso:0,realizada:0,cancelada:0,atrasada:0};
+  tasks.forEach(t=>{counts[estadoLabor(t)]=(counts[estadoLabor(t)]||0)+1;if(laborAtrasada(t))counts.atrasada++});
+  const filtered=sorted.filter(t=>{
+    if(_tasksFiltroEstado==='todas')return true;
+    if(_tasksFiltroEstado==='atrasada')return laborAtrasada(t);
+    return estadoLabor(t)===_tasksFiltroEstado;
+  });
+  const chip=(k,lbl)=>`<span class="chip ${_tasksFiltroEstado===k?'active':''}" onclick="setTasksFiltro('${k}')">${lbl} <strong>${counts[k]||0}</strong></span>`;
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Bitácora de labores</h2><div class="sub">Planifica, ejecuta y registra todas las faenas del huerto</div></div>
+    <button class="btn" onclick="editTask()">+ Nueva labor</button></div>
+    ${sugeridas.length?`<div class="card"><h3>💡 Sugeridas para este mes (${new Date().toLocaleDateString('es-CL',{month:'long'})})</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${sugeridas.map(s=>`<button class="btn small ghost" onclick='quickTask(${JSON.stringify(s).replace(/'/g,"&apos;")})'>+ ${s.nombre}</button>`).join('')}</div></div>`:''}
+    <div class="card">
+      <div style="margin-bottom:12px">
+        ${chip('todas','Todas')}
+        ${chip('atrasada','⚠ Atrasadas')}
+        ${chip('pendiente','🟡 Pendientes')}
+        ${chip('en_curso','🔵 En curso')}
+        ${chip('realizada','🟢 Realizadas')}
+        ${chip('cancelada','⚪ Canceladas')}
+      </div>
+      <div class="toolbar">
+        <input class="search-input" id="lab-search" placeholder="Buscar..." oninput="filterTasks(this.value)">
+      </div>
+      <table id="tbl-tasks">
+        <thead><tr><th>Estado</th><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Horas</th><th>Responsable</th><th>Registrado por</th><th>📷</th><th>Notas</th><th></th></tr></thead>
+        <tbody>${filtered.length?filtered.map(t=>{
+          const est=estadoLabor(t);
+          const atr=laborAtrasada(t);
+          const fechaMostrar=est==='pendiente'?(t.fechaPlanificada||t.fecha):(t.fecha||t.fechaPlanificada);
+          const subFecha=(est==='pendiente'&&t.fechaPlanificada)?'plan.':(est==='realizada'?'ejec.':'');
+          const estHTML=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
+          const fotoTxt=t.foto?`<img src="${t.foto}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')" title="Ver foto">`:'<span style="color:var(--gris);font-size:11px">-</span>';
+          return `<tr class="${atr?'fila-atrasada':''}"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td style="max-width:220px;font-size:12px">${t.notas||''}</td><td><button class="btn small ghost" onclick="editTask('${t.id}')">✎</button> <button class="btn small danger" onclick="delTask('${t.id}')">×</button></td></tr>`;
+        }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+function setTasksFiltro(k){_tasksFiltroEstado=k;renderTasks()}
+function filterTasks(v){const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none'})}
+function quickTask(template){editTask(null,template)}
+
+async function editTask(id,template){
+  const blocks=await getAll('blocks');
+  const curName=userById(CURRENT_USER).nombre;
+  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,foto:''}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,foto:''});
+  const cats=[...new Set(LABOR_TEMPLATES.map(l=>l.cat))];
+  const estAct=estadoLabor(t);
+  openModal(`<h3>${id?'Editar':'Registrar'} labor</h3>
+    <div class="form-row"><label>Plantilla rápida (opcional)</label><select onchange="if(this.value){const t=LABOR_TEMPLATES[this.value];document.getElementById('f-nom').value=t.nombre;document.getElementById('f-cat').value=t.cat;document.getElementById('f-notas').value=t.desc}">
+      <option value="">-- Elegir plantilla --</option>
+      ${LABOR_TEMPLATES.map((l,i)=>`<option value="${i}">${l.cat}: ${l.nombre}</option>`).join('')}
+    </select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre de la labor</label><input id="f-nom" value="${t.nombre||''}"></div>
+      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Estado</label><select id="f-estado" onchange="toggleFechaEjec()">
+        <option value="pendiente" ${estAct==='pendiente'?'selected':''}>🟡 Pendiente (planificada)</option>
+        <option value="en_curso" ${estAct==='en_curso'?'selected':''}>🔵 En curso</option>
+        <option value="realizada" ${estAct==='realizada'?'selected':''}>🟢 Realizada</option>
+        <option value="cancelada" ${estAct==='cancelada'?'selected':''}>⚪ Cancelada</option>
+      </select></div>
+      <div class="form-row"><label>Cuartel</label><select id="f-bloq"><option value="">General / Todos</option>${blocks.map(b=>`<option ${t.bloque===b.nombre?'selected':''}>${b.nombre}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Fecha planificada</label><input id="f-fplan" type="date" value="${t.fechaPlanificada||t.fecha||today()}"></div>
+      <div class="form-row" id="row-fejec"><label>Fecha ejecutada</label><input id="f-fejec" type="date" value="${t.fecha||''}"></div>
+      <div class="form-row"><label>Horas-hombre</label><input id="f-horas" type="number" step="0.5" value="${t.horas||''}"></div>
+      <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
+    </div>
+    <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
+    <div class="form-row"><label>📷 Foto de la labor (opcional)</label>
+      ${t.foto?`<div style="margin-bottom:6px"><img src="${t.foto}" style="max-width:140px;max-height:140px;border-radius:6px;cursor:pointer" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')"></div>`:''}
+      <input id="f-labfoto" type="file" accept="image/*" capture="environment">
+      <small style="color:var(--gris);font-size:11px">Evidencia de la labor realizada (poda, fertilización, monitoreo, etc.)</small></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveTask(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+  toggleFechaEjec();
+}
+function toggleFechaEjec(){const e=document.getElementById('f-estado');const row=document.getElementById('row-fejec');const fe=document.getElementById('f-fejec');if(!e||!row)return;const mostrar=(e.value==='realizada'||e.value==='en_curso');row.style.display=mostrar?'':'none';if(mostrar&&fe&&!fe.value)fe.value=today();}
+async function saveTask(id){
+  const estado=document.getElementById('f-estado').value;
+  const fplan=document.getElementById('f-fplan').value;
+  const fejec=document.getElementById('f-fejec').value;
+  const data={nombre:document.getElementById('f-nom').value,categoria:document.getElementById('f-cat').value,estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloque:document.getElementById('f-bloq').value,horas:parseFloat(document.getElementById('f-horas').value)||null,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
+  if(!data.nombre){toast('Nombre requerido','warn');return}
+  if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
+  const fLab=document.getElementById('f-labfoto');
+  if(fLab&&fLab.files&&fLab.files[0]){try{data.foto=await fileToDataURL(fLab.files[0]);}catch(e){toast('Error procesando foto','warn')}}else if(id){const prev=await get('tasks',id);if(prev&&prev.foto)data.foto=prev.foto;}
+  let isNew=!id;
+  if(id){data.id=id;await put('tasks',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
+  closeModal();toast('Labor guardada');
+  if(isNew||data.estado==='realizada'){
+    const estLabel=data.estado==='realizada'?'✓ Realizada':data.estado==='en_curso'?'🔵 En curso':data.estado==='cancelada'?'Cancelada':'🟡 Planificada';
+    notifyHook('Labor',`${estLabel}: ${data.nombre}`,`Cuartel: ${data.bloque||'General'}\nCategoría: ${data.categoria||'-'}\nFecha: ${fmt(data.fechaPlanificada||data.fecha)}${data.horas?'\nHoras-hombre: '+data.horas:''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.notas?'\n📝 '+data.notas.slice(0,200):''}`,'tasks');
+  }
+  renderTasks();
+}
+async function delTask(id){if(!confirm('¿Eliminar labor?'))return;await del('tasks',id);toast('Eliminada');renderTasks();}
+
+/* ============ APLICACIONES ============ */
+async function renderApplications(){
+  const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
+  const sorted=[...apps].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Productos fitosanitarios, fertilizantes y bioestimulantes aplicados</div></div>
+    <button class="btn" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
+    <div class="alert-box warn"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Importante:</strong> Registra TODA aplicación incluyendo dosis, motivo, carencia y condiciones climáticas. Obligatorio para GlobalG.A.P. / MPS y trazabilidad de exportación.</div></div>
+    <div class="card">
+      <div class="toolbar">
+        <input class="search-input" placeholder="Buscar producto..." oninput="filterApps(this.value)">
+      </div>
+      <table id="tbl-apps">
+        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
+        <tbody>${sorted.length?sorted.map(a=>{
+          const fin=fechaFinCarencia(a);
+          const activa=carenciaActiva(a);
+          const aptoTxt=fin?(activa?`<span class="tag warn">🚫 ${fmt(fin)}</span>`:`<span class="tag ok">✓ ${fmt(fin)}</span>`):'<span style="color:var(--gris-m);font-size:11px">—</span>';
+          const clima=[];
+          if(a.tempC!=null&&a.tempC!=='')clima.push(`${a.tempC}°C`);
+          if(a.humedad!=null&&a.humedad!=='')clima.push(`${a.humedad}%H`);
+          if(a.viento!=null&&a.viento!=='')clima.push(`💨${a.viento}`);
+          if(a.horaApp)clima.push(a.horaApp);
+          const climaTxt=clima.length?`<span style="font-size:11px;color:var(--texto-m)">${clima.join(' · ')}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>';
+          const metodoTxt=[a.metodoAplicacion,a.prestador].filter(Boolean).join(' · ')||'<span style="color:var(--gris-m);font-size:11px">—</span>';
+          const fotos=[];
+          if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
+          if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
+          const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
+          return `<tr class="${activa?'fila-carencia':''}"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td>${a.dosis||'—'}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td><button class="btn small ghost" onclick="editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+        }).join(''):'<tr><td colspan="12" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
+      </table>
+    </div>`;
+  lucideInit();
+}
+function filterApps(v){document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+
+async function editApp(id){
+  const blocks=await getAll('blocks');
+  const curName=userById(CURRENT_USER).nombre;
+  const a=id?await get('applications',id):{fecha:today(),producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:'',fotoProducto:'',fotoAplicacion:''};
+  const bloquesSel=getBloques(a);
+  const cats=[...new Set(PRODUCT_TEMPLATES.map(p=>p.cat))];
+  const metodos=['Barra tractor','Barra espalda','Dron','Mochila manual','Pulverizadora espalda','Aéreo','Riego por goteo','Otro'];
+  const cdIni=a.carenciaDias!=null&&a.carenciaDias!==''?a.carenciaDias:(parseCarenciaDias(a.carencia)||'');
+  openModal(`<h3>${id?'Editar':'Registrar'} aplicación</h3>
+    <div class="form-row"><label>Seleccionar producto conocido (opcional)</label><select onchange="if(this.value){const p=PRODUCT_TEMPLATES[this.value];document.getElementById('f-prod').value=p.nombre;document.getElementById('f-cat').value=p.cat;document.getElementById('f-ing').value=p.tipo;document.getElementById('f-dos').value=p.dosis_rec;document.getElementById('f-mot').value=p.motivo;document.getElementById('f-car').value=p.carencia;document.getElementById('f-cdias').value=parseCarenciaDias(p.carencia)||'';actualizarAptoDesde()}">
+      <option value="">-- Buscar en biblioteca --</option>
+      ${cats.map(c=>`<optgroup label="${c}">${PRODUCT_TEMPLATES.map((p,i)=>p.cat===c?`<option value="${i}">${p.nombre}</option>`:'').join('')}</optgroup>`).join('')}
+    </select></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha aplicación</label><input id="f-fecha" type="date" value="${a.fecha}" onchange="actualizarAptoDesde()"></div>
+      <div class="form-row"><label>Hora aplicación</label><input id="f-hora" type="time" value="${a.horaApp||''}"></div>
+      <div class="form-row"><label>Producto comercial</label><input id="f-prod" value="${a.producto||''}"></div>
+      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${a.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Ingrediente activo / Tipo</label><input id="f-ing" value="${a.ingrediente||''}"></div>
+      <div class="form-row"><label>Dosis</label><input id="f-dos" value="${a.dosis||''}" placeholder="ej. 2 g/L"></div>
+      <div class="form-row"><label>Volumen aplicado</label><input id="f-vol" value="${a.volumen||''}" placeholder="ej. 500 L total"></div>
+      <div class="form-row"><label>Carencia (texto)</label><input id="f-car" value="${a.carencia||''}" placeholder="ej. 14 días" oninput="document.getElementById('f-cdias').value=parseCarenciaDias(this.value)||'';actualizarAptoDesde()"></div>
+      <div class="form-row"><label>Carencia (días)</label><input id="f-cdias" type="number" min="0" value="${cdIni}" placeholder="días" oninput="actualizarAptoDesde()"></div>
+      <div class="form-row"><label>Responsable</label><input id="f-resp" value="${a.responsable||''}"></div>
+      <div class="form-row"><label>Prestador del servicio</label><input id="f-prest" value="${a.prestador||''}" placeholder="Propio / Nombre empresa externa"></div>
+      <div class="form-row"><label>Método de aplicación</label><select id="f-metodo"><option value="">-- Seleccionar --</option>${metodos.map(m=>`<option ${a.metodoAplicacion===m?'selected':''}>${m}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row"><label>Cuarteles aplicados <span style="color:var(--gris);font-weight:400;font-size:11px">(selecciona uno o varios)</span></label>
+      <div class="checkbox-grid">
+        ${blocks.map(b=>`<div class="check-item"><input type="checkbox" id="cb-${b.id}" class="f-bloq-chk" value="${b.nombre}" ${bloquesSel.includes(b.nombre)?'checked':''}><label for="cb-${b.id}">${b.nombre} <small style="font-weight:400;color:var(--gris-m)">(${(b.cantidad||0).toLocaleString()} riz.)</small></label></div>`).join('')}
+      </div>
+    </div>
+    <div class="alert-box info" id="apto-preview" style="margin-top:6px"><i data-lucide="clock"></i><div class="ab-content">Apto cosecha desde: <strong id="apto-val">—</strong></div></div>
+    <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías (opcional pero recomendado)</h4>
+    <div class="form-grid">
+      <div class="form-row"><label>Foto del producto / etiqueta</label>
+        ${a.fotoProducto?`<div style="margin-bottom:6px"><img src="${a.fotoProducto}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"></div>`:''}
+        <input id="f-fotoprod" type="file" accept="image/*" capture="environment">
+        <small style="color:var(--gris);font-size:11px">Etiqueta / envase del producto aplicado</small></div>
+      <div class="form-row"><label>Foto de la aplicación</label>
+        ${a.fotoAplicacion?`<div style="margin-bottom:6px"><img src="${a.fotoAplicacion}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"></div>`:''}
+        <input id="f-fotoapl" type="file" accept="image/*" capture="environment">
+        <small style="color:var(--gris);font-size:11px">Equipo / operario aplicando</small></div>
+    </div>
+    <h4><i data-lucide="cloud" style="width:14px;height:14px;vertical-align:-2px"></i> Condiciones climáticas al aplicar <span style="color:var(--gris);font-weight:400;font-size:11px">(recomendado GlobalG.A.P./MPS)</span></h4>
+    <div class="form-grid">
+      <div class="form-row"><label>Temperatura (°C)</label><input id="f-temp" type="number" step="0.5" value="${a.tempC!=null?a.tempC:''}" placeholder="ej. 20"></div>
+      <div class="form-row"><label>Humedad (%)</label><input id="f-hum" type="number" min="0" max="100" value="${a.humedad!=null?a.humedad:''}" placeholder="ej. 60"></div>
+      <div class="form-row"><label>Viento (km/h)</label><input id="f-vto" type="number" step="0.5" value="${a.viento!=null?a.viento:''}" placeholder="ej. 8"></div>
+    </div>
+    <div class="form-row" style="margin-top:10px"><label>Motivo / plaga o enfermedad objetivo</label><textarea id="f-mot" rows="2">${a.motivo||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveApp(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  actualizarAptoDesde();
+  lucideInit();
+}
+function actualizarAptoDesde(){const f=document.getElementById('f-fecha');const d=document.getElementById('f-cdias');const out=document.getElementById('apto-val');const box=document.getElementById('apto-preview');if(!f||!d||!out||!box)return;const dias=parseInt(d.value,10);if(f.value&&!isNaN(dias)&&dias>=0){const fin=addDays(f.value,dias);const activa=new Date(fin)>=new Date(today());out.textContent=fmt(fin)+(activa?' (en carencia)':' (ya apto)');box.className='alert-box '+(activa?'warn':'ok');}else{out.textContent='—';box.className='alert-box info'}}
+async function saveApp(id){
+  const cdRaw=document.getElementById('f-cdias').value;
+  const cdias=cdRaw===''?null:parseInt(cdRaw,10);
+  const bloques=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
+  const data={fecha:document.getElementById('f-fecha').value,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null};
+  if(!data.producto){toast('Producto requerido','warn');return}
+  const fProd=document.getElementById('f-fotoprod');
+  const fApl=document.getElementById('f-fotoapl');
+  if(fProd&&fProd.files&&fProd.files[0]){try{data.fotoProducto=await fileToDataURL(fProd.files[0]);}catch(e){toast('Error procesando foto producto','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoProducto)data.fotoProducto=prev.fotoProducto;}
+  if(fApl&&fApl.files&&fApl.files[0]){try{data.fotoAplicacion=await fileToDataURL(fApl.files[0]);}catch(e){toast('Error procesando foto aplicación','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoAplicacion)data.fotoAplicacion=prev.fotoAplicacion;}
+  let isNew=!id;
+  if(id){data.id=id;await put('applications',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('applications',data)}
+  closeModal();toast('Aplicación guardada');
+  const fin=fechaFinCarencia(data);
+  notifyHook('Aplicación fitosanitaria',`${data.producto}${data.categoria?' ('+data.categoria+')':''}`,`Fecha: ${fmt(data.fecha)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
+  renderApplications();
+}
+async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+
+/* ============ ASESORES ============ */
+async function renderAdvisors(){
+  const [advisors,files]=await Promise.all([getAll('advisors'),getAll('advisorfiles')]);
+  const sorted=[...advisors].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const totalArchivos=files.length;
+  const tamTotal=files.reduce((s,f)=>s+((f.data||'').length*0.75),0);
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Asesores</h2><div class="sub">Registro de asesores externos y documentos entregados</div></div>
+      <button class="btn" onclick="editAdvisor()"><i data-lucide="user-plus"></i>Nuevo asesor</button>
+    </div>
+    <div class="grid grid-3">
+      <div class="kpi"><div class="kpi-header"><div class="label">Asesores</div><div class="kpi-icon"><i data-lucide="users"></i></div></div><div class="value">${advisors.length}</div><div class="foot">registrados</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Archivos</div><div class="kpi-icon"><i data-lucide="file-text"></i></div></div><div class="value">${totalArchivos}</div><div class="foot">~${(tamTotal/1024/1024).toFixed(1)} MB total</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Últimos 30 días</div><div class="kpi-icon"><i data-lucide="upload"></i></div></div><div class="value">${files.filter(f=>daysBetween(f.fecha,new Date())<=30).length}</div><div class="foot">documentos recibidos</div></div>
+    </div>
+    ${sorted.length?`<div class="grid grid-2">
+      ${sorted.map(adv=>{
+        const advFiles=files.filter(f=>f.advisorId===adv.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+        const ultimo=advFiles[0];
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:17px;flex-shrink:0">${(adv.nombre||'?').slice(0,2).toUpperCase()}</div>
+              <div><h3 style="margin:0;font-size:15px">${adv.nombre}</h3>${adv.especialidad?`<div style="font-size:12px;color:var(--verde-d);font-weight:500;margin-top:2px">${adv.especialidad}</div>`:''}${adv.empresa?`<div style="font-size:11.5px;color:var(--gris);margin-top:1px">${adv.empresa}</div>`:''}</div>
+            </div>
+            <div style="display:flex;gap:4px"><button class="btn small ghost" onclick="editAdvisor('${adv.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delAdvisor('${adv.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div>
+          </div>
+          <div style="margin-top:12px;font-size:12.5px;color:var(--texto-m);display:grid;gap:4px">
+            ${adv.email?`<div><i data-lucide="mail" style="width:13px;height:13px;vertical-align:-2px;color:var(--gris)"></i> ${adv.email}</div>`:''}
+            ${adv.telefono?`<div><i data-lucide="phone" style="width:13px;height:13px;vertical-align:-2px;color:var(--gris)"></i> ${adv.telefono}</div>`:''}
+            ${adv.notas?`<div style="color:var(--gris);margin-top:4px;padding-top:6px;border-top:1px solid var(--gris-xl)">${adv.notas}</div>`:''}
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gris-xl)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <strong style="font-size:12.5px;color:var(--texto)"><i data-lucide="folder" style="width:14px;height:14px;vertical-align:-2px;color:var(--verde)"></i> Archivos (${advFiles.length})</strong>
+              <button class="btn small" onclick="uploadAdvisorFile('${adv.id}')"><i data-lucide="upload"></i>Subir</button>
+            </div>
+            ${advFiles.length?`<div style="display:grid;gap:6px;max-height:240px;overflow-y:auto">${advFiles.slice(0,8).map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--gris-xl);border-radius:6px;gap:8px">
+              <div style="display:flex;gap:8px;align-items:center;min-width:0;flex:1"><i data-lucide="${fileIcon(f.nombre)}" style="width:16px;height:16px;color:var(--verde);flex-shrink:0"></i><div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:500;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nombre}</div><div style="font-size:10.5px;color:var(--gris)">${fmt(f.fecha)} · ${((f.data||'').length*0.75/1024).toFixed(0)} KB${f.descripcion?` · ${f.descripcion}`:''}</div></div></div>
+              <div style="display:flex;gap:3px;flex-shrink:0"><button class="btn small ghost" onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i></button><button class="btn small danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar"><i data-lucide="x"></i></button></div>
+            </div>`).join('')}${advFiles.length>8?`<div style="text-align:center;font-size:11px;color:var(--gris);padding:6px">+ ${advFiles.length-8} archivos más</div>`:''}</div>`:`<div style="padding:20px;text-align:center;color:var(--gris-m);font-size:12.5px;background:var(--gris-xl);border-radius:6px">Sin archivos subidos aún</div>`}
+          </div>
+        </div>`}).join('')}
+    </div>`:`<div class="card"><div class="empty"><i data-lucide="users"></i><div style="margin-top:10px">Sin asesores registrados</div><button class="btn" style="margin-top:15px" onclick="editAdvisor()"><i data-lucide="user-plus"></i>Agregar primer asesor</button></div></div>`}
+  `;
+  lucideInit();
+}
+function fileIcon(name){const ext=(name||'').split('.').pop().toLowerCase();if(['pdf'].includes(ext))return 'file-text';if(['doc','docx'].includes(ext))return 'file-text';if(['xls','xlsx','csv'].includes(ext))return 'file-spreadsheet';if(['ppt','pptx'].includes(ext))return 'file-text';if(['jpg','jpeg','png','gif','webp'].includes(ext))return 'file-image';if(['mp4','mov','avi'].includes(ext))return 'file-video';if(['zip','rar','7z'].includes(ext))return 'file-archive';return 'file'}
+async function editAdvisor(id){
+  const a=id?await get('advisors',id):{nombre:'',especialidad:'',empresa:'',email:'',telefono:'',notas:''};
+  openModal(`<h3>${id?'Editar':'Nuevo'} asesor</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre completo *</label><input id="f-adv-nom" value="${a.nombre||''}" placeholder="Juan Pérez"></div>
+      <div class="form-row"><label>Especialidad</label><input id="f-adv-esp" value="${a.especialidad||''}" placeholder="Agrónomo / Fitopatólogo / Riego..."></div>
+      <div class="form-row"><label>Empresa / Institución</label><input id="f-adv-emp" value="${a.empresa||''}" placeholder="Consultora XYZ"></div>
+      <div class="form-row"><label>Email</label><input id="f-adv-email" type="email" value="${a.email||''}" placeholder="correo@ejemplo.cl"></div>
+      <div class="form-row"><label>Teléfono</label><input id="f-adv-tel" value="${a.telefono||''}" placeholder="+56 9 ..."></div>
+    </div>
+    <div class="form-row"><label>Notas / Alcance del servicio</label><textarea id="f-adv-not" rows="3">${a.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAdvisor(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  lucideInit();
+}
+async function saveAdvisor(id){
+  const data={nombre:document.getElementById('f-adv-nom').value.trim(),especialidad:document.getElementById('f-adv-esp').value,empresa:document.getElementById('f-adv-emp').value,email:document.getElementById('f-adv-email').value,telefono:document.getElementById('f-adv-tel').value,notas:document.getElementById('f-adv-not').value};
+  if(!data.nombre){toast('Nombre requerido','warn');return}
+  if(id){data.id=id;await put('advisors',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('advisors',data)}
+  closeModal();toast('Asesor guardado');renderAdvisors();
+}
+async function delAdvisor(id){
+  const files=await getAll('advisorfiles');
+  const nArch=files.filter(f=>f.advisorId===id).length;
+  if(!confirm(`¿Eliminar asesor y sus ${nArch} archivo${nArch!==1?'s':''}?`))return;
+  await Promise.all(files.filter(f=>f.advisorId===id).map(f=>del('advisorfiles',f.id)));
+  await del('advisors',id);toast('Eliminado');renderAdvisors();
+}
+function uploadAdvisorFile(advisorId){
+  openModal(`<h3><i data-lucide="upload" style="width:18px;height:18px;vertical-align:-3px"></i> Subir archivo del asesor</h3>
+    <div class="form-row"><label>Archivo *</label><input id="f-adv-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"><small style="color:var(--gris);font-size:11px">Máx 8 MB por archivo. Formatos: PDF, Word, Excel, imágenes, ZIP.</small></div>
+    <div class="form-row"><label>Fecha documento</label><input id="f-adv-fecha" type="date" value="${today()}"></div>
+    <div class="form-row"><label>Descripción breve</label><input id="f-adv-desc" placeholder="ej. Análisis de suelo agosto 2026"></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="doUploadAdvisorFile('${advisorId}')"><i data-lucide="upload"></i>Subir</button></div>`);
+  lucideInit();
+}
+async function doUploadAdvisorFile(advisorId){
+  const fi=document.getElementById('f-adv-file');
+  if(!fi.files[0]){toast('Selecciona un archivo','warn');return}
+  const file=fi.files[0];
+  if(file.size>8*1024*1024){toast('Archivo demasiado grande (máx 8 MB)','warn');return}
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const data={advisorId:advisorId,nombre:file.name,tipo:file.type,data:e.target.result,fecha:document.getElementById('f-adv-fecha').value||today(),descripcion:document.getElementById('f-adv-desc').value,createdBy:CURRENT_USER,createdAt:new Date().toISOString()};
+    await add('advisorfiles',data);
+    closeModal();toast('Archivo subido');renderAdvisors();
+  };
+  reader.readAsDataURL(file);
+}
+async function downloadAdvisorFile(id){
+  const f=await get('advisorfiles',id);
+  if(!f||!f.data){toast('Archivo no disponible','warn');return}
+  const a=document.createElement('a');a.href=f.data;a.download=f.nombre;document.body.appendChild(a);a.click();a.remove();
+}
+async function delAdvisorFile(id){if(!confirm('¿Eliminar archivo?'))return;await del('advisorfiles',id);toast('Archivo eliminado');renderAdvisors();}
+
+/* ============ INVENTARIO ============ */
+const INV_CATEGORIAS=['Fungicida','Insecticida','Herbicida','Acaricida','Bactericida','Fertilizante foliar','Fertilizante suelo','Bioestimulante','Corrector / Enmienda','EPP / Seguridad','Herramientas','Sustratos / Insumos','Embalaje / Cosecha','Otro'];
+const INV_UNIDADES=['L','mL','kg','g','unidades','sacos','cajas','rollos'];
+let _invFiltroCat='todas';
+function invStockStatus(it){
+  const stock=parseFloat(it.stock)||0;
+  const min=parseFloat(it.stockMinimo)||0;
+  if(stock<=0)return{lbl:'Agotado',cls:'alert',prio:0};
+  if(min>0&&stock<=min)return{lbl:'Stock bajo',cls:'warn',prio:1};
+  if(it.vencimiento){const d=daysBetween(today(),it.vencimiento);if(d<0)return{lbl:'Vencido',cls:'alert',prio:0};if(d<=30)return{lbl:`Vence en ${d}d`,cls:'warn',prio:1}}
+  return{lbl:'OK',cls:'ok',prio:3};
+}
+async function renderInventory(){
+  const items=await getAll('inventory');
+  const byCat={};items.forEach(i=>{byCat[i.categoria||'Otro']=(byCat[i.categoria||'Otro']||0)+1});
+  const stockBajo=items.filter(i=>{const s=invStockStatus(i);return s.cls==='warn'||s.cls==='alert'});
+  const valorTotal=items.reduce((s,i)=>s+((parseFloat(i.precio)||0)*(parseFloat(i.stock)||0)),0);
+  const filtered=_invFiltroCat==='todas'?items:items.filter(i=>(i.categoria||'Otro')===_invFiltroCat);
+  const sorted=[...filtered].sort((a,b)=>{const sA=invStockStatus(a).prio,sB=invStockStatus(b).prio;if(sA!==sB)return sA-sB;return (a.nombre||'').localeCompare(b.nombre||'')});
+  const chip=(k,lbl,n)=>`<span class="chip ${_invFiltroCat===k?'active':''}" onclick="setInvFiltro('${k.replace(/'/g,"\\'")}')">${lbl}${n!=null?` <strong>${n}</strong>`:''}</span>`;
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Inventario de bodega</h2><div class="sub">Productos fitosanitarios, fertilizantes, EPP y otros insumos</div></div>
+      <button class="btn" onclick="editInvItem()"><i data-lucide="plus"></i>Nuevo producto</button>
+    </div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Productos</div><div class="kpi-icon"><i data-lucide="package"></i></div></div><div class="value">${items.length}</div><div class="foot">${Object.keys(byCat).length} categorías</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Stock bajo / Agotado</div><div class="kpi-icon"><i data-lucide="alert-triangle"></i></div></div><div class="value">${stockBajo.length}</div><div class="foot">requieren reposición</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Valor estimado</div><div class="kpi-icon"><i data-lucide="dollar-sign"></i></div></div><div class="value">$${Math.round(valorTotal).toLocaleString('es-CL')}</div><div class="foot">stock × precio unitario</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Por vencer 30d</div><div class="kpi-icon"><i data-lucide="calendar-clock"></i></div></div><div class="value">${items.filter(i=>i.vencimiento&&daysBetween(today(),i.vencimiento)>=0&&daysBetween(today(),i.vencimiento)<=30).length}</div><div class="foot">productos próximos a vencer</div></div>
+    </div>
+    ${stockBajo.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Reposición pendiente</h3>${stockBajo.slice(0,5).map(i=>{const st=invStockStatus(i);return `<div class="alert-box ${st.cls==='alert'?'danger':'warn'}"><i data-lucide="package-x"></i><div class="ab-content"><strong>${i.nombre}</strong> · ${i.categoria||'-'} · Stock actual: <strong>${i.stock||0} ${i.unidad||''}</strong> ${i.stockMinimo?`(mínimo ${i.stockMinimo})`:''} ${i.proveedor?`· Proveedor: ${i.proveedor}`:''}</div></div>`}).join('')}${stockBajo.length>5?`<div style="font-size:12px;color:var(--gris);text-align:center;padding:8px">+ ${stockBajo.length-5} productos más</div>`:''}</div>`:''}
+    <div class="card">
+      <div class="filters-bar">
+        ${chip('todas','Todas',items.length)}
+        ${INV_CATEGORIAS.filter(c=>byCat[c]).map(c=>chip(c,c,byCat[c])).join('')}
+      </div>
+      <div class="toolbar">
+        <input class="search-input" placeholder="Buscar producto, marca o ingrediente..." oninput="filterInv(this.value)">
+      </div>
+      <table id="tbl-inv">
+        <thead><tr><th>Estado</th><th>Producto</th><th>Categoría</th><th>Marca</th><th>Presentación</th><th>Stock</th><th>Mínimo</th><th>Vencimiento</th><th>Ubicación</th><th>Precio unit.</th><th></th></tr></thead>
+        <tbody>${sorted.length?sorted.map(i=>{
+          const st=invStockStatus(i);
+          const stockCls=st.cls==='alert'?'alert':st.cls==='warn'?'warn':'ok';
+          const venc=i.vencimiento?fmt(i.vencimiento):'—';
+          const ven=i.vencimiento?daysBetween(today(),i.vencimiento):null;
+          const vencCls=ven!=null&&ven<0?'color:var(--alerta);font-weight:600':(ven!=null&&ven<=30?'color:#b45309;font-weight:600':'color:var(--texto-m)');
+          return `<tr><td><span class="tag ${stockCls}">${st.lbl}</span></td><td><strong>${i.nombre}</strong>${i.ingrediente?`<div style="font-size:11px;color:var(--gris);margin-top:1px">${i.ingrediente}</div>`:''}</td><td><span class="tag info">${i.categoria||'-'}</span></td><td>${i.marca||'—'}</td><td>${i.presentacion||'—'}</td><td><strong style="font-variant-numeric:tabular-nums">${(i.stock||0).toLocaleString('es-CL')}</strong> <small style="color:var(--gris)">${i.unidad||''}</small></td><td style="color:var(--gris-m)">${i.stockMinimo||'—'}</td><td style="${vencCls}">${venc}</td><td style="font-size:12px">${i.ubicacion||'—'}</td><td style="font-variant-numeric:tabular-nums">${i.precio?`$${parseFloat(i.precio).toLocaleString('es-CL')}`:'—'}</td><td style="white-space:nowrap"><button class="btn small" onclick="adjustStock('${i.id}')" title="Ajustar stock"><i data-lucide="edit-3"></i></button> <button class="btn small ghost" onclick="editInvItem('${i.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delInvItem('${i.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+        }).join(''):`<tr><td colspan="11" class="empty"><i data-lucide="package"></i><div>Sin productos en inventario</div></td></tr>`}</tbody>
+      </table>
+    </div>`;
+  lucideInit();
+}
+function setInvFiltro(k){_invFiltroCat=k;renderInventory()}
+function filterInv(v){document.querySelectorAll('#tbl-inv tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+async function editInvItem(id){
+  const it=id?await get('inventory',id):{nombre:'',categoria:'',marca:'',ingrediente:'',presentacion:'',unidad:'L',stock:0,stockMinimo:0,vencimiento:'',ubicacion:'',proveedor:'',precio:'',notas:'',foto:''};
+  openModal(`<h3>${id?'Editar':'Nuevo'} producto en inventario</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre del producto *</label><input id="f-inv-nom" value="${it.nombre||''}" placeholder="ej. Switch 62.5 WG"></div>
+      <div class="form-row"><label>Categoría *</label><select id="f-inv-cat"><option value="">-- Seleccionar --</option>${INV_CATEGORIAS.map(c=>`<option ${it.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Marca / Fabricante</label><input id="f-inv-marca" value="${it.marca||''}" placeholder="ej. Syngenta"></div>
+      <div class="form-row"><label>Ingrediente activo</label><input id="f-inv-ing" value="${it.ingrediente||''}" placeholder="ej. Ciprodinil + Fludioxonil"></div>
+      <div class="form-row"><label>Presentación</label><input id="f-inv-pres" value="${it.presentacion||''}" placeholder="ej. Bolsa 1 kg / Bidón 5 L"></div>
+      <div class="form-row"><label>Unidad de medida</label><select id="f-inv-uni">${INV_UNIDADES.map(u=>`<option ${it.unidad===u?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Stock actual</label><input id="f-inv-stk" type="number" step="0.01" value="${it.stock||0}"></div>
+      <div class="form-row"><label>Stock mínimo (alerta)</label><input id="f-inv-min" type="number" step="0.01" value="${it.stockMinimo||0}" placeholder="ej. 2"></div>
+      <div class="form-row"><label>Fecha vencimiento</label><input id="f-inv-venc" type="date" value="${it.vencimiento||''}"></div>
+      <div class="form-row"><label>Ubicación bodega</label><input id="f-inv-ubi" value="${it.ubicacion||''}" placeholder="ej. Estante A-2"></div>
+      <div class="form-row"><label>Proveedor</label><input id="f-inv-prov" value="${it.proveedor||''}" placeholder="ej. Agrocentro Talca"></div>
+      <div class="form-row"><label>Precio unitario (CLP)</label><input id="f-inv-pre" type="number" step="1" value="${it.precio||''}" placeholder="ej. 45000"></div>
+    </div>
+    <div class="form-row"><label>Foto del producto (opcional)</label>
+      ${it.foto?`<div style="margin-bottom:6px"><img src="${it.foto}" style="max-width:130px;max-height:130px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${it.foto.replace(/'/g,"\\'")}')"></div>`:''}
+      <input id="f-inv-foto" type="file" accept="image/*" capture="environment">
+      <small style="color:var(--gris);font-size:11px">Etiqueta o envase para identificación rápida</small>
+    </div>
+    <div class="form-row"><label>Notas</label><textarea id="f-inv-not" rows="2" placeholder="ej. Guardar bajo llave, toxicidad clase II...">${it.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveInvItem(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  lucideInit();
+}
+async function saveInvItem(id){
+  const data={nombre:document.getElementById('f-inv-nom').value.trim(),categoria:document.getElementById('f-inv-cat').value,marca:document.getElementById('f-inv-marca').value,ingrediente:document.getElementById('f-inv-ing').value,presentacion:document.getElementById('f-inv-pres').value,unidad:document.getElementById('f-inv-uni').value,stock:parseFloat(document.getElementById('f-inv-stk').value)||0,stockMinimo:parseFloat(document.getElementById('f-inv-min').value)||0,vencimiento:document.getElementById('f-inv-venc').value||null,ubicacion:document.getElementById('f-inv-ubi').value,proveedor:document.getElementById('f-inv-prov').value,precio:parseFloat(document.getElementById('f-inv-pre').value)||null,notas:document.getElementById('f-inv-not').value};
+  if(!data.nombre){toast('Nombre requerido','warn');return}
+  if(!data.categoria){toast('Categoría requerida','warn');return}
+  const fFoto=document.getElementById('f-inv-foto');
+  if(fFoto&&fFoto.files&&fFoto.files[0]){try{data.foto=await fileToDataURL(fFoto.files[0]);}catch(e){toast('Error procesando foto','warn')}}else if(id){const prev=await get('inventory',id);if(prev&&prev.foto)data.foto=prev.foto;}
+  if(id){data.id=id;await put('inventory',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('inventory',data)}
+  closeModal();toast('Producto guardado');renderInventory();
+}
+async function adjustStock(id){
+  const it=await get('inventory',id);if(!it)return;
+  openModal(`<h3><i data-lucide="edit-3" style="width:18px;height:18px;vertical-align:-3px"></i> Ajustar stock</h3>
+    <div class="alert-box info"><i data-lucide="package"></i><div class="ab-content"><strong>${it.nombre}</strong><br>Stock actual: <strong>${it.stock||0} ${it.unidad||''}</strong></div></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Tipo de movimiento</label><select id="f-aj-tipo"><option value="entrada">➕ Entrada (compra / ingreso)</option><option value="salida">➖ Salida (uso / aplicación)</option><option value="ajuste">⚙️ Ajuste (corrección inventario)</option></select></div>
+      <div class="form-row"><label>Cantidad (${it.unidad||''})</label><input id="f-aj-cant" type="number" step="0.01" value="" placeholder="ej. 5"></div>
+    </div>
+    <div class="form-row"><label>Motivo / nota</label><input id="f-aj-nota" placeholder="ej. Compra mayo 2026, uso en aplicación cuartel Sarah..."></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="doAdjustStock('${id}',${it.stock||0})"><i data-lucide="check"></i>Aplicar</button></div>`);
+  lucideInit();
+}
+async function doAdjustStock(id,stockActual){
+  const tipo=document.getElementById('f-aj-tipo').value;
+  const cant=parseFloat(document.getElementById('f-aj-cant').value);
+  const nota=document.getElementById('f-aj-nota').value;
+  if(!cant||cant<=0){toast('Cantidad inválida','warn');return}
+  let nuevo=stockActual;
+  if(tipo==='entrada')nuevo=stockActual+cant;
+  else if(tipo==='salida')nuevo=Math.max(0,stockActual-cant);
+  else nuevo=cant;/* ajuste = fija el valor */
+  const prev=await get('inventory',id);
+  await put('inventory',{...prev,id:id,stock:nuevo});
+  /* Registrar movimiento */
+  await add('invmoves',{inventoryId:id,producto:prev.nombre,tipo:tipo,cantidad:cant,stockAnterior:stockActual,stockNuevo:nuevo,nota:nota,fecha:today(),createdBy:CURRENT_USER,createdAt:new Date().toISOString()});
+  closeModal();toast(`Stock actualizado: ${nuevo} ${prev.unidad||''}`);
+  /* Notificar solo si entra en bajo mínimo o se agota */
+  const min=parseFloat(prev.stockMinimo)||0;
+  const wasCritico=(stockActual<=0)||(min>0&&stockActual<=min);
+  const esCritico=(nuevo<=0)||(min>0&&nuevo<=min);
+  if(esCritico&&!wasCritico){
+    notifyHook('Inventario crítico',`${prev.nombre} ${nuevo<=0?'AGOTADO':'bajo mínimo'}`,`Stock actual: ${nuevo} ${prev.unidad||''} (mín. ${prev.stockMinimo||'-'})\nCategoría: ${prev.categoria||'-'}${prev.proveedor?'\nProveedor: '+prev.proveedor:''}\n${tipo==='salida'?'Salida de ':'Ajuste a '}${cant} ${prev.unidad||''}`,'inventory');
+  }
+  renderInventory();
+}
+async function delInvItem(id){if(!confirm('¿Eliminar producto del inventario?'))return;await del('inventory',id);toast('Eliminado');renderInventory();}
+
+/* ============ CLIMA Y LLUVIAS ============ */
+/* Horas-frío método Utah lineal base 7.2°C */
+function computeHF(tmin,tmax){
+  const TH=7.2;
+  if(tmin==null||tmax==null||isNaN(tmin)||isNaN(tmax))return 0;
+  if(tmax<=TH)return 24;
+  if(tmin>=TH)return 0;
+  return Math.round(24*(TH-tmin)/(tmax-tmin)*10)/10;
+}
+function sumHFFrom(weatherArr,fromDate){
+  return weatherArr.filter(w=>w.fecha>=fromDate).reduce((s,w)=>s+computeHF(parseFloat(w.tmin),parseFloat(w.tmax)),0);
+}
+function sumRainFrom(weatherArr,fromDate){
+  return weatherArr.filter(w=>w.fecha>=fromDate).reduce((s,w)=>s+(parseFloat(w.precipMm)||0),0);
+}
+/* Recomendaciones en base a pronóstico y estado */
+function weatherRecommendations(histArr,forecast,apps,mes){
+  const rec=[];
+  const lluviaProx=forecast.filter(f=>f.precip>=5);
+  const lluviaFuerte=forecast.filter(f=>f.precip>=15);
+  const totalLluvia7d=forecast.slice(0,7).reduce((s,f)=>s+(f.precip||0),0);
+  /* Preparación previa a lluvia */
+  if(lluviaFuerte.length){
+    const f=lluviaFuerte[0];
+    rec.push({tipo:'danger',icon:'cloud-rain',titulo:`Lluvia fuerte prevista (${f.precip} mm) el ${fmt(f.fecha)}`,acciones:[
+      'Revisar drenajes y canales: que estén despejados. Un encharcamiento >24h puede iniciar Phytophthora cactorum (pudrición de corona).',
+      'Aplicar fungicida preventivo sistémico 48-72h ANTES de la lluvia si no hay aplicación reciente (Boscalid, Fludioxonil+Ciprodinil o Azoxistrobina). Rotar modos de acción FRAC.',
+      'Asegurar tutorado / mallas en cuarteles con botón floral en desarrollo (la lluvia + viento tumba tallos cargados).',
+      'Retirar follaje caído y residuos del campo antes de la lluvia (inóculo de Botrytis).',
+      'Si el suelo está seco, NO regar 48h antes — deja que la lluvia sea el riego.',
+      'Cubrir sacos de fertilizante y productos fitosanitarios que estén en tránsito o a la intemperie.',
+      'Suspender aplicaciones programadas: ventana efectiva = 6-8h sin lluvia post-aplicación.'
+    ]});
+  }else if(lluviaProx.length){
+    rec.push({tipo:'warn',icon:'cloud-drizzle',titulo:`Lluvia moderada prevista los próximos días (${totalLluvia7d.toFixed(0)} mm en 7d)`,acciones:[
+      'Oportunidad para aplicación preventiva de fungicida ANTES de la lluvia (mejor eficacia que curativo).',
+      'Monitoreo fitosanitario intensivo 48-72h después de la lluvia: primeros síntomas de Botrytis paeoniae aparecen en ese rango con humedad relativa >85%.',
+      'Revisar programación de riego: disminuir o suspender según mm caídos.'
+    ]});
+  }
+  /* Riesgo Botrytis por ventana húmeda + temperatura */
+  const hoy=today();
+  const hum7=histArr.filter(w=>w.fecha>=addDays(hoy,-7)&&w.fecha<=hoy);
+  const diasHumedos=hum7.filter(w=>(parseFloat(w.humedad)||0)>=85).length;
+  if(diasHumedos>=3&&mes>=9&&mes<=12){
+    rec.push({tipo:'warn',icon:'virus',titulo:`Ventana de alto riesgo Botrytis: ${diasHumedos}/7 días con HR≥85%`,acciones:[
+      'Aplicación preventiva urgente con fungicida rotado (no repetir el mismo grupo FRAC que en la aplicación anterior).',
+      'Eliminar manualmente botones con síntoma (manchas marrón-violáceas, masa gris esporulante) y sacar del campo.',
+      'Reducir volumen de riego y evitar riego por aspersión.'
+    ]});
+  }
+  /* Temperatura extrema */
+  const tmaxProx=forecast.slice(0,5).map(f=>f.tmax).filter(x=>x!=null);
+  if(tmaxProx.some(t=>t>=30)&&mes>=10&&mes<=12){
+    rec.push({tipo:'warn',icon:'thermometer-sun',titulo:'Ola de calor prevista durante floración',acciones:[
+      'Adelantar cosecha en horario más temprano (antes de 9 AM). Botón marshmallow abre MUY rápido con >28°C.',
+      'Aumentar frecuencia de riego (corto y frecuente) para mantener presión hídrica.',
+      'Evitar aplicaciones foliares en horario central del día (fitotoxicidad).'
+    ]});
+  }
+  const tminProx=forecast.slice(0,5).map(f=>f.tmin).filter(x=>x!=null);
+  if(tminProx.some(t=>t<=0)&&(mes===8||mes===9||mes===10)){
+    rec.push({tipo:'danger',icon:'snowflake',titulo:'Riesgo de helada tardía primaveral',acciones:[
+      'Los brotes emergentes de Sarah Y2 son EXTREMADAMENTE vulnerables a helada de -1°C o menos.',
+      'Regar suelo 24h antes (suelo húmedo libera calor durante la noche).',
+      'Cobertura con agromanta si es factible en cuarteles prioritarios.',
+      'Encender humo/bruma si la helada es radiativa (cielo despejado, viento <3 km/h).',
+      'Suspender riego por aspersión que pueda congelarse en brote.'
+    ]});
+  }
+  return rec;
+}
+async function fetchOpenMeteoHistory(fromDate,toDate){
+  const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${FINCA_COORDS.lat}&longitude=${FINCA_COORDS.lon}&start_date=${fromDate}&end_date=${toDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean,wind_speed_10m_max&timezone=${encodeURIComponent(FINCA_COORDS.tz)}`;
+  const r=await fetch(url);if(!r.ok)throw new Error('Open-Meteo history failed: '+r.status);
+  const d=await r.json();
+  const out=[];
+  for(let i=0;i<d.daily.time.length;i++){
+    out.push({fecha:d.daily.time[i],tmin:d.daily.temperature_2m_min[i],tmax:d.daily.temperature_2m_max[i],precipMm:d.daily.precipitation_sum[i],humedad:d.daily.relative_humidity_2m_mean[i],viento:d.daily.wind_speed_10m_max[i]});
+  }
+  return out;
+}
+async function fetchOpenMeteoForecast(){
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${FINCA_COORDS.lat}&longitude=${FINCA_COORDS.lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,wind_speed_10m_max&forecast_days=14&timezone=${encodeURIComponent(FINCA_COORDS.tz)}`;
+  const r=await fetch(url);if(!r.ok)throw new Error('Open-Meteo forecast failed: '+r.status);
+  const d=await r.json();
+  const out=[];
+  for(let i=0;i<d.daily.time.length;i++){
+    out.push({fecha:d.daily.time[i],tmin:d.daily.temperature_2m_min[i],tmax:d.daily.temperature_2m_max[i],precip:d.daily.precipitation_sum[i],wcode:d.daily.weather_code[i],viento:d.daily.wind_speed_10m_max[i]});
+  }
+  return out;
+}
+function wCodeIcon(c){
+  if(c==null)return 'cloud';
+  if(c===0)return 'sun';
+  if(c<=3)return 'cloud-sun';
+  if(c<=48)return 'cloud-fog';
+  if(c<=57)return 'cloud-drizzle';
+  if(c<=67)return 'cloud-rain';
+  if(c<=77)return 'cloud-snow';
+  if(c<=82)return 'cloud-rain-wind';
+  if(c<=86)return 'cloud-snow';
+  return 'cloud-lightning';
+}
+function wCodeLabel(c){
+  if(c==null)return '-';
+  if(c===0)return 'Despejado';
+  if(c<=3)return 'Parcial nublado';
+  if(c<=48)return 'Neblina';
+  if(c<=57)return 'Llovizna';
+  if(c<=67)return 'Lluvia';
+  if(c<=77)return 'Nieve';
+  if(c<=82)return 'Chubasco';
+  if(c<=86)return 'Nevada';
+  return 'Tormenta';
+}
+async function renderWeather(){
+  const weather=(await getAll('weather')).sort((a,b)=>(a.fecha<b.fecha?1:-1));
+  const apps=await getAll('applications');
+  const hoy=new Date();
+  const mes=hoy.getMonth()+1;
+  /* Temporada HF: 1-mayo a 31-agosto hemisferio sur */
+  const anioActual=hoy.getFullYear();
+  const inicioHF=(mes>=5?anioActual:anioActual-1)+'-05-01';
+  const finHF=(mes>=5?anioActual:anioActual-1)+'-08-31';
+  const hfArr=weather.filter(w=>w.fecha>=inicioHF&&w.fecha<=finHF);
+  const hfAcum=hfArr.reduce((s,w)=>s+computeHF(parseFloat(w.tmin),parseFloat(w.tmax)),0);
+  const inicioMes=anioActual+'-'+String(mes).padStart(2,'0')+'-01';
+  const lluviaMes=sumRainFrom(weather,inicioMes);
+  const lluviaAnio=sumRainFrom(weather,anioActual+'-01-01');
+  const diasLluvia30=weather.filter(w=>w.fecha>=addDays(today(),-30)&&(parseFloat(w.precipMm)||0)>=1).length;
+  /* Pronóstico cargado en sesión */
+  let forecast=window._wForecast||[];
+  const recs=weatherRecommendations(weather,forecast,apps,mes);
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Clima y lluvias</h2><div class="sub">San Clemente, Maule · ${FINCA_COORDS.lat.toFixed(4)}°, ${FINCA_COORDS.lon.toFixed(4)}°</div></div>
+      <div class="actions">
+        <button class="btn secondary" onclick="syncWeatherFromOpenMeteo()"><i data-lucide="refresh-cw"></i>Sincronizar últimos 60 días</button>
+        <button class="btn secondary" onclick="loadWeatherForecast()"><i data-lucide="cloud"></i>Cargar pronóstico 14 días</button>
+        <button class="btn" onclick="editWeather()"><i data-lucide="plus"></i>Registro manual</button>
+      </div>
+    </div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Horas-frío acumuladas</div><div class="kpi-icon"><i data-lucide="snowflake"></i></div></div><div class="value">${Math.round(hfAcum)}</div><div class="foot">Desde ${fmt(inicioHF)} · base 7.2°C</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Lluvia mes actual</div><div class="kpi-icon"><i data-lucide="cloud-rain"></i></div></div><div class="value">${lluviaMes.toFixed(1)}<small style="font-size:14px;color:var(--gris)"> mm</small></div><div class="foot">${diasLluvia30} días con lluvia últimos 30d</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Lluvia año ${anioActual}</div><div class="kpi-icon"><i data-lucide="umbrella"></i></div></div><div class="value">${lluviaAnio.toFixed(0)}<small style="font-size:14px;color:var(--gris)"> mm</small></div><div class="foot">Promedio histórico San Clemente: ~700 mm/año</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Días registrados</div><div class="kpi-icon"><i data-lucide="calendar"></i></div></div><div class="value">${weather.length}</div><div class="foot">${weather.filter(w=>w.fecha>=addDays(today(),-30)).length} últimos 30d</div></div>
+    </div>
+    <div class="card">
+      <h3><i data-lucide="target"></i>Progreso horas-frío por variedad</h3>
+      ${Object.entries(HF_OBJETIVOS).map(([v,obj])=>{const pct=Math.min(100,Math.round(hfAcum/obj.opt*100));const color=pct>=100?'var(--verde)':pct>=70?'#f59e0b':'var(--rosa-d)';return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><strong>${v}</strong><span style="color:var(--gris)">${Math.round(hfAcum)} / ${obj.opt} h (${pct}%)</span></div>
+        <div style="height:10px;background:var(--gris-xl);border-radius:5px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};transition:width .4s"></div></div>
+        <div style="font-size:11px;color:var(--gris);margin-top:3px">Min ${obj.min}h · Óptimo ${obj.opt}h · Max ${obj.max}h</div>
+      </div>`}).join('')}
+    </div>
+    ${recs.length?`<div class="card">
+      <h3><i data-lucide="alert-triangle"></i>Recomendaciones agronómicas por condiciones actuales</h3>
+      ${recs.map(r=>`<div class="alert-box ${r.tipo}" style="display:block"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i data-lucide="${r.icon}"></i><strong>${r.titulo}</strong></div><ul style="margin:0 0 0 24px;font-size:13px;line-height:1.6">${r.acciones.map(a=>`<li>${a}</li>`).join('')}</ul></div>`).join('')}
+    </div>`:''}
+    <div class="grid grid-2">
+      <div class="card"><h3><i data-lucide="bar-chart-3"></i>Acumulado HF (últimos 120 días)</h3><div class="chart-container"><canvas id="chart-hf"></canvas></div></div>
+      <div class="card"><h3><i data-lucide="cloud-rain"></i>Lluvia mensual (últimos 12 meses)</h3><div class="chart-container"><canvas id="chart-rain"></canvas></div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><i data-lucide="cloud"></i>Pronóstico 14 días (Open-Meteo)</h3>
+        ${forecast.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">${forecast.map(f=>{const rainW=f.precip>=15?'danger':f.precip>=5?'warn':'';return `<div style="padding:10px;border:1px solid var(--gris-xl);border-radius:var(--radio-sm);text-align:center;${rainW==='danger'?'border-color:var(--rosa-d);background:#fdf2f5':rainW==='warn'?'border-color:#f59e0b;background:#fffbeb':''}">
+          <div style="font-size:11px;color:var(--gris);text-transform:uppercase;font-weight:600">${new Date(f.fecha+'T00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})}</div>
+          <div style="margin:6px 0"><i data-lucide="${wCodeIcon(f.wcode)}" style="width:28px;height:28px;color:var(--verde-d)"></i></div>
+          <div style="font-size:12px;color:var(--texto)"><strong>${Math.round(f.tmax)}°</strong> / <span style="color:var(--gris)">${Math.round(f.tmin)}°</span></div>
+          <div style="font-size:11px;color:${f.precip>=5?'var(--rosa-d)':'var(--gris)'};font-weight:${f.precip>=5?'700':'400'};margin-top:3px">💧 ${(f.precip||0).toFixed(1)} mm</div>
+          <div style="font-size:10px;color:var(--gris);margin-top:2px">${wCodeLabel(f.wcode)}</div>
+        </div>`}).join('')}</div>`:`<div class="empty"><i data-lucide="cloud-off"></i><div>Haz clic en <strong>Cargar pronóstico 14 días</strong> para ver el forecast de San Clemente vía Open-Meteo.</div></div>`}
+      </div>
+      <div class="card">
+        <h3><i data-lucide="list"></i>Últimos registros</h3>
+        <table style="margin-top:5px"><thead><tr><th>Fecha</th><th>Tmín / Tmáx</th><th>Lluvia</th><th>HF</th><th>HR%</th></tr></thead><tbody>
+          ${weather.slice(0,14).map(w=>{const hf=computeHF(parseFloat(w.tmin),parseFloat(w.tmax));return `<tr><td>${fmt(w.fecha)}</td><td>${w.tmin!=null?w.tmin.toFixed?w.tmin.toFixed(1):w.tmin:'-'}° / ${w.tmax!=null?w.tmax.toFixed?w.tmax.toFixed(1):w.tmax:'-'}°</td><td>${w.precipMm!=null?(parseFloat(w.precipMm)).toFixed(1):'-'} mm</td><td>${hf.toFixed(1)}</td><td>${w.humedad!=null?Math.round(w.humedad):'-'}</td></tr>`}).join('')}
+        </tbody></table>
+        ${weather.length>14?`<div style="font-size:11px;color:var(--gris);margin-top:6px">Mostrando últimos 14 de ${weather.length} registros</div>`:''}
+      </div>
+    </div>`;
+  /* CHARTS */
+  const dHF=weather.filter(w=>w.fecha>=addDays(today(),-120)).sort((a,b)=>(a.fecha<b.fecha?-1:1));
+  let acum=0;const labHF=dHF.map(w=>w.fecha);const dataHF=dHF.map(w=>{acum+=computeHF(parseFloat(w.tmin),parseFloat(w.tmax));return Math.round(acum)});
+  if(document.getElementById('chart-hf')){
+    new Chart(document.getElementById('chart-hf'),{type:'line',data:{labels:labHF,datasets:[{label:'HF acumuladas',data:dataHF,borderColor:'#3f7a52',backgroundColor:'rgba(63,122,82,.12)',fill:true,tension:.25}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},annotation:{}},scales:{x:{ticks:{maxTicksLimit:8}}}}});
+  }
+  /* Rain per month last 12 */
+  const meses12=[];for(let i=11;i>=0;i--){const d=new Date(anioActual,hoy.getMonth()-i,1);meses12.push({y:d.getFullYear(),m:d.getMonth()+1,lbl:d.toLocaleDateString('es-CL',{month:'short',year:'2-digit'})})}
+  const rainData=meses12.map(mm=>weather.filter(w=>{const d=new Date(w.fecha);return d.getFullYear()===mm.y&&(d.getMonth()+1)===mm.m}).reduce((s,w)=>s+(parseFloat(w.precipMm)||0),0));
+  if(document.getElementById('chart-rain')){
+    new Chart(document.getElementById('chart-rain'),{type:'bar',data:{labels:meses12.map(m=>m.lbl),datasets:[{label:'Lluvia mm',data:rainData,backgroundColor:'#2563eb'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+  lucideInit();
+}
+async function syncWeatherFromOpenMeteo(){
+  try{
+    toast('Descargando últimos 60 días…');
+    const to=today();const from=addDays(to,-60);
+    const data=await fetchOpenMeteoHistory(from,to);
+    const existing=await getAll('weather');
+    const keyed=Object.fromEntries(existing.map(w=>[w.fecha,w]));
+    let nuevos=0,actual=0;
+    for(const d of data){
+      if(d.tmax==null&&d.tmin==null&&d.precipMm==null)continue;
+      if(keyed[d.fecha]){
+        const prev=keyed[d.fecha];
+        if(prev.source!=='manual'){await put('weather',{...prev,...d,source:'openmeteo'});actual++;}
+      }else{
+        await add('weather',{...d,source:'openmeteo',createdAt:new Date().toISOString()});nuevos++;
+      }
+    }
+    toast(`✓ ${nuevos} nuevos · ${actual} actualizados`);
+    renderWeather();
+  }catch(e){toast('Error: '+e.message,'warn');console.error(e);}
+}
+async function loadWeatherForecast(){
+  try{
+    toast('Cargando pronóstico…');
+    const f=await fetchOpenMeteoForecast();
+    window._wForecast=f;
+    toast('✓ Pronóstico cargado');
+    renderWeather();
+  }catch(e){toast('Error: '+e.message,'warn');console.error(e);}
+}
+async function editWeather(id){
+  const w=id?await get('weather',id):{fecha:today(),tmin:'',tmax:'',precipMm:'',humedad:'',viento:'',notas:'',source:'manual'};
+  openModal(`<h3>${id?'Editar':'Nuevo'} registro climático</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha</label><input id="f-w-fecha" type="date" value="${w.fecha}"></div>
+      <div class="form-row"><label>Temp. mínima (°C)</label><input id="f-w-tmin" type="number" step="0.1" value="${w.tmin!=null?w.tmin:''}"></div>
+      <div class="form-row"><label>Temp. máxima (°C)</label><input id="f-w-tmax" type="number" step="0.1" value="${w.tmax!=null?w.tmax:''}"></div>
+      <div class="form-row"><label>Precipitación (mm)</label><input id="f-w-pp" type="number" step="0.1" value="${w.precipMm!=null?w.precipMm:''}"></div>
+      <div class="form-row"><label>Humedad media (%)</label><input id="f-w-hum" type="number" min="0" max="100" value="${w.humedad!=null?w.humedad:''}"></div>
+      <div class="form-row"><label>Viento máx. (km/h)</label><input id="f-w-vto" type="number" step="0.1" value="${w.viento!=null?w.viento:''}"></div>
+    </div>
+    <div class="form-row"><label>Notas / observaciones</label><textarea id="f-w-notas" rows="2">${w.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button>${id?`<button class="btn danger" onclick="delWeather('${id}')">Eliminar</button>`:''}<button class="btn" onclick="saveWeather(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function saveWeather(id){
+  const data={fecha:document.getElementById('f-w-fecha').value,tmin:parseFloat(document.getElementById('f-w-tmin').value),tmax:parseFloat(document.getElementById('f-w-tmax').value),precipMm:parseFloat(document.getElementById('f-w-pp').value)||0,humedad:parseFloat(document.getElementById('f-w-hum').value)||null,viento:parseFloat(document.getElementById('f-w-vto').value)||null,notas:document.getElementById('f-w-notas').value,source:'manual'};
+  if(!data.fecha){toast('Fecha requerida','warn');return}
+  if(isNaN(data.tmin))data.tmin=null;if(isNaN(data.tmax))data.tmax=null;
+  if(id){data.id=id;await put('weather',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('weather',data)}
+  closeModal();toast('Registro guardado');renderWeather();
+}
+async function delWeather(id){if(!confirm('¿Eliminar registro?'))return;await del('weather',id);closeModal();toast('Eliminado');renderWeather();}
+
+/* ============ ESTUDIOS (suelo / foliar / virus / nematológico / agua / rizoma) ============ */
+let _studiesFiltroTipo='todos';
+function estudioTipo(k){return ESTUDIO_TIPOS.find(t=>t.key===k)||{key:'otro',label:'Otro',icon:'file-text',campos:[]}}
+function estudioResumenVal(e){
+  const t=estudioTipo(e.tipo);const r=e.resultados||{};
+  const items=t.campos.slice(0,3).map(c=>r[c]!=null&&r[c]!==''?`<span class="tag info" style="font-size:10px">${c}: ${r[c]}</span>`:'').filter(Boolean);
+  return items.length?items.join(' '):(e.resumen?`<span style="color:var(--gris);font-size:11px">${e.resumen.slice(0,80)}${e.resumen.length>80?'…':''}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>');
+}
+async function renderStudies(){
+  const [studies,blocks]=await Promise.all([getAll('studies'),getAll('blocks')]);
+  const sorted=[...studies].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const filt=_studiesFiltroTipo==='todos'?sorted:sorted.filter(s=>s.tipo===_studiesFiltroTipo);
+  const counts=Object.fromEntries(ESTUDIO_TIPOS.map(t=>[t.key,studies.filter(s=>s.tipo===t.key).length]));
+  /* Alertas: sin análisis de suelo en últimos 12 meses */
+  const alertas=[];
+  const sueloReciente=studies.filter(s=>s.tipo==='suelo'&&daysBetween(s.fecha,new Date())<=365);
+  if(!sueloReciente.length)alertas.push({tipo:'warn',txt:'Sin análisis de suelo en últimos 12 meses. Abril-mayo es ventana óptima (post-senescencia). Recomendado muestrear y cargar resultados.'});
+  const nemReciente=studies.filter(s=>s.tipo==='nematodos'&&daysBetween(s.fecha,new Date())<=365);
+  if(!nemReciente.length&&blocks.length)alertas.push({tipo:'warn',txt:'Sin muestreo nematológico en últimos 12 meses. Suelos del Maule tienen alta prevalencia de Meloidogyne y Pratylenchus.'});
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Estudios de laboratorio</h2><div class="sub">Análisis de suelo, foliar, agua, virus, nematológico y más</div></div>
+    <button class="btn" onclick="editStudy()"><i data-lucide="plus"></i>Nuevo estudio</button></div>
+    ${alertas.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Alertas</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}"><div class="ab-content">${a.txt}</div></div>`).join('')}</div>`:''}
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Total estudios</div><div class="kpi-icon"><i data-lucide="flask-conical"></i></div></div><div class="value">${studies.length}</div><div class="foot">${studies.filter(s=>daysBetween(s.fecha,new Date())<=90).length} últimos 90 días</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Análisis de suelo</div><div class="kpi-icon"><i data-lucide="layers"></i></div></div><div class="value">${counts.suelo||0}</div><div class="foot">Último: ${studies.filter(s=>s.tipo==='suelo').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0]?.fecha?fmt(studies.filter(s=>s.tipo==='suelo').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0].fecha):'nunca'}</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Nematológico</div><div class="kpi-icon"><i data-lucide="bug"></i></div></div><div class="value">${counts.nematodos||0}</div><div class="foot">${counts.virus||0} virus · ${counts.foliar||0} foliar</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Costo acumulado</div><div class="kpi-icon"><i data-lucide="receipt"></i></div></div><div class="value">$${studies.reduce((s,e)=>s+(parseFloat(e.costo)||0),0).toLocaleString('es-CL')}</div><div class="foot">CLP en análisis</div></div>
+    </div>
+    <div class="card">
+      <div class="filters-bar"><span class="filter-chip ${_studiesFiltroTipo==='todos'?'active':''}" onclick="setStudiesFiltro('todos')">Todos <strong>${studies.length}</strong></span>
+      ${ESTUDIO_TIPOS.map(t=>`<span class="filter-chip ${_studiesFiltroTipo===t.key?'active':''}" onclick="setStudiesFiltro('${t.key}')"><i data-lucide="${t.icon}" style="width:12px;height:12px"></i> ${t.label} <strong>${counts[t.key]||0}</strong></span>`).join('')}</div>
+      <div class="toolbar" style="margin-top:10px"><input class="search-input" placeholder="Buscar laboratorio, cuartel…" oninput="filterStudies(this.value)"></div>
+      <table id="tbl-studies"><thead><tr><th>Fecha</th><th>Tipo</th><th>Laboratorio</th><th>Cuarteles</th><th>Resumen / Resultados</th><th>Archivo</th><th>Costo</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(e=>{const t=estudioTipo(e.tipo);return `<tr><td>${fmt(e.fecha)}</td><td><span class="tag info"><i data-lucide="${t.icon}" style="width:11px;height:11px"></i> ${t.label}</span></td><td><strong>${e.laboratorio||'-'}</strong>${e.codigoMuestra?`<div style="font-size:10px;color:var(--gris)">Cód. ${e.codigoMuestra}</div>`:''}</td><td>${bloquesTags({bloques:e.cuarteles||[]})}</td><td style="max-width:280px">${estudioResumenVal(e)}</td><td>${e.archivo?`<button class="btn small ghost" onclick="viewStudyFile('${e.id}')"><i data-lucide="${fileIcon(e.archivoNombre||'file.pdf')}"></i> Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${e.costo?'$'+parseFloat(e.costo).toLocaleString('es-CL'):'—'}</td><td><button class="btn small ghost" onclick="editStudy('${e.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delStudy('${e.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty"><i data-lucide="flask-conical"></i><div>Sin estudios registrados</div></td></tr>'}</tbody></table>
+    </div>`;
+  lucideInit();
+}
+function setStudiesFiltro(k){_studiesFiltroTipo=k;renderStudies()}
+function filterStudies(v){document.querySelectorAll('#tbl-studies tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+async function editStudy(id){
+  const blocks=await getAll('blocks');
+  const e=id?await get('studies',id):{tipo:'suelo',fecha:today(),laboratorio:'',codigoMuestra:'',cuarteles:[],resumen:'',resultados:{},costo:'',notas:'',archivo:'',archivoNombre:'',archivoTipo:''};
+  const t=estudioTipo(e.tipo);
+  openModal(`<h3>${id?'Editar':'Nuevo'} estudio de laboratorio</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Tipo de estudio</label><select id="f-e-tipo" onchange="rerenderStudyFields()">${ESTUDIO_TIPOS.map(x=>`<option value="${x.key}" ${e.tipo===x.key?'selected':''}>${x.label}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Fecha</label><input id="f-e-fecha" type="date" value="${e.fecha}"></div>
+      <div class="form-row"><label>Laboratorio</label><input id="f-e-lab" value="${e.laboratorio||''}" placeholder="ej. AGQ Labs, INIA, Agrolab"></div>
+      <div class="form-row"><label>Código muestra</label><input id="f-e-cod" value="${e.codigoMuestra||''}" placeholder="N° interno lab"></div>
+      <div class="form-row"><label>Costo (CLP)</label><input id="f-e-costo" type="number" value="${e.costo||''}"></div>
+    </div>
+    <div class="form-row"><label>Cuarteles muestreados <span style="color:var(--gris);font-weight:400;font-size:11px">(uno o varios)</span></label>
+      <div class="checkbox-grid">${blocks.map(b=>`<div class="check-item"><input type="checkbox" id="cbe-${b.id}" class="f-ecuart-chk" value="${b.nombre}" ${(e.cuarteles||[]).includes(b.nombre)?'checked':''}><label for="cbe-${b.id}">${b.nombre}</label></div>`).join('')}</div>
+    </div>
+    <h4><i data-lucide="flask-conical"></i> Resultados clave <span style="color:var(--gris);font-weight:400;font-size:11px">(campos dinámicos según tipo)</span></h4>
+    <div class="form-grid" id="f-e-resultados">${(t.campos||[]).map(c=>`<div class="form-row"><label>${c}</label><input data-campo="${c}" class="f-e-campo" value="${(e.resultados&&e.resultados[c]!=null)?e.resultados[c]:''}"></div>`).join('')}</div>
+    <div class="form-row" style="margin-top:10px"><label>Resumen ejecutivo / Interpretación</label><textarea id="f-e-resumen" rows="3" placeholder="Conclusiones del laboratorio y recomendaciones agronómicas">${e.resumen||''}</textarea></div>
+    <div class="form-row"><label>Notas internas</label><textarea id="f-e-notas" rows="2">${e.notas||''}</textarea></div>
+    <div class="form-row"><label>📎 Archivo del informe (PDF, imagen, Excel)</label>
+      ${e.archivo?`<div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:12px;padding:8px;background:var(--gris-xl);border-radius:6px"><i data-lucide="${fileIcon(e.archivoNombre||'file')}"></i><span>${e.archivoNombre||'archivo'}</span> <button class="btn small ghost" onclick="viewStudyFile('${id}')">Ver</button></div>`:''}
+      <input id="f-e-archivo" type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv">
+      <small style="color:var(--gris);font-size:11px">Max 8MB. Queda adjunto al registro para consulta histórica.</small>
+    </div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveStudy(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+  lucideInit();
+}
+function rerenderStudyFields(){
+  const key=document.getElementById('f-e-tipo').value;const t=estudioTipo(key);
+  document.getElementById('f-e-resultados').innerHTML=(t.campos||[]).map(c=>`<div class="form-row"><label>${c}</label><input data-campo="${c}" class="f-e-campo" value=""></div>`).join('');
+}
+async function saveStudy(id){
+  const cuarteles=Array.from(document.querySelectorAll('.f-ecuart-chk:checked')).map(c=>c.value);
+  const resultados={};
+  document.querySelectorAll('.f-e-campo').forEach(inp=>{const c=inp.getAttribute('data-campo');const v=inp.value.trim();if(v!=='')resultados[c]=v;});
+  const data={tipo:document.getElementById('f-e-tipo').value,fecha:document.getElementById('f-e-fecha').value,laboratorio:document.getElementById('f-e-lab').value,codigoMuestra:document.getElementById('f-e-cod').value,cuarteles:cuarteles,resumen:document.getElementById('f-e-resumen').value,resultados:resultados,costo:parseFloat(document.getElementById('f-e-costo').value)||null,notas:document.getElementById('f-e-notas').value};
+  if(!data.fecha){toast('Fecha requerida','warn');return}
+  const fi=document.getElementById('f-e-archivo');
+  if(fi&&fi.files&&fi.files[0]){
+    const file=fi.files[0];
+    if(file.size>8*1024*1024){toast('Archivo >8MB no permitido','warn');return}
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      data.archivo=ev.target.result;data.archivoNombre=file.name;data.archivoTipo=file.type;
+      await persistStudy(id,data);
+    };reader.readAsDataURL(file);
+  }else{
+    if(id){const prev=await get('studies',id);if(prev){data.archivo=prev.archivo;data.archivoNombre=prev.archivoNombre;data.archivoTipo=prev.archivoTipo}}
+    await persistStudy(id,data);
+  }
+}
+async function persistStudy(id,data){
+  if(id){data.id=id;await put('studies',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('studies',data)}
+  closeModal();toast('Estudio guardado');
+  const t=estudioTipo(data.tipo);
+  notifyHook('Estudio de laboratorio',`${t.label} — ${data.laboratorio||'Laboratorio'}`,`Cuarteles: ${(data.cuarteles||[]).join(', ')||'General'}${data.resumen?'\n📝 '+data.resumen.slice(0,200):''}`,'studies');
+  renderStudies();
+}
+async function delStudy(id){if(!confirm('¿Eliminar estudio?'))return;await del('studies',id);toast('Eliminado');renderStudies();}
+async function viewStudyFile(id){
+  const e=await get('studies',id);
+  if(!e||!e.archivo){toast('Sin archivo adjunto','warn');return}
+  const a=document.createElement('a');a.href=e.archivo;a.download=e.archivoNombre||'estudio';document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ============ PRECIOS DE MERCADO ============ */
+let _pricesFiltroMercado='todos';
+async function renderPrices(){
+  const [prices,blocks]=await Promise.all([getAll('prices'),getAll('blocks')]);
+  const sorted=[...prices].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const filt=_pricesFiltroMercado==='todos'?sorted:sorted.filter(p=>p.mercado===_pricesFiltroMercado);
+  /* Tipos de cambio en vivo */
+  let fx=window._fxRates||null;
+  /* KPIs */
+  const last30=prices.filter(p=>daysBetween(p.fecha,new Date())<=30);
+  const avgSarah=last30.filter(p=>p.variedad==='Sarah Bernhardt');
+  const priceInEUR=(p)=>{if(!fx)return null;const v=parseFloat(p.precioUnit)||0;if(p.moneda==='EUR')return v;if(p.moneda==='USD')return v*(fx.EUR_USD?1/fx.EUR_USD:0.92);if(p.moneda==='CLP')return v/(fx.EUR_CLP||1050);return v};
+  const avgSarahEUR=avgSarah.length&&fx?avgSarah.reduce((s,p)=>s+(priceInEUR(p)||0),0)/avgSarah.length:null;
+  /* Proyección cosecha Y3+ */
+  const tallsProj=blocks.reduce((sum,b)=>{const anios=Math.floor(daysBetween(b.plantacion,new Date())/365)+1;const stPerPlant=anios<=2?0:anios===3?3:anios===4?8:12;return sum+(b.cantidad||0)*stPerPlant},0);
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Precios de mercado</h2><div class="sub">Seguimiento manual + tipo de cambio en vivo + proyecciones de venta</div></div>
+    <div class="actions"><button class="btn secondary" onclick="fetchExchangeRates()"><i data-lucide="refresh-cw"></i>Actualizar tipos de cambio</button><button class="btn" onclick="editPrice()"><i data-lucide="plus"></i>Nuevo precio</button></div></div>
+    <div class="alert-box info"><i data-lucide="info"></i><div class="ab-content"><strong>¿Cómo alimentar esto?</strong> No existe API pública gratuita con precios por tallo de peonía. Recomendación: cada lunes ingresa manualmente los promedios de la <a href="https://www.royalfloraholland.com/en/the-marketplace/facts-and-figures" target="_blank">subasta Royal FloraHolland</a> + consultas a tu exportador o importadores. La plataforma convierte todo a EUR/USD/CLP automáticamente con el tipo de cambio del día.</div></div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Registros de precios</div><div class="kpi-icon"><i data-lucide="line-chart"></i></div></div><div class="value">${prices.length}</div><div class="foot">${last30.length} últimos 30 días</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Precio prom. Sarah B.</div><div class="kpi-icon"><i data-lucide="euro"></i></div></div><div class="value">${avgSarahEUR!=null?'€'+avgSarahEUR.toFixed(2):'—'}</div><div class="foot">Por tallo · últimos 30d · ${avgSarah.length} regs.</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Tallos proyectados</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${tallsProj.toLocaleString('es-CL')}</div><div class="foot">Según edad cuarteles (Y1:0 · Y3:3 · Y4:8 · Y5+:12 t/planta)</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Ingreso estimado bruto</div><div class="kpi-icon"><i data-lucide="dollar-sign"></i></div></div><div class="value">${avgSarahEUR!=null?'€'+(avgSarahEUR*tallsProj).toLocaleString('es-CL',{maximumFractionDigits:0}):'—'}</div><div class="foot">Proyección simple · FOB Aalsmeer equivalente</div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><i data-lucide="refresh-cw"></i>Tipos de cambio actuales</h3>
+        ${fx?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+          <div style="padding:10px;background:var(--gris-xl);border-radius:6px"><div style="color:var(--gris);font-size:11px;text-transform:uppercase;font-weight:600">EUR → USD</div><div style="font-size:18px;font-weight:700">${(1/fx.EUR_USD).toFixed(4)}</div></div>
+          <div style="padding:10px;background:var(--gris-xl);border-radius:6px"><div style="color:var(--gris);font-size:11px;text-transform:uppercase;font-weight:600">EUR → CLP</div><div style="font-size:18px;font-weight:700">${fx.EUR_CLP?fx.EUR_CLP.toFixed(0):'—'}</div></div>
+          <div style="padding:10px;background:var(--gris-xl);border-radius:6px"><div style="color:var(--gris);font-size:11px;text-transform:uppercase;font-weight:600">USD → CLP</div><div style="font-size:18px;font-weight:700">${fx.USD_CLP?fx.USD_CLP.toFixed(0):'—'}</div></div>
+          <div style="padding:10px;background:var(--gris-xl);border-radius:6px"><div style="color:var(--gris);font-size:11px;text-transform:uppercase;font-weight:600">Actualizado</div><div style="font-size:14px;font-weight:600">${fx.ts?new Date(fx.ts).toLocaleString('es-CL'):'-'}</div></div>
+        </div>`:'<div class="empty"><i data-lucide="refresh-cw"></i><div>Haz clic en <strong>Actualizar tipos de cambio</strong> para traer datos en vivo (mindicador.cl + exchangerate.host)</div></div>'}
+      </div>
+      <div class="card">
+        <h3><i data-lucide="external-link"></i>Fuentes de referencia</h3>
+        ${FUENTES_PRECIOS.map(f=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><a href="${f.url}" target="_blank" style="font-weight:600;color:var(--verde-d);text-decoration:none">${f.nombre} <i data-lucide="external-link" style="width:11px;height:11px"></i></a><div style="font-size:11.5px;color:var(--gris);margin-top:2px">${f.desc}</div></div>`).join('')}
+        <div style="margin-top:10px;font-size:11px;color:var(--gris)">💡 Tip: suscríbete al newsletter gratuito de Rabobank Floriculture — llega mensualmente con precios y tendencias.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="filters-bar"><span class="filter-chip ${_pricesFiltroMercado==='todos'?'active':''}" onclick="setPricesFiltro('todos')">Todos <strong>${prices.length}</strong></span>
+      ${MERCADOS.map(m=>{const n=prices.filter(p=>p.mercado===m).length;return n?`<span class="filter-chip ${_pricesFiltroMercado===m?'active':''}" onclick="setPricesFiltro('${m.replace(/'/g,"\\'")}')">${m} <strong>${n}</strong></span>`:''}).join('')}</div>
+      <div class="toolbar" style="margin-top:10px"><input class="search-input" placeholder="Buscar variedad, mercado…" oninput="filterPrices(this.value)"></div>
+      <table id="tbl-prices"><thead><tr><th>Semana</th><th>Mercado</th><th>Variedad</th><th>Grado</th><th>Precio / tallo</th><th>≈ EUR</th><th>≈ CLP</th><th>Volumen</th><th>Notas</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(p=>{const eur=priceInEUR(p);const clp=eur&&fx&&fx.EUR_CLP?eur*fx.EUR_CLP:null;return `<tr><td>${fmt(p.fecha)}</td><td><span class="tag info">${p.mercado||'-'}</span></td><td><strong>${p.variedad||'-'}</strong></td><td>${p.grado||'-'}</td><td><strong>${p.precioUnit} ${p.moneda}</strong></td><td>${eur!=null?'€'+eur.toFixed(2):'—'}</td><td>${clp!=null?'$'+Math.round(clp).toLocaleString('es-CL'):'—'}</td><td>${p.volumen||'—'}</td><td style="font-size:11px;color:var(--gris);max-width:180px">${p.notas||'—'}</td><td><button class="btn small ghost" onclick="editPrice('${p.id}')"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delPrice('${p.id}')"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="10" class="empty"><i data-lucide="line-chart"></i><div>Sin precios registrados</div></td></tr>'}</tbody></table>
+    </div>
+    ${prices.length>=3?`<div class="card"><h3><i data-lucide="trending-up"></i>Evolución de precios (tallo EUR equivalente)</h3><div class="chart-container"><canvas id="chart-prices"></canvas></div></div>`:''}`;
+  if(prices.length>=3&&document.getElementById('chart-prices')){
+    const vars=[...new Set(prices.map(p=>p.variedad))];
+    const colors={'Sarah Bernhardt':'#e8a7b8','Bowl of Cream':'#f59e0b','Festiva Maxima':'#94a3b8','Red Charm':'#dc2626','Duchesse de Nemours':'#2563eb','Coral Charm':'#fb923c'};
+    const semanasUnicas=[...new Set(prices.map(p=>p.fecha))].sort();
+    const datasets=vars.map(v=>({label:v,data:semanasUnicas.map(f=>{const ps=prices.filter(p=>p.variedad===v&&p.fecha===f);if(!ps.length)return null;const avg=ps.reduce((s,p)=>s+(priceInEUR(p)||0),0)/ps.length;return Math.round(avg*100)/100}),borderColor:colors[v]||'#64748b',backgroundColor:(colors[v]||'#64748b')+'33',tension:.2,spanGaps:true}));
+    new Chart(document.getElementById('chart-prices'),{type:'line',data:{labels:semanasUnicas,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'EUR / tallo'}}}}});
+  }
+  lucideInit();
+}
+function setPricesFiltro(m){_pricesFiltroMercado=m;renderPrices()}
+function filterPrices(v){document.querySelectorAll('#tbl-prices tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+async function fetchExchangeRates(){
+  try{
+    toast('Consultando tipos de cambio…');
+    /* mindicador.cl (UF, USD, EUR vs CLP) */
+    let EUR_CLP=null,USD_CLP=null,EUR_USD=null;
+    try{const r=await fetch('https://mindicador.cl/api');if(r.ok){const d=await r.json();USD_CLP=d.dolar?.valor;EUR_CLP=d.euro?.valor;if(USD_CLP&&EUR_CLP)EUR_USD=EUR_CLP/USD_CLP;}}catch(e){}
+    /* Fallback exchangerate.host */
+    if(!EUR_CLP||!USD_CLP){
+      try{const r=await fetch('https://api.exchangerate.host/latest?base=EUR&symbols=USD,CLP');if(r.ok){const d=await r.json();if(d.rates){EUR_CLP=EUR_CLP||d.rates.CLP;EUR_USD=EUR_USD||(1/d.rates.USD);USD_CLP=USD_CLP||(EUR_CLP/EUR_USD);}}}catch(e){}
+    }
+    if(!EUR_CLP&&!USD_CLP)throw new Error('No se pudo obtener tipos de cambio');
+    window._fxRates={EUR_CLP,USD_CLP,EUR_USD,ts:new Date().toISOString()};
+    toast('✓ Tipos de cambio actualizados');
+    renderPrices();
+  }catch(e){toast('Error: '+e.message,'warn');console.error(e);}
+}
+async function editPrice(id){
+  const p=id?await get('prices',id):{fecha:today(),mercado:'Royal FloraHolland (subasta)',variedad:'Sarah Bernhardt',grado:'A',precioUnit:'',moneda:'EUR',volumen:'',notas:''};
+  openModal(`<h3>${id?'Editar':'Nuevo'} registro de precio</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha (semana)</label><input id="f-p-fecha" type="date" value="${p.fecha}"></div>
+      <div class="form-row"><label>Mercado</label><select id="f-p-merc">${MERCADOS.map(m=>`<option ${p.mercado===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Variedad</label><select id="f-p-var">${VARIEDADES_PRECIO.map(v=>`<option ${p.variedad===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Grado</label><select id="f-p-grado">${GRADOS_PRECIO.map(g=>`<option value="${g.key}" ${p.grado===g.key?'selected':''}>${g.label}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Precio unitario (por tallo)</label><input id="f-p-prec" type="number" step="0.01" value="${p.precioUnit||''}"></div>
+      <div class="form-row"><label>Moneda</label><select id="f-p-mon">${MONEDAS.map(m=>`<option ${p.moneda===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Volumen / contexto</label><input id="f-p-vol" value="${p.volumen||''}" placeholder="ej. 15.000 tallos semana"></div>
+    </div>
+    <div class="form-row"><label>Notas</label><textarea id="f-p-notas" rows="2">${p.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button>${id?`<button class="btn danger" onclick="delPrice('${id}')">Eliminar</button>`:''}<button class="btn" onclick="savePrice(${id?`'${id}'`:'null'})">Guardar</button></div>`);
+}
+async function savePrice(id){
+  const data={fecha:document.getElementById('f-p-fecha').value,mercado:document.getElementById('f-p-merc').value,variedad:document.getElementById('f-p-var').value,grado:document.getElementById('f-p-grado').value,precioUnit:parseFloat(document.getElementById('f-p-prec').value)||0,moneda:document.getElementById('f-p-mon').value,volumen:document.getElementById('f-p-vol').value,notas:document.getElementById('f-p-notas').value};
+  if(!data.precioUnit){toast('Precio requerido','warn');return}
+  if(id){data.id=id;await put('prices',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('prices',data)}
+  closeModal();toast('Precio guardado');renderPrices();
+}
+async function delPrice(id){if(!confirm('¿Eliminar registro?'))return;await del('prices',id);if(document.getElementById('modal').classList.contains('open'))closeModal();toast('Eliminado');renderPrices();}
+
+/* ============ HITOS (notificación manual) ============ */
+async function openHitoModal(){
+  const blocks=await getAll('blocks');
+  openModal(`<h3>📌 Registrar hito importante</h3>
+    <p style="font-size:12.5px;color:var(--gris);margin:0 0 10px">Los hitos se guardan en la bitácora y se notifican automáticamente al grupo de socios (WhatsApp/Telegram) si tienes las notificaciones activas.</p>
+    <div class="form-grid">
+      <div class="form-row"><label>Título</label><input id="f-h-tit" placeholder="ej. Primer botón coloreado observado"></div>
+      <div class="form-row"><label>Categoría</label><select id="f-h-cat"><option>Fenología</option><option>Sanidad</option><option>Cosecha</option><option>Comercial</option><option>Operaciones</option><option>Riesgo</option><option>Otro</option></select></div>
+    </div>
+    <div class="form-row"><label>Cuartel (opcional)</label><select id="f-h-bloq"><option value="">General</option>${blocks.map(b=>`<option>${b.nombre}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Descripción</label><textarea id="f-h-desc" rows="4" placeholder="Detalles para los socios"></textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveHito()"><i data-lucide="send"></i>Guardar y notificar</button></div>`);
+  lucideInit();
+}
+async function saveHito(){
+  const titulo=document.getElementById('f-h-tit').value.trim();
+  if(!titulo){toast('Título requerido','warn');return}
+  const data={titulo,categoria:document.getElementById('f-h-cat').value,bloque:document.getElementById('f-h-bloq').value,descripcion:document.getElementById('f-h-desc').value,fecha:today(),createdBy:CURRENT_USER,createdAt:new Date().toISOString()};
+  await add('hitos',data);
+  closeModal();toast('Hito registrado y notificado ✓');
+  notifyHook('Hito importante',`${data.categoria}: ${titulo}`,`${data.bloque?'Cuartel: '+data.bloque+'\n':''}${data.descripcion||''}`,'hitos');
+  if(currentPage==='dashboard')renderDashboard();
+}
+
+/* ============ INFORMES ============ */
+async function renderReports(){
+  const [tasks,apps,photos,points,blocks]=await Promise.all([getAll('tasks'),getAll('applications'),getAll('photos'),getAll('photopoints'),getAll('blocks')]);
+  const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
+  const hoy=new Date();
+  /* Análisis fenológico */
+  const fasesPorPunto={};
+  points.forEach(p=>{
+    const fp=photos.filter(f=>f.pointId===p.id).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+    fasesPorPunto[p.id]=fp;
+  });
+  /* Alertas sanitarias automáticas */
+  const alertasSanitarias=[];
+  const mes=hoy.getMonth()+1;
+  const ultAppMonth=apps.filter(a=>daysBetween(a.fecha,hoy)<=30);
+  blocks.forEach(b=>{
+    const appBlock=ultAppMonth.filter(a=>bloqueMatch(a,b.nombre));
+    if(mes>=9&&mes<=11){
+      const fung=appBlock.filter(a=>a.categoria==='Fungicida');
+      if(fung.length===0)alertasSanitarias.push({tipo:'warn',bloque:b.nombre,msg:'Sin fungicida preventivo en últimos 30 días durante período crítico (botoneo/floración). Considerar aplicación preventiva contra Botrytis.'});
+    }
+  });
+  /* Labores sin frecuencia esperada */
+  const monitoreos=tasks.filter(t=>t.nombre&&t.nombre.toLowerCase().includes('monitoreo')&&daysBetween(t.fecha,hoy)<=14);
+  if(mes>=9&&mes<=11&&monitoreos.length===0)alertasSanitarias.push({tipo:'warn',bloque:'General',msg:'No hay monitoreos fitosanitarios en últimas 2 semanas. En temporada activa se recomienda monitoreo semanal.'});
+  /* Costos horas-hombre */
+  const hhUltMes=tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).reduce((s,t)=>s+(parseFloat(t.horas)||0),0);
+  const hhPorCat={};
+  tasks.forEach(t=>{hhPorCat[t.categoria||'Sin categoría']=(hhPorCat[t.categoria||'Sin categoría']||0)+(parseFloat(t.horas)||0)});
+  /* Total aplicaciones por categoría */
+  const appPorCat={};apps.forEach(a=>{appPorCat[a.categoria||'Otro']=(appPorCat[a.categoria||'Otro']||0)+1});
+
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Informes comparativos</h2><div class="sub">Análisis automatizado de datos registrados</div></div>
+    <button class="btn secondary" onclick="exportReport()">📄 Exportar informe</button></div>
+
+    <div class="card" id="report-printable">
+      <h3>🌸 Informe general Santa Ana Peonías</h3>
+      <p style="font-size:12px;color:var(--gris)">Generado el ${fmtLong(hoy)}</p>
+
+      <h3 style="margin-top:20px">🌿 Evolución fenológica por punto</h3>
+      ${points.map(p=>{const fs=fasesPorPunto[p.id];if(!fs.length)return `<div class="alert-box warn"><strong>${p.codigo} · ${p.nombre}</strong>: Sin fotografías registradas.</div>`;
+        const fases=[...new Set(fs.map(f=>f.fase).filter(Boolean))];
+        const primera=fs[0],ultima=fs[fs.length-1];
+        const dias=daysBetween(primera.fecha,ultima.fecha);
+        return `<div style="padding:12px;border:1px solid var(--gris-l);border-radius:8px;margin-bottom:10px">
+          <strong>${p.codigo} · ${p.nombre}</strong> <span class="tag info">${p.bloque}</span>
+          <div style="font-size:12px;margin-top:5px;color:var(--gris)">${fs.length} fotografías · ${dias} días cubiertos · Desde ${fmt(primera.fecha)} hasta ${fmt(ultima.fecha)}</div>
+          <div style="margin-top:6px;font-size:12px"><strong>Fases observadas:</strong> ${fases.length?fases.map(f=>`<span class="tag ok">${f}</span>`).join(' '):'<em>sin fase registrada</em>'}</div>
+        </div>`}).join('')}
+
+      <h3 style="margin-top:20px">🧑‍🌾 Bitácora de labores</h3>
+      <div class="grid grid-2">
+        <div><strong>Resumen total</strong><table style="margin-top:8px"><tr><th>Categoría</th><th>Horas-hombre</th></tr>${Object.entries(hhPorCat).map(([k,v])=>`<tr><td>${k}</td><td>${v.toFixed(1)} h</td></tr>`).join('')}</table></div>
+        <div><strong>Últimos 30 días</strong><div class="kpi" style="margin-top:8px"><div class="label">Horas-hombre</div><div class="value">${hhUltMes.toFixed(1)}</div><div class="foot">${tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).length} labores</div></div></div>
+      </div>
+
+      <h3 style="margin-top:20px">💧 Aplicaciones</h3>
+      <table><tr><th>Categoría</th><th>Total aplicaciones</th><th>Últimos 30 días</th></tr>
+      ${Object.entries(appPorCat).map(([cat,n])=>{const n30=apps.filter(a=>a.categoria===cat&&daysBetween(a.fecha,hoy)<=30).length;return `<tr><td>${cat}</td><td>${n}</td><td>${n30}</td></tr>`}).join('')}
+      </table>
+
+      <h3 style="margin-top:20px">⚠️ Alertas sanitarias y recomendaciones</h3>
+      ${alertasSanitarias.length?alertasSanitarias.map(a=>`<div class="alert-box ${a.tipo}"><strong>${a.bloque}:</strong> ${a.msg}</div>`).join(''):'<div class="alert-box ok">✓ Sin alertas sanitarias automatizadas detectadas en este momento.</div>'}
+
+      <h3 style="margin-top:20px">📋 Recomendaciones del mes actual</h3>
+      <div class="alert-box info"><strong>${fenologia(mes).fase}</strong><br>${fenologia(mes).desc}</div>
+      <div style="font-size:12px">
+        <strong>Labores típicas para ${new Date().toLocaleDateString('es-CL',{month:'long'})}:</strong>
+        <ul style="margin-left:20px;margin-top:5px">${LABOR_TEMPLATES.filter(l=>l.mes.includes(mes)).map(l=>`<li><strong>${l.nombre}</strong> (${l.cat}): ${l.desc}</li>`).join('')}</ul>
+      </div>
+
+      <h3 style="margin-top:20px">📸 Comparador de puntos (vista reducida)</h3>
+      ${points.filter(p=>fasesPorPunto[p.id].length>=2).slice(0,4).map(p=>{const fs=fasesPorPunto[p.id];const first=fs[0],last=fs[fs.length-1];return `<div style="margin-bottom:15px"><strong>${p.codigo} · ${p.nombre}</strong>
+        <div class="compare-grid" style="margin-top:8px"><div class="compare-col"><img src="${first.img}"><div class="meta"><strong>${fmt(first.fecha)}</strong> · ${first.fase||''}</div></div><div class="compare-col"><img src="${last.img}"><div class="meta"><strong>${fmt(last.fecha)}</strong> · ${last.fase||''} (${daysBetween(first.fecha,last.fecha)} días después)</div></div></div></div>`}).join('')}
+    </div>`;
+}
+
+async function exportReport(){
+  const div=document.getElementById('report-printable');
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Informe Santa Ana Peonías</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:30px;max-width:900px;margin:auto;line-height:1.5;color:#333}h3{color:#2f5d3a;margin-top:20px;border-bottom:1px solid #ddd;padding-bottom:4px}img{max-width:100%;border-radius:4px}table{border-collapse:collapse;width:100%}th,td{padding:6px;border:1px solid #ddd;font-size:12px;text-align:left}th{background:#faf7f2}.alert-box{padding:10px;border-left:4px solid #4a7c59;margin:8px 0;font-size:13px;background:#f9fafb}.alert-box.warn{border-color:#f59e0b}.alert-box.danger{border-color:#dc2626}.alert-box.ok{border-color:#059669;background:#f0fdf4}.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:#eef;margin-right:4px}.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:10px;background:#fafafa;border-radius:6px}.kpi .label{font-size:11px;color:#666}.kpi .value{font-size:24px;font-weight:bold;color:#2f5d3a}.kpi .foot{font-size:11px;color:#666}.grid{display:grid;gap:15px}.grid-2{grid-template-columns:1fr 1fr}</style></head><body>${div.innerHTML}<script>window.print()<\/script></body></html>`);
+}
+
+/* ============ RESPALDO / CONFIGURACIÓN ============ */
+async function renderSettings(){
+  const [blocks,points,photos,tasks,apps,studies,prices,hitos]=await Promise.all([getAll('blocks'),getAll('photopoints'),getAll('photos'),getAll('tasks'),getAll('applications'),getAll('studies'),getAll('prices'),getAll('hitos')]);
+  let sizeEst=0;photos.forEach(p=>{sizeEst+=(p.img||'').length*0.75});
+  const cfg=await getNotifyConfig();
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Respaldo y avisos</h2><div class="sub">Notificaciones WhatsApp/Telegram, respaldo y configuración</div></div></div>
+
+    <div class="card">
+      <h3><i data-lucide="bell"></i>Notificaciones al grupo de socios</h3>
+      <p style="font-size:13px;color:var(--gris);margin:0 0 12px">Cada vez que se registre una aplicación, labor, hito o crítica de inventario, la plataforma envía un mensaje resumen + link al grupo configurado. Funciona con <strong>CallMeBot (WhatsApp)</strong>, <strong>Telegram Bot</strong>, <strong>Zapier/Make webhook</strong> o cualquier otro endpoint HTTP.</p>
+      <div class="form-grid">
+        <div class="form-row"><label>Habilitar notificaciones</label><select id="cfg-enabled"><option value="true" ${cfg.enabled?'selected':''}>Sí (activo)</option><option value="false" ${!cfg.enabled?'selected':''}>No</option></select></div>
+        <div class="form-row"><label>Tipo de servicio</label><select id="cfg-type">
+          <option value="generic" ${cfg.webhookType==='generic'?'selected':''}>Webhook genérico (Zapier / Make / n8n / propio)</option>
+          <option value="callmebot" ${cfg.webhookType==='callmebot'?'selected':''}>CallMeBot (WhatsApp 1:1 gratis)</option>
+          <option value="telegram" ${cfg.webhookType==='telegram'?'selected':''}>Telegram Bot (grupo)</option>
+          <option value="slack" ${cfg.webhookType==='slack'?'selected':''}>Slack Webhook</option>
+          <option value="discord" ${cfg.webhookType==='discord'?'selected':''}>Discord Webhook</option>
+        </select></div>
+      </div>
+      <div class="form-row"><label>URL del webhook</label><input id="cfg-url" value="${cfg.webhookUrl||''}" placeholder="https://..."></div>
+      <div class="form-row" id="cfg-tgrow" style="${cfg.webhookType==='telegram'?'':'display:none'}"><label>Chat ID Telegram (opcional si ya va en la URL)</label><input id="cfg-tgchat" value="${cfg.telegramChatId||''}" placeholder="-100123456789 (grupo) o ID personal"></div>
+      <h4 style="margin-top:18px"><i data-lucide="filter"></i>¿Qué eventos notificar?</h4>
+      <div class="checkbox-grid">
+        <div class="check-item"><input type="checkbox" id="cfg-ev-apps" ${cfg.events?.apps!==false?'checked':''}><label for="cfg-ev-apps">💧 Aplicaciones (fitos / fertilizantes)</label></div>
+        <div class="check-item"><input type="checkbox" id="cfg-ev-tasks" ${cfg.events?.tasks!==false?'checked':''}><label for="cfg-ev-tasks">🧑‍🌾 Labores (nuevas y realizadas)</label></div>
+        <div class="check-item"><input type="checkbox" id="cfg-ev-inv" ${cfg.events?.inventory?'checked':''}><label for="cfg-ev-inv">📦 Inventario crítico (stock bajo/agotado)</label></div>
+        <div class="check-item"><input type="checkbox" id="cfg-ev-std" ${cfg.events?.studies!==false?'checked':''}><label for="cfg-ev-std">🧪 Estudios de laboratorio</label></div>
+        <div class="check-item"><input type="checkbox" id="cfg-ev-pri" ${cfg.events?.prices?'checked':''}><label for="cfg-ev-pri">💶 Precios de mercado</label></div>
+        <div class="check-item"><input type="checkbox" id="cfg-ev-hit" ${cfg.events?.hitos!==false?'checked':''}><label for="cfg-ev-hit">📌 Hitos importantes (manuales)</label></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveSettingsNotif()"><i data-lucide="save"></i>Guardar configuración</button><button class="btn secondary" onclick="testWebhook()"><i data-lucide="send"></i>Probar envío</button></div>
+      <details style="margin-top:15px;padding:12px;background:var(--gris-xl);border-radius:var(--radio-sm);font-size:12.5px">
+        <summary style="cursor:pointer;font-weight:600;color:var(--verde-d)">📖 Cómo configurar cada opción</summary>
+        <div style="margin-top:10px;line-height:1.7">
+          <p><strong>🟢 CallMeBot WhatsApp (más fácil, gratis, 1:1 a cada socio):</strong></p>
+          <ol style="margin-left:18px">
+            <li>En WhatsApp, cada socio agrega el contacto <strong>+34 644 56 90 92</strong> y le envía el mensaje <code>I allow callmebot to send me messages</code>.</li>
+            <li>Esperar el mensaje de respuesta con la API key personal.</li>
+            <li>URL de ejemplo: <code>https://api.callmebot.com/whatsapp.php?phone=+56912345678&apikey=1234567</code></li>
+            <li>Limitación: solo envía a un teléfono por webhook. Para los 4 socios: usar Zapier/Make para "fanout" a 4 llamadas, o elegir Telegram.</li>
+          </ol>
+          <p style="margin-top:10px"><strong>🔵 Telegram Bot (mejor para grupos, gratis):</strong></p>
+          <ol style="margin-left:18px">
+            <li>En Telegram hablar con <code>@BotFather</code> → <code>/newbot</code> → copiar TOKEN.</li>
+            <li>Crear grupo "Santa Ana Socios", agregar al bot como miembro.</li>
+            <li>Enviar un mensaje cualquiera al grupo. Luego abrir en navegador: <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> y copiar el <code>chat.id</code> (empieza con <code>-100...</code>).</li>
+            <li>URL webhook: <code>https://api.telegram.org/bot&lt;TOKEN&gt;/sendMessage</code>, Chat ID: el <code>-100...</code></li>
+          </ol>
+          <p style="margin-top:10px"><strong>⚙️ Zapier/Make/n8n (WhatsApp grupo oficial):</strong></p>
+          <ol style="margin-left:18px">
+            <li>Crear Zap con trigger "Webhook by Zapier → Catch Hook" y pegar la URL del webhook en esta plataforma.</li>
+            <li>Action "WhatsApp Business by Meta" o "WhatsApp by Twilio" → enviar mensaje al grupo.</li>
+            <li>En el mensaje usa los campos <code>{{titulo}}</code>, <code>{{mensaje}}</code>, <code>{{usuario}}</code>, <code>{{fecha}}</code>, <code>{{url}}</code>, <code>{{text}}</code> (este último trae el mensaje armado en Markdown).</li>
+          </ol>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3><i data-lucide="map-pin"></i>Ubicación del huerto</h3>
+      <p style="font-size:13px;color:var(--gris);margin:0 0 8px">Usada por el módulo <strong>Clima</strong> para sincronizar con Open-Meteo. Ya configurada: <strong>${FINCA_COORDS.nombre}</strong> (${FINCA_COORDS.lat}, ${FINCA_COORDS.lon}).</p>
+      <p style="font-size:12px;color:var(--gris)">Para cambiar, ajusta <code>FINCA_COORDS</code> en el código HTML.</p>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>📤 Exportar respaldo completo</h3>
+        <p style="font-size:13px;color:var(--gris)">Descarga un archivo JSON con toda tu información. Guárdalo en Google Drive o disco externo mensualmente.</p>
+        <div style="margin:15px 0;font-size:12px;background:var(--gris-xl);padding:10px;border-radius:6px">
+          <strong>Contenido del respaldo:</strong><br>
+          • ${blocks.length} cuarteles · ${points.length} puntos foto · ${photos.length} fotos (~${(sizeEst/1024/1024).toFixed(1)} MB)<br>
+          • ${tasks.length} labores · ${apps.length} aplicaciones<br>
+          • ${studies.length} estudios · ${prices.length} precios · ${hitos.length} hitos<br>
+          • + Inventario, asesores, clima, configuración
+        </div>
+        <button class="btn" onclick="exportAll()"><i data-lucide="download"></i>Descargar respaldo JSON</button>
+      </div>
+      <div class="card">
+        <h3>📥 Importar respaldo</h3>
+        <p style="font-size:13px;color:var(--gris)">Restaura datos desde un archivo JSON. <strong style="color:var(--rosa-d)">Atención:</strong> "Reemplazar" borra todo primero.</p>
+        <input type="file" id="imp-file" accept=".json" style="margin-top:10px">
+        <div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="importAll(false)">Agregar</button><button class="btn danger" onclick="importAll(true)">Reemplazar todo</button></div>
+      </div>
+      <div class="card">
+        <h3>🗑️ Limpiar datos</h3>
+        <p style="font-size:13px;color:var(--gris)">Elimina todos los datos permanentemente. Usa con precaución.</p>
+        <button class="btn danger" onclick="wipeAll()" style="margin-top:10px">Borrar toda la base</button>
+      </div>
+      <div class="card">
+        <h3>ℹ️ Información</h3>
+        <div style="font-size:13px">
+          <p><strong>Almacenamiento:</strong> Firebase Firestore (Google) + caché local offline.</p>
+          <p><strong>Proyecto:</strong> ${FIREBASE_CONFIG.projectId}</p>
+          <p><strong>Sincronización:</strong> Tiempo real entre los 4 usuarios.</p>
+          <p><strong>Respaldo sugerido:</strong> JSON mensual aunque Firebase sea confiable.</p>
+          <p><strong>Versión:</strong> 3.0 · Clima + Estudios + Precios + Avisos · Abr 2026</p>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('cfg-type').addEventListener('change',e=>{document.getElementById('cfg-tgrow').style.display=e.target.value==='telegram'?'':'none'});
+  lucideInit();
+}
+async function saveSettingsNotif(){
+  const cfg={id:'notifications',enabled:document.getElementById('cfg-enabled').value==='true',webhookType:document.getElementById('cfg-type').value,webhookUrl:document.getElementById('cfg-url').value.trim(),telegramChatId:document.getElementById('cfg-tgchat')?document.getElementById('cfg-tgchat').value.trim():'',events:{apps:document.getElementById('cfg-ev-apps').checked,tasks:document.getElementById('cfg-ev-tasks').checked,inventory:document.getElementById('cfg-ev-inv').checked,studies:document.getElementById('cfg-ev-std').checked,prices:document.getElementById('cfg-ev-pri').checked,hitos:document.getElementById('cfg-ev-hit').checked}};
+  await saveNotifyConfig(cfg);toast('✓ Configuración guardada');
+}
+async function exportAll(){
+  const data={exported:new Date().toISOString(),version:1};
+  for(const s of STORES)data[s]=await getAll(s);
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`santaana_backup_${today()}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Respaldo descargado');
+}
+async function importAll(replace){
+  const f=document.getElementById('imp-file').files[0];
+  if(!f){toast('Selecciona un archivo','warn');return}
+  if(replace&&!confirm('¿Reemplazar TODO? Esto borrará los datos actuales.'))return;
+  const text=await f.text();
+  const data=JSON.parse(text);
+  if(replace){for(const s of STORES){const items=await getAll(s);for(const i of items)await del(s,i.id)}}
+  for(const s of STORES){if(data[s])for(const item of data[s]){delete item.id;await add(s,item)}}
+  toast('Importación completada');renderSettings();
+}
+async function wipeAll(){
+  if(!confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.'))return;
+  if(!confirm('¿Estás absolutamente seguro?'))return;
+  for(const s of STORES){const items=await getAll(s);for(const i of items)await del(s,i.id)}
+  toast('Base vaciada');await seedIfEmpty();renderSettings();
+}
+
+/* ============ LOGIN / LOGOUT (Firebase Auth) ============ */
+function renderLogin(){
+  document.getElementById('login').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-error').style.display='none';
+  document.getElementById('login-password').value='';
+  lucideInit();
+}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  if(!email||!pw){errEl.textContent='Selecciona usuario e ingresa contraseña';errEl.style.display='block';return}
+  try{
+    errEl.textContent='Conectando...';errEl.style.color='#6b7280';errEl.style.display='block';
+    await FB_AUTH.signInWithEmailAndPassword(email,pw);
+    errEl.style.display='none';
+    /* onAuthStateChanged se encargará de entrar */
+  }catch(e){
+    errEl.style.color='#dc2626';
+    let msg='Error de login';
+    if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')msg='Contraseña incorrecta';
+    else if(e.code==='auth/user-not-found')msg='Usuario no existe en el sistema';
+    else if(e.code==='auth/too-many-requests')msg='Demasiados intentos. Espera unos minutos.';
+    else if(e.code==='auth/network-request-failed')msg='Sin conexión a internet';
+    else msg='Error: '+(e.message||e.code);
+    errEl.textContent=msg;errEl.style.display='block';
+  }
+}
+function renderUserPill(){
+  const u=userById(CURRENT_USER);
+  const status=CONN_STATUS==='online'?'<span style="color:#86efac">● online</span>':'<span style="color:#fde68a">● offline</span>';
+  document.getElementById('user-pill').innerHTML=`<div class="av" style="background:${u.color}">${u.avatar}</div><div class="info"><b>${u.nombre}</b><small>${status} · cerrar sesión</small></div>`;
+}
+async function logout(){
+  if(!confirm('¿Cerrar sesión?'))return;
+  unsubscribeAll();
+  await FB_AUTH.signOut();
+  CURRENT_USER=null;
+}
+
+/* ============ SINCRONIZACIÓN EN TIEMPO REAL ============ */
+function setupRealtimeSync(){
+  /* Refresca la página actual cuando cambian datos en cualquier colección */
+  STORES.forEach(store=>{
+    subscribe(store,()=>{
+      if(PAGES[currentPage])PAGES[currentPage]();
+    });
+  });
+  /* Estado de conexión visible */
+  FB_DB.collection('_status').doc('heartbeat').onSnapshot({includeMetadataChanges:true},snap=>{
+    CONN_STATUS=snap.metadata.fromCache?'offline':'online';
+    if(CURRENT_USER)renderUserPill();
+  },()=>{CONN_STATUS='online';if(CURRENT_USER)renderUserPill();});
+}
+
+/* ============ INIT ============ */
+(async()=>{
+  if(!fbInit())return;
+  FB_AUTH.onAuthStateChanged(async user=>{
+    if(user){
+      const profile=userByEmail(user.email);
+      if(!profile){
+        alert('Tu email ('+user.email+') no está registrado en la plataforma. Contacta al administrador.');
+        await FB_AUTH.signOut();
+        renderLogin();
+        return;
+      }
+      CURRENT_USER=profile.id;
+      document.getElementById('login').style.display='none';
+      document.getElementById('app').style.display='grid';
+      lucideInit();
+      await seedIfEmpty();
+      renderUserPill();
+      setupRealtimeSync();
+      nav('dashboard');
+    } else {
+      CURRENT_USER=null;
+      renderLogin();
+    }
+  });
+})();
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+</script>
+</body>
+</html>
+
+
+
+
+
