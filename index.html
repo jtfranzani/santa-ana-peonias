@@ -364,24 +364,41 @@ function parseCarenciaDias(x){if(x==null)return null;if(typeof x==='number')retu
 function addDays(dateStr,days){const d=new Date(dateStr);d.setDate(d.getDate()+days);return d.toISOString().split('T')[0]}
 function fechaFinCarencia(app){const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d?addDays(app.fecha,d):null}
 function carenciaActiva(app){const f=fechaFinCarencia(app);return f?new Date(f)>=new Date(today()):false}
-function fileToDataURL(file,maxW=1600){
+/* Comprime iterativamente hasta que el base64 baje de targetKB (default 500KB).
+   Firestore limita a 1 MB por documento; dos fotos comprimidas a 500KB c/u dejan
+   margen para el resto del registro. Parte con maxW=1600 y va bajando si es necesario. */
+function fileToDataURL(file,maxW=1600,targetKB=500){
   return new Promise((res,rej)=>{
     const reader=new FileReader();
     reader.onload=e=>{
       const img=new Image();
       img.onload=()=>{
-        const canvas=document.createElement('canvas');
-        const scale=Math.min(1,maxW/img.width);
-        canvas.width=img.width*scale;canvas.height=img.height*scale;
-        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-        res(canvas.toDataURL('image/jpeg',0.85));
+        const intentos=[
+          {w:maxW,q:0.85},{w:maxW,q:0.75},{w:1200,q:0.75},
+          {w:1000,q:0.70},{w:800,q:0.65},{w:640,q:0.55}
+        ];
+        let out='';
+        for(const it of intentos){
+          const canvas=document.createElement('canvas');
+          const scale=Math.min(1,it.w/img.width);
+          canvas.width=Math.round(img.width*scale);
+          canvas.height=Math.round(img.height*scale);
+          canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+          out=canvas.toDataURL('image/jpeg',it.q);
+          const kb=out.length*0.75/1024; // base64 -> bytes aprox
+          if(kb<=targetKB)break;
+        }
+        res(out);
       };
+      img.onerror=()=>rej(new Error('No se pudo decodificar la imagen'));
       img.src=e.target.result;
     };
-    reader.onerror=rej;
+    reader.onerror=()=>rej(new Error('No se pudo leer el archivo'));
     reader.readAsDataURL(file);
   });
 }
+/* Suma aproximada de bytes de un objeto serializado (para chequear límite Firestore). */
+function approxDocSize(obj){try{return new Blob([JSON.stringify(obj)]).size}catch(e){return JSON.stringify(obj).length}}
 function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.add('open')}
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function viewImage(src){if(!src)return;const existing=document.getElementById('img-viewer');if(existing)existing.remove();const div=document.createElement('div');div.id='img-viewer';div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';div.onclick=()=>div.remove();div.innerHTML=`<img src="${src}" style="max-width:95%;max-height:95%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5)"><button style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.9);border:none;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:bold">×</button>`;document.body.appendChild(div);}
@@ -784,11 +801,21 @@ async function savePhoto(){
   const files=document.getElementById('f-file').files;
   if(!files.length){toast('Selecciona al menos una imagen','warn');return}
   toast('Procesando '+files.length+' imagen(es)...');
+  let okCount=0,failCount=0;
   for(const f of files){
-    const img=await fileToDataURL(f);
-    await add('photos',{pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()});
+    try{
+      const img=await fileToDataURL(f);
+      const doc={pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()};
+      const sz=approxDocSize(doc);
+      if(sz>950000){failCount++;console.warn('savePhoto: '+f.name+' supera 950KB ('+(sz/1024).toFixed(0)+'KB)');continue;}
+      await add('photos',doc);
+      okCount++;
+    }catch(e){failCount++;console.error('savePhoto falló para '+f.name+':',e);}
   }
-  closeModal();toast(files.length+' foto(s) guardada(s)');renderPhotos();
+  closeModal();
+  if(failCount>0)toast(okCount+' guardada(s), '+failCount+' con error (ver consola)','warn');
+  else toast(okCount+' foto(s) guardada(s)');
+  renderPhotos();
 }
 
 async function viewPhoto(id){
@@ -954,7 +981,12 @@ async function saveTask(id){
   const fLab=document.getElementById('f-labfoto');
   if(fLab&&fLab.files&&fLab.files[0]){try{data.foto=await fileToDataURL(fLab.files[0]);}catch(e){toast('Error procesando foto','warn')}}else if(id){const prev=await get('tasks',id);if(prev&&prev.foto)data.foto=prev.foto;}
   let isNew=!id;
-  if(id){data.id=id;await put('tasks',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
+  const sz=approxDocSize(data);
+  if(sz>950000){toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Usa una foto más chica.','warn');return;}
+  try{
+    if(id){data.id=id;await put('tasks',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
+  }catch(e){console.error('saveTask falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return;}
   closeModal();toast('Labor guardada');
   if(isNew||data.estado==='realizada'){
     const estLabel=data.estado==='realizada'?'✓ Realizada':data.estado==='en_curso'?'🔵 En curso':data.estado==='cancelada'?'Cancelada':'🟡 Planificada';
@@ -1068,7 +1100,21 @@ async function saveApp(id){
   if(fProd&&fProd.files&&fProd.files[0]){try{data.fotoProducto=await fileToDataURL(fProd.files[0]);}catch(e){toast('Error procesando foto producto','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoProducto)data.fotoProducto=prev.fotoProducto;}
   if(fApl&&fApl.files&&fApl.files[0]){try{data.fotoAplicacion=await fileToDataURL(fApl.files[0]);}catch(e){toast('Error procesando foto aplicación','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoAplicacion)data.fotoAplicacion=prev.fotoAplicacion;}
   let isNew=!id;
-  if(id){data.id=id;await put('applications',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('applications',data)}
+  // Chequeo de tamaño antes de enviar a Firestore (límite 1 MB por documento).
+  const sz=approxDocSize(data);
+  if(sz>950000){
+    toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Reintenta sin fotos o con fotos más chicas.','warn');
+    console.warn('saveApp: documento supera 950KB',sz,'bytes');
+    return;
+  }
+  try{
+    if(id){data.id=id;await put('applications',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('applications',data)}
+  }catch(e){
+    console.error('saveApp falló:',e);
+    toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');
+    return;
+  }
   closeModal();toast('Aplicación guardada');
   const fin=fechaFinCarencia(data);
   notifyHook('Aplicación fitosanitaria',`${data.producto}${data.categoria?' ('+data.categoria+')':''}`,`Fecha: ${fmt(data.fecha)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
@@ -1268,7 +1314,12 @@ async function saveInvItem(id){
   if(!data.categoria){toast('Categoría requerida','warn');return}
   const fFoto=document.getElementById('f-inv-foto');
   if(fFoto&&fFoto.files&&fFoto.files[0]){try{data.foto=await fileToDataURL(fFoto.files[0]);}catch(e){toast('Error procesando foto','warn')}}else if(id){const prev=await get('inventory',id);if(prev&&prev.foto)data.foto=prev.foto;}
-  if(id){data.id=id;await put('inventory',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('inventory',data)}
+  const sz=approxDocSize(data);
+  if(sz>950000){toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Usa una foto más chica.','warn');return;}
+  try{
+    if(id){data.id=id;await put('inventory',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('inventory',data)}
+  }catch(e){console.error('saveInvItem falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return;}
   closeModal();toast('Producto guardado');renderInventory();
 }
 async function adjustStock(id){
@@ -1651,7 +1702,12 @@ async function saveStudy(id){
   }
 }
 async function persistStudy(id,data){
-  if(id){data.id=id;await put('studies',data)}else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('studies',data)}
+  const sz=approxDocSize(data);
+  if(sz>950000){toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). El PDF adjunto supera el límite de Firestore (~1 MB). Comprime el PDF antes de subirlo.','warn');return;}
+  try{
+    if(id){data.id=id;await put('studies',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('studies',data)}
+  }catch(e){console.error('persistStudy falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return;}
   closeModal();toast('Estudio guardado');
   const t=estudioTipo(data.tipo);
   notifyHook('Estudio de laboratorio',`${t.label} — ${data.laboratorio||'Laboratorio'}`,`Cuarteles: ${(data.cuarteles||[]).join(', ')||'General'}${data.resumen?'\n📝 '+data.resumen.slice(0,200):''}`,'studies');
