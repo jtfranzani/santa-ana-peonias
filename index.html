@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Santa Ana Peonías · Plataforma de Gestión</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -253,6 +256,24 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .user-pill .info small{font-size:10px;opacity:.7}
 .user-pill .switch{font-size:14px;opacity:.6}
 .user-badge-mini{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 6px;border-radius:8px;color:#fff;font-weight:500;vertical-align:middle}
+/* Version pill (sidebar) + update banner */
+.version-pill{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px;margin:0 14px 10px;background:rgba(255,255,255,.08);border-radius:8px;font-size:11px;color:rgba(255,255,255,.75)}
+.version-pill.update-ready{background:rgba(245,158,11,.28);color:#fff;box-shadow:0 0 0 1px rgba(245,158,11,.35)}
+.version-pill .vlabel{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.version-pill .vdot{width:7px;height:7px;border-radius:50%;background:#10b981}
+.version-pill.update-ready .vdot{background:#f59e0b;animation:pulse-dot 1.4s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.35}}
+.version-refresh{background:transparent;border:none;color:inherit;cursor:pointer;padding:6px;border-radius:6px;display:flex;align-items:center;min-height:30px;min-width:30px;justify-content:center}
+.version-refresh:hover{background:rgba(255,255,255,.12)}
+.version-refresh i{width:14px;height:14px}
+.version-refresh.spin i{animation:spin-refresh 1s linear infinite}
+@keyframes spin-refresh{to{transform:rotate(360deg)}}
+#update-banner{position:fixed;top:0;left:0;right:0;z-index:200;background:linear-gradient(90deg,#f59e0b,#ea580c);color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.18);animation:slideDownBanner .25s ease}
+#update-banner .ubtext{flex:1;line-height:1.35}
+#update-banner button.ubprimary{background:#fff;color:#b45309;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;min-height:36px}
+#update-banner button.ubclose{background:transparent;color:rgba(255,255,255,.85);border:none;cursor:pointer;font-size:18px;line-height:1;padding:4px 8px;min-height:36px}
+@keyframes slideDownBanner{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+@media(max-width:900px){#update-banner{font-size:12px;padding:10px 12px} #update-banner button.ubprimary{padding:8px 10px;font-size:11px}}
 </style>
 </head>
 <body>
@@ -310,6 +331,10 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
       <a onclick="nav('reports')" id="nav-reports"><i data-lucide="trending-up"></i><span>Informes</span></a>
       <a onclick="nav('settings')" id="nav-settings"><i data-lucide="settings"></i><span>Respaldo y avisos</span></a>
     </div>
+    <div class="version-pill" id="version-pill" title="Versión instalada">
+      <span class="vlabel"><span class="vdot"></span><span id="version-label">v…</span></span>
+      <button class="version-refresh" onclick="refreshApp()" aria-label="Actualizar plataforma" title="Buscar actualización y recargar"><i data-lucide="refresh-cw"></i></button>
+    </div>
     <div class="user-pill" id="user-pill" onclick="logout()" title="Cambiar usuario"></div>
   </nav>
   <main class="main" id="main"></main>
@@ -328,6 +353,11 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "1024922362326",
   appId: "1:1024922362326:web:52b78f627b830cc1378477"
 };
+
+/* ============ VERSIÓN DE LA APLICACIÓN ============ */
+/* Incrementar este valor cada vez que se publique un cambio en GitHub.
+   Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
+const APP_VERSION='2026.04.24.1';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2301,6 +2331,23 @@ async function renderSettings(){
     <div class="page-header"><div><h2>Respaldo y avisos</h2><div class="sub">Notificaciones WhatsApp/Telegram, respaldo y configuración</div></div></div>
 
     <div class="card">
+      <h3><i data-lucide="git-branch"></i>Versión de la plataforma</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:22px;font-weight:700;color:var(--verde-d);font-variant-numeric:tabular-nums">v${APP_VERSION}</div>
+          <div style="font-size:11.5px;color:var(--gris)">Versión instalada en este dispositivo</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost" onclick="checkForNewVersion(false)"><i data-lucide="search"></i>Buscar actualización</button>
+          <button class="btn" onclick="refreshApp()"><i data-lucide="refresh-cw"></i>Actualizar ahora</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--gris);margin-top:12px;padding-top:10px;border-top:1px solid var(--gris-xl);line-height:1.5">
+        Si anclaste la plataforma a la pantalla de inicio del celular y no ves los cambios más recientes, toca <strong>Actualizar ahora</strong>. Se limpia la caché local del navegador y se recarga la versión más nueva desde el servidor. <strong>Tus datos en la nube (Firestore) no se tocan — solo se refresca el código.</strong>
+      </div>
+    </div>
+
+    <div class="card">
       <h3><i data-lucide="bell"></i>Notificaciones al grupo de socios</h3>
       <p style="font-size:13px;color:var(--gris);margin:0 0 12px">Cada vez que se registre una aplicación, labor, hito o crítica de inventario, la plataforma envía un mensaje resumen + link al grupo configurado. Funciona con <strong>CallMeBot (WhatsApp)</strong>, <strong>Telegram Bot</strong>, <strong>Zapier/Make webhook</strong> o cualquier otro endpoint HTTP.</p>
       <div class="form-grid">
@@ -2484,6 +2531,65 @@ function setupRealtimeSync(){
   },()=>{CONN_STATUS='online';if(CURRENT_USER)renderUserPill();});
 }
 
+/* ============ VERSIONADO / ACTUALIZACIÓN ============ */
+function renderVersionPill(){
+  const lab=document.getElementById('version-label');
+  if(lab)lab.textContent='v'+APP_VERSION;
+}
+async function refreshApp(){
+  const btn=document.querySelector('.version-refresh');
+  if(btn)btn.classList.add('spin');
+  try{toast('Actualizando plataforma…')}catch(e){}
+  /* 1) Limpiar Cache Storage API (PWA caches) */
+  try{
+    if(window.caches){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+  }catch(e){console.warn('caches.delete',e)}
+  /* 2) Desregistrar service workers si hubiera */
+  try{
+    if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+  }catch(e){console.warn('sw.unregister',e)}
+  /* 3) Recargar con parámetro anti-caché */
+  const u=new URL(location.href);
+  u.searchParams.set('v',Date.now());
+  /* Pequeño delay para que se vea el spin y el toast */
+  setTimeout(()=>{location.replace(u.toString())},350);
+}
+async function checkForNewVersion(silent){
+  try{
+    const base=location.href.split('#')[0].split('?')[0];
+    const r=await fetch(base+'?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const txt=await r.text();
+    const m=txt.match(/const\s+APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    if(m&&m[1]){
+      const remote=m[1];
+      if(remote!==APP_VERSION){
+        showUpdateBanner(remote);
+        const pill=document.getElementById('version-pill');
+        if(pill)pill.classList.add('update-ready');
+      }else if(!silent){
+        toast('Estás en la última versión (v'+APP_VERSION+')');
+      }
+    }
+  }catch(e){console.warn('checkForNewVersion',e)}
+}
+function showUpdateBanner(remoteVer){
+  if(document.getElementById('update-banner'))return;
+  const bar=document.createElement('div');
+  bar.id='update-banner';
+  bar.innerHTML=`
+    <div class="ubtext">🔄 <strong>Nueva versión disponible</strong> (v${remoteVer}). Toca <strong>Actualizar</strong> para obtenerla.</div>
+    <button class="ubprimary" onclick="refreshApp()">Actualizar</button>
+    <button class="ubclose" onclick="this.parentElement.remove()" aria-label="Ocultar" title="Ocultar">✕</button>`;
+  document.body.appendChild(bar);
+}
+
 /* ============ INIT ============ */
 (async()=>{
   if(!fbInit())return;
@@ -2502,8 +2608,14 @@ function setupRealtimeSync(){
       lucideInit();
       await seedIfEmpty();
       renderUserPill();
+      renderVersionPill();
       setupRealtimeSync();
       nav('dashboard');
+      /* Chequeo silencioso de nueva versión al abrir y cada 15 minutos */
+      checkForNewVersion(true);
+      if(!window._versionInterval){
+        window._versionInterval=setInterval(()=>checkForNewVersion(true),15*60*1000);
+      }
     } else {
       CURRENT_USER=null;
       renderLogin();
