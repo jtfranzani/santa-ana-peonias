@@ -350,32 +350,42 @@ async function seedIfEmpty(){
 }
 
 /* ============ HELPERS ============ */
-const fmt=d=>new Date(d).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'});
-const fmtLong=d=>new Date(d).toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-const today=()=>new Date().toISOString().split('T')[0];
-const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/(1000*60*60*24));
+/* Parser tolerante de fecha YYYY-MM-DD como local (evita corrimiento UTC -> día anterior).
+   Si llega ISO con hora o un objeto Date, usa el constructor normal. */
+function parseLocalDate(d){
+  if(d==null||d==='')return null;
+  if(d instanceof Date)return d;
+  if(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)){
+    const [y,m,day]=d.split('-').map(Number);
+    return new Date(y,m-1,day);
+  }
+  return new Date(d);
+}
+const fmt=d=>{const x=parseLocalDate(d);return x?x.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}):''};
+const fmtLong=d=>{const x=parseLocalDate(d);return x?x.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''};
+const today=()=>{const n=new Date();const y=n.getFullYear();const m=String(n.getMonth()+1).padStart(2,'0');const d=String(n.getDate()).padStart(2,'0');return `${y}-${m}-${d}`};
+const daysBetween=(a,b)=>Math.round((parseLocalDate(b)-parseLocalDate(a))/(1000*60*60*24));
 /* Labores: helpers de estado */
 const estadoLabor=t=>t.estado||'realizada';
 const ESTADO_LBL={pendiente:'Pendiente',en_curso:'En curso',realizada:'Realizada',cancelada:'Cancelada'};
 const ESTADO_CLS={pendiente:'pendiente',en_curso:'curso',realizada:'realizada',cancelada:'cancelada'};
-function laborAtrasada(t){if(estadoLabor(t)!=='pendiente')return false;const fp=t.fechaPlanificada||t.fecha;if(!fp)return false;return new Date(fp)<new Date(today())}
+function laborAtrasada(t){if(estadoLabor(t)!=='pendiente')return false;const fp=t.fechaPlanificada||t.fecha;if(!fp)return false;return parseLocalDate(fp)<parseLocalDate(today())}
 /* Aplicaciones: helpers de carencia */
 function parseCarenciaDias(x){if(x==null)return null;if(typeof x==='number')return x;const m=String(x).match(/(\d+)/);return m?parseInt(m[1],10):null}
-function addDays(dateStr,days){const d=new Date(dateStr);d.setDate(d.getDate()+days);return d.toISOString().split('T')[0]}
+function addDays(dateStr,days){const d=parseLocalDate(dateStr);if(!d)return dateStr;d.setDate(d.getDate()+days);const y=d.getFullYear();const mo=String(d.getMonth()+1).padStart(2,'0');const dd=String(d.getDate()).padStart(2,'0');return `${y}-${mo}-${dd}`}
 function fechaFinCarencia(app){const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d?addDays(app.fecha,d):null}
-function carenciaActiva(app){const f=fechaFinCarencia(app);return f?new Date(f)>=new Date(today()):false}
-/* Comprime iterativamente hasta que el base64 baje de targetKB (default 500KB).
-   Firestore limita a 1 MB por documento; dos fotos comprimidas a 500KB c/u dejan
-   margen para el resto del registro. Parte con maxW=1600 y va bajando si es necesario. */
-function fileToDataURL(file,maxW=1600,targetKB=500){
+function carenciaActiva(app){const f=fechaFinCarencia(app);return f?parseLocalDate(f)>=parseLocalDate(today()):false}
+/* Comprime iterativamente hasta que el base64 baje de targetKB (default 300KB).
+   Firestore limita a 1 MB por documento; con 300KB/foto caben 2-3 fotos + datos. */
+function fileToDataURL(file,maxW=1400,targetKB=300){
   return new Promise((res,rej)=>{
     const reader=new FileReader();
     reader.onload=e=>{
       const img=new Image();
       img.onload=()=>{
         const intentos=[
-          {w:maxW,q:0.85},{w:maxW,q:0.75},{w:1200,q:0.75},
-          {w:1000,q:0.70},{w:800,q:0.65},{w:640,q:0.55}
+          {w:maxW,q:0.82},{w:maxW,q:0.72},{w:1100,q:0.72},
+          {w:900,q:0.68},{w:720,q:0.62},{w:560,q:0.55},{w:460,q:0.50}
         ];
         let out='';
         for(const it of intentos){
@@ -1009,7 +1019,7 @@ async function renderApplications(){
         <input class="search-input" placeholder="Buscar producto..." oninput="filterApps(this.value)">
       </div>
       <table id="tbl-apps">
-        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
         <tbody>${sorted.length?sorted.map(a=>{
           const fin=fechaFinCarencia(a);
           const activa=carenciaActiva(a);
@@ -1025,7 +1035,7 @@ async function renderApplications(){
           if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
           if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
           const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
-          return `<tr class="${activa?'fila-carencia':''}"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td>${a.dosis||'—'}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td><button class="btn small ghost" onclick="editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          return `<tr class="${activa?'fila-carencia':''}"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td><button class="btn small ghost" onclick="editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="12" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table>
     </div>`;
@@ -1069,11 +1079,11 @@ async function editApp(id){
     <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías (opcional pero recomendado)</h4>
     <div class="form-grid">
       <div class="form-row"><label>Foto del producto / etiqueta</label>
-        ${a.fotoProducto?`<div style="margin-bottom:6px"><img src="${a.fotoProducto}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"></div>`:''}
+        ${a.fotoProducto?`<div style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><img src="${a.fotoProducto}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><label style="font-size:12px;color:var(--rojo);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="f-del-fotoprod" style="margin:0"> Quitar foto</label></div>`:''}
         <input id="f-fotoprod" type="file" accept="image/*" capture="environment">
         <small style="color:var(--gris);font-size:11px">Etiqueta / envase del producto aplicado</small></div>
       <div class="form-row"><label>Foto de la aplicación</label>
-        ${a.fotoAplicacion?`<div style="margin-bottom:6px"><img src="${a.fotoAplicacion}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"></div>`:''}
+        ${a.fotoAplicacion?`<div style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><img src="${a.fotoAplicacion}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><label style="font-size:12px;color:var(--rojo);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="f-del-fotoapl" style="margin:0"> Quitar foto</label></div>`:''}
         <input id="f-fotoapl" type="file" accept="image/*" capture="environment">
         <small style="color:var(--gris);font-size:11px">Equipo / operario aplicando</small></div>
     </div>
@@ -1097,8 +1107,14 @@ async function saveApp(id){
   if(!data.producto){toast('Producto requerido','warn');return}
   const fProd=document.getElementById('f-fotoprod');
   const fApl=document.getElementById('f-fotoapl');
-  if(fProd&&fProd.files&&fProd.files[0]){try{data.fotoProducto=await fileToDataURL(fProd.files[0]);}catch(e){toast('Error procesando foto producto','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoProducto)data.fotoProducto=prev.fotoProducto;}
-  if(fApl&&fApl.files&&fApl.files[0]){try{data.fotoAplicacion=await fileToDataURL(fApl.files[0]);}catch(e){toast('Error procesando foto aplicación','warn')}}else if(id){const prev=await get('applications',id);if(prev&&prev.fotoAplicacion)data.fotoAplicacion=prev.fotoAplicacion;}
+  const delProd=document.getElementById('f-del-fotoprod')?.checked;
+  const delApl=document.getElementById('f-del-fotoapl')?.checked;
+  if(fProd&&fProd.files&&fProd.files[0]){try{data.fotoProducto=await fileToDataURL(fProd.files[0]);}catch(e){toast('Error procesando foto producto','warn')}}
+  else if(delProd){data.fotoProducto=null;}
+  else if(id){const prev=await get('applications',id);if(prev&&prev.fotoProducto)data.fotoProducto=prev.fotoProducto;}
+  if(fApl&&fApl.files&&fApl.files[0]){try{data.fotoAplicacion=await fileToDataURL(fApl.files[0]);}catch(e){toast('Error procesando foto aplicación','warn')}}
+  else if(delApl){data.fotoAplicacion=null;}
+  else if(id){const prev=await get('applications',id);if(prev&&prev.fotoAplicacion)data.fotoAplicacion=prev.fotoAplicacion;}
   let isNew=!id;
   // Chequeo de tamaño antes de enviar a Firestore (límite 1 MB por documento).
   const sz=approxDocSize(data);
