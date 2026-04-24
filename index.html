@@ -9,6 +9,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<!-- PDF.js para extraer texto de PDFs (autoclasificación de archivos de asesores) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Mammoth para extraer texto de archivos Word (.docx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -1177,7 +1181,7 @@ async function renderAdvisors(){
               <button class="btn small" onclick="uploadAdvisorFile('${adv.id}')"><i data-lucide="upload"></i>Subir</button>
             </div>
             ${advFiles.length?`<div style="display:grid;gap:6px;max-height:240px;overflow-y:auto">${advFiles.slice(0,8).map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--gris-xl);border-radius:6px;gap:8px">
-              <div style="display:flex;gap:8px;align-items:center;min-width:0;flex:1"><i data-lucide="${fileIcon(f.nombre)}" style="width:16px;height:16px;color:var(--verde);flex-shrink:0"></i><div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:500;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nombre}</div><div style="font-size:10.5px;color:var(--gris)">${fmt(f.fecha)} · ${((f.data||'').length*0.75/1024).toFixed(0)} KB${f.descripcion?` · ${f.descripcion}`:''}</div></div></div>
+              <div style="display:flex;gap:8px;align-items:center;min-width:0;flex:1"><i data-lucide="${fileIcon(f.nombre)}" style="width:16px;height:16px;color:var(--verde);flex-shrink:0"></i><div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:500;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nombre}</div><div style="font-size:10.5px;color:var(--gris);display:flex;gap:4px;align-items:center;flex-wrap:wrap">${f.tipoDocLabel?`<span style="background:var(--verde);color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">${f.tipoDocLabel}</span>`:''}<span>${fmt(f.fecha)} · ${((f.data||'').length*0.75/1024).toFixed(0)} KB${f.descripcion?` · ${f.descripcion.slice(0,60)}${f.descripcion.length>60?'...':''}`:''}</span></div></div></div>
               <div style="display:flex;gap:3px;flex-shrink:0"><button class="btn small ghost" onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i></button><button class="btn small danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar"><i data-lucide="x"></i></button></div>
             </div>`).join('')}${advFiles.length>8?`<div style="text-align:center;font-size:11px;color:var(--gris);padding:6px">+ ${advFiles.length-8} archivos más</div>`:''}</div>`:`<div style="padding:20px;text-align:center;color:var(--gris-m);font-size:12.5px;background:var(--gris-xl);border-radius:6px">Sin archivos subidos aún</div>`}
           </div>
@@ -1214,14 +1218,162 @@ async function delAdvisor(id){
   await Promise.all(files.filter(f=>f.advisorId===id).map(f=>del('advisorfiles',f.id)));
   await del('advisors',id);toast('Eliminado');renderAdvisors();
 }
+/* ============ AUTOCLASIFICACIÓN DE ARCHIVOS DE ASESORES ============ */
+/* Tipos de documento que detectamos, con sus palabras clave (todas en minúsculas, sin tilde).
+   Mientras más keywords matchean, mayor el score. Gana el tipo con más score. */
+const ADV_TIPOS=[
+  {key:'plan_fitosanitario',label:'Plan fitosanitario',keywords:['plan fitosanitario','calendario de aplicac','programa fitosanit','programa de aplicac','calendario aplicac','calendario sanitario','carta gantt fitosan','protocolo fitosanit']},
+  {key:'analisis_suelo',label:'Análisis de suelo',keywords:['analisis de suelo','analisis suelo','soil analysis','ph del suelo','materia organica','cic ','olsen','k intercambiab','textura suelo','conductividad electrica']},
+  {key:'analisis_foliar',label:'Análisis foliar',keywords:['analisis foliar','foliar analysis','nitrogeno foliar','diagnostico foliar','tejido vegetal','macronutrientes foliar']},
+  {key:'analisis_agua',label:'Análisis de agua',keywords:['analisis de agua','calidad de agua','analisis agua riego','agua para riego','sar ','rasch','sodio adsorb']},
+  {key:'analisis_virus',label:'Análisis virus',keywords:['analisis virus','virologia','virus peony','pcr ','elisa','serotipo','detecc virus']},
+  {key:'analisis_nematodos',label:'Análisis nemátodos',keywords:['nematodo','nematodos','meloidogyne','pratylenchus','nemas']},
+  {key:'receta',label:'Receta / Prescripción',keywords:['receta agronom','receta fitosanit','prescripc','producto recomendado','dosis recomendada']},
+  {key:'recomendacion',label:'Recomendación técnica',keywords:['recomendacion','informe de visita','visita tecnica','minuta de terreno','resumen de visita','informe tecnico','informe agronom','asesoria tecnica']},
+  {key:'fertilizacion',label:'Plan de fertilización',keywords:['plan de fertiliz','programa de fertiliz','fertilizac','fertirrigac','calendario de abon','dosis n','dosis p','dosis k']},
+  {key:'cotizacion',label:'Cotización',keywords:['cotizacion','cotizaci\u00f3n','presupuesto','oferta comercial','proforma','quotation']},
+  {key:'factura',label:'Factura / Boleta',keywords:['factura','boleta','guia de despacho','documento tributario','dte','electronic invoice']},
+  {key:'certificado',label:'Certificado',keywords:['certificado','certificac','globalgap','global g.a.p','mps ','sag ','iso 14001','rainforest','certification']},
+  {key:'ensayo',label:'Ensayo / Trial',keywords:['ensayo','trial','parcela experim','experimental','tratamiento t1','testigo','diseño bloques']},
+  {key:'protocolo',label:'Protocolo / SOP',keywords:['protocolo','sop ','procedimiento estandar','instructivo','manual de campo']},
+  {key:'monitoreo',label:'Monitoreo plagas/enfermedades',keywords:['monitoreo','scouting','conteo de','trampa','trampeo','umbral de daño','incidencia','severidad']},
+  {key:'otro',label:'Otro',keywords:[]}
+];
+
+/* Normaliza string: minúsculas, sin tildes, sin caracteres raros. */
+function normaliza(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+
+/* Clasifica el texto extraído de un archivo. Retorna {tipo, label, score, top3}. */
+function clasificarDocumento(texto,filename){
+  const t=normaliza(texto+' '+filename);
+  const scores=ADV_TIPOS.map(ti=>{
+    let score=0;
+    for(const kw of ti.keywords){if(t.includes(kw))score+=kw.length>15?3:kw.length>10?2:1;}
+    return {key:ti.key,label:ti.label,score};
+  }).sort((a,b)=>b.score-a.score);
+  const best=scores[0].score>0?scores[0]:{key:'otro',label:'Otro',score:0};
+  return {tipo:best.key,label:best.label,score:best.score,top3:scores.slice(0,3).filter(s=>s.score>0)};
+}
+
+/* Detecta la fecha más plausible del documento. Busca varios formatos. */
+function detectarFecha(texto){
+  if(!texto)return null;
+  const t=texto.slice(0,3000); // Solo los primeros 3000 caracteres (normalmente encabezado)
+  const meses={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
+  const hoy=new Date();const yHoy=hoy.getFullYear();
+  const candidatas=[];
+  // Formato "15 de abril de 2026" o "15 abril 2026"
+  const re1=/(\d{1,2})\s+(?:de\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+de)?\s+(\d{2,4})/gi;
+  let m;while((m=re1.exec(t))!==null){
+    const d=parseInt(m[1]);const mo=meses[m[2].toLowerCase()];let y=parseInt(m[3]);if(y<100)y+=2000;
+    if(d>=1&&d<=31&&y>=2020&&y<=yHoy+2)candidatas.push({y,m:mo,d,src:'literal'});
+  }
+  // Formato DD/MM/YYYY o DD-MM-YYYY o DD.MM.YYYY
+  const re2=/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/g;
+  while((m=re2.exec(t))!==null){
+    const d=parseInt(m[1]);const mo=parseInt(m[2])-1;let y=parseInt(m[3]);if(y<100)y+=2000;
+    if(d>=1&&d<=31&&mo>=0&&mo<=11&&y>=2020&&y<=yHoy+2)candidatas.push({y,m:mo,d,src:'numeric'});
+  }
+  // Formato YYYY-MM-DD
+  const re3=/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g;
+  while((m=re3.exec(t))!==null){
+    const y=parseInt(m[1]);const mo=parseInt(m[2])-1;const d=parseInt(m[3]);
+    if(d>=1&&d<=31&&mo>=0&&mo<=11&&y>=2020&&y<=yHoy+2)candidatas.push({y,m:mo,d,src:'iso'});
+  }
+  if(!candidatas.length)return null;
+  // Prefiere fecha más reciente pero no futura a hoy+30
+  const limite=new Date(hoy.getTime()+30*86400000);
+  const validas=candidatas.filter(c=>new Date(c.y,c.m,c.d)<=limite).sort((a,b)=>new Date(b.y,b.m,b.d)-new Date(a.y,a.m,a.d));
+  const best=validas[0]||candidatas[0];
+  const pad=n=>String(n).padStart(2,'0');
+  return `${best.y}-${pad(best.m+1)}-${pad(best.d)}`;
+}
+
+/* Extrae texto de un File (PDF, DOCX, TXT). Retorna string (hasta 30000 chars) o '' si no puede. */
+async function extractFileText(file){
+  try{
+    const name=file.name.toLowerCase();
+    if(name.endsWith('.txt')||name.endsWith('.csv')){
+      return await file.text();
+    }
+    if(name.endsWith('.pdf')){
+      if(!window.pdfjsLib){console.warn('pdf.js no cargado');return '';}
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const buf=await file.arrayBuffer();
+      const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+      const maxPages=Math.min(pdf.numPages,5); // Primeras 5 páginas bastan
+      let text='';
+      for(let i=1;i<=maxPages;i++){
+        const page=await pdf.getPage(i);
+        const content=await page.getTextContent();
+        text+=content.items.map(it=>it.str).join(' ')+'\n';
+        if(text.length>30000)break;
+      }
+      return text.slice(0,30000);
+    }
+    if(name.endsWith('.docx')){
+      if(!window.mammoth){console.warn('mammoth no cargado');return '';}
+      const buf=await file.arrayBuffer();
+      const r=await window.mammoth.extractRawText({arrayBuffer:buf});
+      return (r.value||'').slice(0,30000);
+    }
+    return ''; // xlsx, imágenes, zip: no intentamos extraer
+  }catch(e){console.warn('extractFileText falló:',e);return '';}
+}
+
+/* Genera un nombre estandarizado: YYYY-MM-DD · Tipo · NombreAsesor.ext */
+function sugerirNombre(fecha,tipoLabel,asesorNombre,origName){
+  const ext=(origName||'').split('.').pop()||'';
+  const safe=s=>(s||'').replace(/[^a-zA-Z0-9\u00e1\u00e9\u00ed\u00f3\u00fa\u00c1\u00c9\u00cd\u00d3\u00da\u00f1\u00d1\s\-_·]/g,'').trim();
+  return `${fecha||today()} · ${safe(tipoLabel)||'Documento'} · ${safe(asesorNombre)||'Asesor'}.${ext}`;
+}
+
 function uploadAdvisorFile(advisorId){
   openModal(`<h3><i data-lucide="upload" style="width:18px;height:18px;vertical-align:-3px"></i> Subir archivo del asesor</h3>
-    <div class="form-row"><label>Archivo *</label><input id="f-adv-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"><small style="color:var(--gris);font-size:11px">Máx 8 MB por archivo. Formatos: PDF, Word, Excel, imágenes, ZIP.</small></div>
-    <div class="form-row"><label>Fecha documento</label><input id="f-adv-fecha" type="date" value="${today()}"></div>
-    <div class="form-row"><label>Descripción breve</label><input id="f-adv-desc" placeholder="ej. Análisis de suelo agosto 2026"></div>
+    <div class="form-row"><label>Archivo *</label><input id="f-adv-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip" onchange="autoAnalizarArchivoAsesor('${advisorId}')"><small style="color:var(--gris);font-size:11px">Máx 8 MB. PDF y Word se autoanalizan para detectar tipo y fecha.</small></div>
+    <div id="f-adv-analisis" style="display:none;padding:10px 12px;border-radius:6px;background:var(--gris-xl);margin:8px 0;font-size:12.5px"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Tipo de documento</label><select id="f-adv-tipo">${ADV_TIPOS.map(t=>`<option value="${t.key}">${t.label}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Fecha documento</label><input id="f-adv-fecha" type="date" value="${today()}"></div>
+    </div>
+    <div class="form-row"><label>Nombre del archivo (sugerido)</label><input id="f-adv-nomfile" placeholder="Se autogenera al seleccionar archivo"></div>
+    <div class="form-row"><label>Descripción breve</label><textarea id="f-adv-desc" rows="2" placeholder="Se autocompleta con el contenido detectado"></textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="doUploadAdvisorFile('${advisorId}')"><i data-lucide="upload"></i>Subir</button></div>`);
   lucideInit();
 }
+
+async function autoAnalizarArchivoAsesor(advisorId){
+  const fi=document.getElementById('f-adv-file');
+  const box=document.getElementById('f-adv-analisis');
+  if(!fi.files[0]){box.style.display='none';return}
+  const file=fi.files[0];
+  box.style.display='block';
+  box.innerHTML='<i data-lucide="loader" style="width:14px;height:14px;vertical-align:-2px"></i> Analizando archivo...';
+  lucideInit();
+  const asesor=await get('advisors',advisorId);
+  const texto=await extractFileText(file);
+  if(!texto){
+    box.innerHTML=`<strong>No se pudo extraer texto de este archivo</strong> (${file.name.split('.').pop().toUpperCase()}). Completa manualmente los campos de abajo.`;
+    document.getElementById('f-adv-nomfile').value=sugerirNombre(today(),'Documento',asesor?.nombre,file.name);
+    return;
+  }
+  const clas=clasificarDocumento(texto,file.name);
+  const fechaDet=detectarFecha(texto)||today();
+  const resumen=texto.slice(0,200).replace(/\s+/g,' ').trim();
+  // Aplicar sugerencias al formulario
+  document.getElementById('f-adv-tipo').value=clas.tipo;
+  document.getElementById('f-adv-fecha').value=fechaDet;
+  document.getElementById('f-adv-desc').value=resumen;
+  document.getElementById('f-adv-nomfile').value=sugerirNombre(fechaDet,clas.label,asesor?.nombre,file.name);
+  // Mensaje de confianza
+  let nivel='Alta';let color='var(--verde-d)';
+  if(clas.score===0){nivel='Indeterminada';color='var(--gris)'}
+  else if(clas.score<3){nivel='Media';color='var(--naranja,#d97706)'}
+  const otrosTxt=clas.top3.length>1?` · Otros candidatos: ${clas.top3.slice(1).map(s=>s.label).join(', ')}`:'';
+  box.innerHTML=`<div style="display:flex;gap:8px;align-items:flex-start"><i data-lucide="sparkles" style="width:16px;height:16px;color:${color};flex-shrink:0;margin-top:2px"></i><div><strong style="color:${color}">${clas.label}</strong> <span style="color:var(--gris);font-size:11px">(confianza ${nivel}${clas.score?', score '+clas.score:''})</span><br><span style="color:var(--gris-m);font-size:11.5px">Fecha detectada: <strong>${fmt(fechaDet)}</strong>${otrosTxt}</span><br><span style="color:var(--gris);font-size:11px">Puedes editar los campos de abajo antes de guardar.</span></div></div>`;
+  lucideInit();
+}
+
 async function doUploadAdvisorFile(advisorId){
   const fi=document.getElementById('f-adv-file');
   if(!fi.files[0]){toast('Selecciona un archivo','warn');return}
@@ -1229,9 +1381,15 @@ async function doUploadAdvisorFile(advisorId){
   if(file.size>8*1024*1024){toast('Archivo demasiado grande (máx 8 MB)','warn');return}
   const reader=new FileReader();
   reader.onload=async e=>{
-    const data={advisorId:advisorId,nombre:file.name,tipo:file.type,data:e.target.result,fecha:document.getElementById('f-adv-fecha').value||today(),descripcion:document.getElementById('f-adv-desc').value,createdBy:CURRENT_USER,createdAt:new Date().toISOString()};
-    await add('advisorfiles',data);
-    closeModal();toast('Archivo subido');renderAdvisors();
+    const nombreFinal=(document.getElementById('f-adv-nomfile').value||'').trim()||file.name;
+    const tipoKey=document.getElementById('f-adv-tipo').value;
+    const tipoLabel=(ADV_TIPOS.find(t=>t.key===tipoKey)||{}).label||'';
+    const data={advisorId:advisorId,nombre:nombreFinal,nombreOriginal:file.name,tipo:file.type,tipoDoc:tipoKey,tipoDocLabel:tipoLabel,data:e.target.result,fecha:document.getElementById('f-adv-fecha').value||today(),descripcion:document.getElementById('f-adv-desc').value,createdBy:CURRENT_USER,createdAt:new Date().toISOString()};
+    const sz=approxDocSize(data);
+    if(sz>950000){toast('Archivo muy grande tras base64 ('+(sz/1024).toFixed(0)+' KB). Firestore limita a 1 MB. Comprime antes de subir.','warn');return;}
+    try{await add('advisorfiles',data);}
+    catch(err){console.error('doUploadAdvisorFile falló:',err);toast('Error al subir: '+(err.message||err.code||'ver consola'),'warn');return;}
+    closeModal();toast('Archivo subido · '+tipoLabel);renderAdvisors();
   };
   reader.readAsDataURL(file);
 }
