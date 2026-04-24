@@ -229,6 +229,8 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .btn{padding:9px 12px;font-size:12.5px}
 }
 .hidden{display:none!important}
+.clickable-row:hover{background:var(--crema)!important}
+.clickable-row:active{background:var(--gris-xl)!important}
 .chart-container{position:relative;height:280px}
 .pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
 .search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
@@ -1019,7 +1021,7 @@ async function renderTasks(){
           const subFecha=(est==='pendiente'&&t.fechaPlanificada)?'plan.':(est==='realizada'?'ejec.':'');
           const estHTML=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
           const fotoTxt=t.foto?`<img src="${t.foto}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')" title="Ver foto">`:'<span style="color:var(--gris);font-size:11px">-</span>';
-          return `<tr class="${atr?'fila-atrasada':''}"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td style="max-width:220px;font-size:12px">${t.notas||''}</td><td><button class="btn small ghost" onclick="editTask('${t.id}')">✎</button> <button class="btn small danger" onclick="delTask('${t.id}')">×</button></td></tr>`;
+          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td style="max-width:220px;font-size:12px">${t.notas||''}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table>
     </div>`;
@@ -1088,6 +1090,38 @@ async function saveTask(id){
 }
 async function delTask(id){if(!confirm('¿Eliminar labor?'))return;await del('tasks',id);toast('Eliminada');renderTasks();}
 
+/* Ver detalle completo de labor (ideal para móvil donde la tabla se corta). */
+async function viewTask(id){
+  const t=await get('tasks',id);
+  if(!t){toast('Labor no encontrada','warn');return}
+  const est=estadoLabor(t);
+  const atr=laborAtrasada(t);
+  const creador=t.createdBy?userById(t.createdBy):null;
+  const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
+  const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
+  const fotoBlock=t.foto?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Foto de la labor</h4><div><img src="${t.foto}" style="width:100%;max-width:320px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')"></div>`:'';
+  openModal(`
+    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}</span>${estTag}</h3>
+    ${atr?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
+    <div style="margin-bottom:8px">
+      ${row('Categoría',t.categoria)}
+      ${row('Cuartel',t.bloque||'General / Todos')}
+      ${row('Fecha planificada',t.fechaPlanificada?fmt(t.fechaPlanificada):'—')}
+      ${row('Fecha ejecutada',(est==='realizada'||est==='en_curso')&&t.fecha?fmt(t.fecha):'—')}
+      ${row('Horas-hombre',t.horas!=null&&t.horas!==''?t.horas+' h':'')}
+      ${row('Responsable',t.responsable)}
+      ${row('Notas / observaciones',t.notas)}
+      ${creador?row('Registrado por',creador.nombre+(t.createdAt?' · '+new Date(t.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}):'')):''}
+    </div>
+    ${fotoBlock}
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cerrar</button>
+      <button class="btn small danger" onclick="closeModal();delTask('${t.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <button class="btn" onclick="closeModal();editTask('${t.id}')"><i data-lucide="pencil"></i>Editar</button>
+    </div>`);
+  lucideInit();
+}
+
 /* ============ APLICACIONES ============ */
 async function renderApplications(){
   const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
@@ -1117,13 +1151,53 @@ async function renderApplications(){
           if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
           if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
           const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
-          return `<tr class="${activa?'fila-carencia':''}"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td><button class="btn small ghost" onclick="editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')){viewApp('${a.id}')}" style="cursor:pointer"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="12" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table>
     </div>`;
   lucideInit();
 }
 function filterApps(v){document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+
+/* Ver detalle completo de aplicación (ideal para móvil donde la tabla se corta). */
+async function viewApp(id){
+  const a=await get('applications',id);
+  if(!a){toast('Aplicación no encontrada','warn');return}
+  const bloques=getBloques(a);
+  const fin=fechaFinCarencia(a);
+  const activa=carenciaActiva(a);
+  const creador=a.createdBy?userById(a.createdBy):null;
+  const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
+  const clima=[a.tempC!=null?a.tempC+'°C':'',a.humedad!=null?a.humedad+'% HR':'',a.viento!=null?a.viento+' km/h':''].filter(Boolean).join(' · ')||'—';
+  const fotos=[];
+  if(a.fotoProducto)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto producto/etiqueta</div><img src="${a.fotoProducto}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"></div>`);
+  if(a.fotoAplicacion)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto aplicación</div><img src="${a.fotoAplicacion}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"></div>`);
+  openModal(`
+    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}</span>${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</h3>
+    ${activa?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="clock"></i><div class="ab-content"><strong>En carencia activa hasta ${fmt(fin)}</strong><br>No cosechar ni reingresar sin EPP hasta esa fecha.</div></div>`:''}
+    <div style="margin-bottom:8px">
+      ${row('Fecha',fmt(a.fecha)+(a.horaApp?' '+a.horaApp:''))}
+      ${row('Cuarteles',bloques.length?bloques.join(', '):'General')}
+      ${row('Ingrediente activo',a.ingrediente)}
+      ${row('Dosis',a.dosis)}
+      ${row('Volumen aplicado',a.volumen)}
+      ${row('Motivo / Plaga objetivo',a.motivo)}
+      ${row('Carencia',(a.carencia||'')+(a.carenciaDias?' ('+a.carenciaDias+' días)':''))}
+      ${row('Apto cosecha desde',fin?fmt(fin):'—')}
+      ${row('Responsable',a.responsable)}
+      ${row('Prestador del servicio',a.prestador)}
+      ${row('Método aplicación',a.metodoAplicacion)}
+      ${row('Condiciones climáticas',clima)}
+      ${creador?row('Registrado por',creador.nombre+' · '+new Date(a.createdAt||Date.now()).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})):''}
+    </div>
+    ${fotos.length?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías</h4><div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${fotos.join('')}</div>`:''}
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cerrar</button>
+      <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <button class="btn" onclick="closeModal();editApp('${a.id}')"><i data-lucide="pencil"></i>Editar</button>
+    </div>`);
+  lucideInit();
+}
 
 async function editApp(id){
   const blocks=await getAll('blocks');
@@ -1471,10 +1545,49 @@ async function doUploadAdvisorFile(advisorId){
   };
   reader.readAsDataURL(file);
 }
+/* Helpers de descarga compatibles con móvil.
+   Safari iOS bloquea los data: URLs en <a download>; Chrome Android los abre pero a veces no descarga.
+   Solución: convertimos data URL -> Blob -> blob: URL, usamos <a download> y si falla abrimos el blob en nueva pestaña (permite "Guardar" desde el visor nativo). */
+function dataURLToBlob(dataURL){
+  try{
+    const arr=dataURL.split(',');
+    const m=arr[0].match(/:(.*?);/);const mime=m?m[1]:'application/octet-stream';
+    const isB64=arr[0].includes('base64');
+    const payload=isB64?atob(arr[1]):decodeURIComponent(arr[1]);
+    const u8=new Uint8Array(payload.length);
+    for(let i=0;i<payload.length;i++)u8[i]=payload.charCodeAt(i);
+    return new Blob([u8],{type:mime});
+  }catch(e){console.warn('dataURLToBlob falló:',e);return null}
+}
+function isMobile(){return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'')}
+async function descargarArchivo(dataURL,filename){
+  if(!dataURL){toast('Archivo no disponible','warn');return}
+  const blob=dataURLToBlob(dataURL);
+  if(!blob){toast('No se pudo preparar el archivo','warn');return}
+  const url=URL.createObjectURL(blob);
+  const name=filename||'archivo';
+  // iOS Safari: <a download> no funciona con blob: tampoco en muchas versiones.
+  // Estrategia: primero intento con <a download>; si el navegador no gatilla nada (mobile),
+  // abrimos en ventana nueva para que el usuario use "Compartir/Guardar" del visor.
+  try{
+    const a=document.createElement('a');
+    a.href=url;a.download=name;a.rel='noopener';a.target='_blank';
+    document.body.appendChild(a);a.click();a.remove();
+  }catch(e){console.warn('download <a> falló:',e)}
+  // En móvil abrimos también una nueva pestaña como respaldo (el usuario decide "Compartir/Guardar")
+  if(isMobile()){
+    setTimeout(()=>{
+      const w=window.open(url,'_blank','noopener');
+      if(!w)toast('Toca "Permitir ventanas" si el archivo no se abrió','warn');
+    },100);
+  }
+  // Liberar el blob URL después de un ratito (da tiempo a que descargue/abra)
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 async function downloadAdvisorFile(id){
   const f=await get('advisorfiles',id);
   if(!f||!f.data){toast('Archivo no disponible','warn');return}
-  const a=document.createElement('a');a.href=f.data;a.download=f.nombre;document.body.appendChild(a);a.click();a.remove();
+  await descargarArchivo(f.data,f.nombre);
 }
 async function delAdvisorFile(id){if(!confirm('¿Eliminar archivo?'))return;await del('advisorfiles',id);toast('Archivo eliminado');renderAdvisors();}
 
@@ -1969,7 +2082,7 @@ async function delStudy(id){if(!confirm('¿Eliminar estudio?'))return;await del(
 async function viewStudyFile(id){
   const e=await get('studies',id);
   if(!e||!e.archivo){toast('Sin archivo adjunto','warn');return}
-  const a=document.createElement('a');a.href=e.archivo;a.download=e.archivoNombre||'estudio';document.body.appendChild(a);a.click();a.remove();
+  await descargarArchivo(e.archivo,e.archivoNombre||'estudio');
 }
 
 /* ============ PRECIOS DE MERCADO ============ */
