@@ -357,7 +357,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.04.27.5';
+const APP_VERSION='2026.04.27.6';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1443,7 +1443,8 @@ async function renderTasks(){
           const fechaMostrar=est==='pendiente'?(t.fechaPlanificada||t.fecha):(t.fecha||t.fechaPlanificada);
           const subFecha=(est==='pendiente'&&t.fechaPlanificada)?'plan.':(est==='realizada'?'ejec.':'');
           const estHTML=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
-          const fotoTxt=t.foto?`<img src="${t.foto}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')" title="Ver foto">`:'<span style="color:var(--gris);font-size:11px">-</span>';
+          const fotosTbl=getTaskFotos(t);
+          const fotoTxt=fotosTbl.length?`<div style="position:relative;display:inline-block"><img src="${fotosTbl[0]}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();viewImage('${fotosTbl[0].replace(/'/g,"\\'")}')" title="Ver foto${fotosTbl.length>1?'s ('+fotosTbl.length+')':''}">${fotosTbl.length>1?`<span style="position:absolute;top:-4px;right:-4px;background:var(--verde-d);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-weight:bold">${fotosTbl.length}</span>`:''}</div>`:'<span style="color:var(--gris);font-size:11px">-</span>';
           return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td style="max-width:220px;font-size:12px">${t.notas||''}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table>
@@ -1453,10 +1454,30 @@ function setTasksFiltro(k){_tasksFiltroEstado=k;renderTasks()}
 function filterTasks(v){const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none'})}
 function quickTask(template){editTask(null,template)}
 
+/* Helper retro-compatible: devuelve el array de fotos de una labor.
+   Soporta el campo legacy `foto` (string única) y el nuevo `fotos` (array). */
+function getTaskFotos(t){
+  if(!t)return[];
+  if(Array.isArray(t.fotos)&&t.fotos.length)return t.fotos.filter(Boolean);
+  if(t.foto)return[t.foto];
+  return[];
+}
+/* Estado en memoria para fotos existentes durante edición de labor (permite eliminar antes de guardar). */
+let _editTaskFotosExistentes=[];
+function removeEditTaskFoto(idx){
+  _editTaskFotosExistentes.splice(idx,1);
+  const cont=document.getElementById('f-labfotos-existentes');
+  if(cont)cont.innerHTML=renderEditTaskFotosExistentes();
+}
+function renderEditTaskFotosExistentes(){
+  if(!_editTaskFotosExistentes.length)return'<small style="color:var(--gris);font-size:11px">Sin fotos previas.</small>';
+  return _editTaskFotosExistentes.map((src,i)=>`<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img src="${src}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><button type="button" onclick="removeEditTaskFoto(${i})" title="Quitar esta foto" style="position:absolute;top:-6px;right:-6px;background:#c0392b;color:#fff;border:none;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3)">×</button></div>`).join('');
+}
 async function editTask(id,template){
   const blocks=await getAll('blocks');
   const curName=userById(CURRENT_USER).nombre;
-  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,foto:''}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,foto:''});
+  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,fotos:[]}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,fotos:[]});
+  _editTaskFotosExistentes=getTaskFotos(t).slice();
   const cats=[...new Set(LABOR_TEMPLATES.map(l=>l.cat))];
   const estAct=estadoLabor(t);
   openModal(`<h3>${id?'Editar':'Registrar'} labor</h3>
@@ -1480,10 +1501,10 @@ async function editTask(id,template){
       <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
     </div>
     <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
-    <div class="form-row"><label>📷 Foto de la labor (opcional)</label>
-      ${t.foto?`<div style="margin-bottom:6px"><img src="${t.foto}" style="max-width:140px;max-height:140px;border-radius:6px;cursor:pointer" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')"></div>`:''}
-      <input id="f-labfoto" type="file" accept="image/*" capture="environment">
-      <small style="color:var(--gris);font-size:11px">Evidencia de la labor realizada (poda, fertilización, monitoreo, etc.)</small></div>
+    <div class="form-row"><label>📷 Fotos de la labor (puedes subir varias)</label>
+      <div id="f-labfotos-existentes" style="margin-bottom:8px;display:flex;flex-wrap:wrap">${renderEditTaskFotosExistentes()}</div>
+      <input id="f-labfotos" type="file" accept="image/*" multiple>
+      <small style="color:var(--gris);font-size:11px">Evidencia de la labor (poda, fertilización, monitoreo, etc.). Puedes seleccionar varias fotos a la vez desde la cámara o la galería del teléfono. Las fotos previas se conservan a menos que las quites con la "×".</small></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveTask(${id?`'${id}'`:'null'})">Guardar</button></div>`);
   toggleFechaEjec();
 }
@@ -1495,16 +1516,60 @@ async function saveTask(id){
   const data={nombre:document.getElementById('f-nom').value,categoria:document.getElementById('f-cat').value,estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloque:document.getElementById('f-bloq').value,horas:parseFloat(document.getElementById('f-horas').value)||null,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
   if(!data.nombre){toast('Nombre requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
-  const fLab=document.getElementById('f-labfoto');
-  if(fLab&&fLab.files&&fLab.files[0]){try{data.foto=await fileToDataURL(fLab.files[0]);}catch(e){toast('Error procesando foto','warn')}}else if(id){const prev=await get('tasks',id);if(prev&&prev.foto)data.foto=prev.foto;}
+  /* === Manejo de múltiples fotos (retro-compatible con campo legacy `foto`) ===
+     - Conservamos las que el usuario no quitó (_editTaskFotosExistentes).
+     - Procesamos los archivos nuevos del input "multiple".
+     - Si el documento se acerca al límite Firestore (~1 MB), recompactamos
+       las nuevas con un targetKB más bajo para que entren más fotos.
+     - Móvil: el input ya no usa capture="environment" (eso forzaba sólo cámara
+       en iOS) y sí soporta multiple, lo que permite elegir varias desde galería. */
+  const fLabInput=document.getElementById('f-labfotos');
+  const nuevosFiles=(fLabInput&&fLabInput.files)?Array.from(fLabInput.files):[];
+  const fotosPrevias=Array.isArray(_editTaskFotosExistentes)?_editTaskFotosExistentes.slice():[];
+  let fotosNuevas=[];
+  const totalFotosFinal=fotosPrevias.length+nuevosFiles.length;
+  /* Presupuesto por foto: si hay muchas, comprimimos más. */
+  let perPhotoKB=300;
+  if(totalFotosFinal>=2)perPhotoKB=220;
+  if(totalFotosFinal>=3)perPhotoKB=170;
+  if(totalFotosFinal>=4)perPhotoKB=130;
+  if(totalFotosFinal>=5)perPhotoKB=100;
+  const erroresFotos=[];
+  for(const f of nuevosFiles){
+    try{
+      const dataURL=await fileToDataURL(f,1400,perPhotoKB);
+      fotosNuevas.push(dataURL);
+    }catch(e){
+      erroresFotos.push((f.name||'foto')+': '+(e&&e.message?e.message:'no se pudo procesar'));
+    }
+  }
+  data.fotos=[...fotosPrevias,...fotosNuevas];
+  /* Si subimos nuevas, eliminamos el campo legacy `foto` para no duplicar storage. */
+  data.foto=null;
   let isNew=!id;
-  const sz=approxDocSize(data);
-  if(sz>950000){toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Usa una foto más chica.','warn');return;}
+  /* Verificación de tamaño + recompresión agresiva si se pasa de 1 MB. */
+  let sz=approxDocSize(data);
+  if(sz>950000&&fotosNuevas.length){
+    /* Re-comprimir las nuevas a un objetivo aún más bajo (50 KB c/u). */
+    const filesAComprimir=nuevosFiles;
+    fotosNuevas=[];
+    for(const f of filesAComprimir){
+      try{fotosNuevas.push(await fileToDataURL(f,720,60));}catch(e){}
+    }
+    data.fotos=[...fotosPrevias,...fotosNuevas];
+    sz=approxDocSize(data);
+  }
+  if(sz>950000){
+    toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Quita alguna foto previa o sube menos.','warn');
+    return;
+  }
   try{
     if(id){data.id=id;await put('tasks',data)}
     else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
   }catch(e){console.error('saveTask falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return;}
-  closeModal();toast('Labor guardada');
+  closeModal();
+  if(erroresFotos.length){toast('Labor guardada. Algunas fotos fallaron: '+erroresFotos.join('; '),'warn');}
+  else toast('Labor guardada'+(fotosNuevas.length?` (${fotosNuevas.length} foto${fotosNuevas.length>1?'s':''} agregada${fotosNuevas.length>1?'s':''})`:''));
   if(isNew||data.estado==='realizada'){
     const estLabel=data.estado==='realizada'?'✓ Realizada':data.estado==='en_curso'?'🔵 En curso':data.estado==='cancelada'?'Cancelada':'🟡 Planificada';
     notifyHook('Labor',`${estLabel}: ${data.nombre}`,`Cuartel: ${data.bloque||'General'}\nCategoría: ${data.categoria||'-'}\nFecha: ${fmt(data.fechaPlanificada||data.fecha)}${data.horas?'\nHoras-hombre: '+data.horas:''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.notas?'\n📝 '+data.notas.slice(0,200):''}`,'tasks');
@@ -1522,7 +1587,8 @@ async function viewTask(id){
   const creador=t.createdBy?userById(t.createdBy):null;
   const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
   const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
-  const fotoBlock=t.foto?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Foto de la labor</h4><div><img src="${t.foto}" style="width:100%;max-width:320px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${t.foto.replace(/'/g,"\\'")}')"></div>`:'';
+  const fotosArr=getTaskFotos(t);
+  const fotoBlock=fotosArr.length?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotos de la labor (${fotosArr.length})</h4><div style="display:flex;flex-wrap:wrap;gap:8px">${fotosArr.map(src=>`<img src="${src}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:zoom-in;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')">`).join('')}</div>`:'';
   openModal(`
     <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}</span>${estTag}</h3>
     ${atr?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
