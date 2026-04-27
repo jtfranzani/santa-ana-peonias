@@ -357,7 +357,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.04.27.3';
+const APP_VERSION='2026.04.27.5';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -480,49 +480,62 @@ async function seedIfEmpty(){
 }
 
 /* ============ PUNTOS DE FOTO RECOMENDADOS ============ */
-/* Diseño basado en hileras orientadas Oriente-Poniente (E-O):
-   - Vistas "a lo largo de la hilera" → cámara apuntando al Este o al Oeste
-   - Vistas "perpendiculares a las hileras" → cámara apuntando al Norte o al Sur
-   - Detalle cenital → cámara apuntando hacia abajo
+/* Configuración v3 (definida por el productor en abril 2026):
+   6 puntos físicos referenciados a la válvula 4 y al inicio del camino central.
+   Las hileras corren Oriente-Poniente (E-O); las vistas al Norte/Sur son
+   perpendiculares a las hileras (atraviesan varias hileras en sección).
    La hora 10:00-11:00 evita sombras duras y reduce contraluz. */
 const PUNTOS_FOTO_RECOMENDADOS=[
-  {codigo:'P1',nombre:'Sarah Bernhardt - Cabecera poniente, vista al oriente',bloque:'Sarah Bernhardt',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Parado en el extremo poniente del cuartel, cámara mirando hacia el oriente — a lo largo de las hileras. Las hileras se alejan en perspectiva. Tomar a 1,7 m de altura. Incluir estaca de referencia con cinta roja en primer plano.',hora:'10:00-11:00'},
-  {codigo:'P2',nombre:'Sarah Bernhardt - Centro, vista al norte',bloque:'Sarah Bernhardt',orientacion:'Vista al Norte (perpendicular a las hileras)',descripcion:'Mitad del cuartel, parado entre dos hileras, cámara mirando al norte — atravesando las hileras. Vista panorámica que muestra varios camellones en cross-section. Útil para evaluar cobertura y uniformidad. Incluir poste tutor con referencia graduada.',hora:'10:00-11:00'},
-  {codigo:'P3',nombre:'Sarah Bernhardt - Cabecera oriente, vista al poniente',bloque:'Sarah Bernhardt',orientacion:'Vista al Oeste (a lo largo de la hilera)',descripcion:'Extremo oriente del cuartel, cámara mirando al poniente — vista contraria a P1, a lo largo de las hileras. Permite contrastar zonas oriente vs poniente del bloque. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
-  {codigo:'P4',nombre:'Bowl of Cream - Cabecera poniente, vista al oriente',bloque:'Bowl of Cream',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Parado en el extremo poniente del cuartel, cámara mirando hacia el oriente — a lo largo de las hileras. Incluir camellón y línea de gotero como referencia.',hora:'10:00-11:00'},
-  {codigo:'P5',nombre:'Bowl of Cream - Detalle planta',bloque:'Bowl of Cream',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca amarilla. Foto perpendicular al suelo (cenital) para medir cobertura foliar. Encuadre fijo: planta centrada en el cuadro.',hora:'10:00-11:00'},
-  {codigo:'P6',nombre:'Festiva Maxima - Cabecera poniente, vista al oriente',bloque:'Festiva Maxima',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Vista general a lo largo de las hileras, parado en cabecera poniente mirando al oriente. Incluir camellón, mulch y zona de acceso.',hora:'10:00-11:00'},
-  {codigo:'P7',nombre:'Festiva Maxima - Detalle planta',bloque:'Festiva Maxima',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca verde. Vista cenital para cobertura foliar.',hora:'10:00-11:00'},
-  {codigo:'P8',nombre:'Panorámica general huerto',bloque:'Todos',orientacion:'Variable (desde punto fijo)',descripcion:'Vista desde punto alto (ej. bodega) mostrando los tres cuarteles. Mismo encuadre cada vez. Anotar dirección exacta de cámara la primera vez (ej. "vista al sur") y mantenerla.',hora:'10:00-11:00'}
+  {codigo:'P1',nombre:'Festiva Maxima - Vista al Sur (recorrido W→E)',bloque:'Festiva Maxima',orientacion:'Vista al Sur (perpendicular a las hileras)',descripcion:'Recorrido de Poniente a Oriente. Parado en el costado norte del cuartel Festiva, cámara mirando hacia el sur — perpendicular a las hileras (que corren E-O). Tomar a 1,7 m de altura. Mantener el mismo encuadre cada vez.',hora:'10:00-11:00'},
+  {codigo:'P2',nombre:'Sarah Bernhardt - Válvula 4, vista al Sur',bloque:'Sarah Bernhardt',orientacion:'Vista al Sur (perpendicular a las hileras)',descripcion:'Punto de referencia físico: válvula 4. Recorrido de Poniente a Oriente. Parado en el costado norte de la válvula 4, cámara mirando hacia el sur — perpendicular a las hileras. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
+  {codigo:'P3',nombre:'Sarah Bernhardt - Inicio del camino, vista al Norte',bloque:'Sarah Bernhardt',orientacion:'Vista al Norte (perpendicular a las hileras)',descripcion:'Parado al inicio del camino central, lado sur del cuartel Sarah, cámara mirando hacia el norte — perpendicular a las hileras. La vista abarca el camino y las hileras transversales. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
+  {codigo:'P4',nombre:'Sarah Bernhardt - Válvula 4, vista al Norte',bloque:'Sarah Bernhardt',orientacion:'Vista al Norte (perpendicular a las hileras)',descripcion:'Punto de referencia físico: válvula 4 (mismo punto físico que P2 pero giro de 180°). Recorrido de Oriente a Poniente. Parado en el costado sur de la válvula 4, cámara mirando hacia el norte. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
+  {codigo:'P5',nombre:'Bowl of Cream - Inicio del cuartel, vista al Norte',bloque:'Bowl of Cream',orientacion:'Vista al Norte (perpendicular a las hileras)',descripcion:'Recorrido de Oriente a Poniente. Parado al comienzo del cuartel Bowl of Cream, lado sur, cámara mirando hacia el norte — perpendicular a las hileras. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
+  {codigo:'P6',nombre:'Festiva Maxima - Inicio del camino, vista al Sur',bloque:'Festiva Maxima',orientacion:'Vista al Sur (perpendicular a las hileras)',descripcion:'Parado al inicio del camino central, lado norte del cuartel Festiva, cámara mirando hacia el sur — perpendicular a las hileras. La vista abarca el camino y las hileras transversales. Tomar a 1,7 m de altura.',hora:'10:00-11:00'}
 ];
 
-/* Migración: actualiza los puntos seedeados originales (P1-P8) si todavía tienen
-   las orientaciones antiguas que confundían el sentido de las hileras.
-   No toca puntos personalizados por el usuario. */
-const PHOTOPOINT_LEGACY_NAMES={
-  'P1':'Sarah Bernhardt - Acceso norte',
-  'P2':'Sarah Bernhardt - Centro',
-  'P3':'Sarah Bernhardt - Zona sur',
-  'P4':'Bowl of Cream - Cuartel completo',
-  'P5':'Bowl of Cream - Detalle planta',
-  'P6':'Festiva Maxima - Cuartel completo',
-  'P7':'Festiva Maxima - Detalle planta',
-  'P8':'Panorámica general huerto'
-};
+/* Migración v3: detecta puntos seedeados de versiones anteriores (v1 sin convención E-O,
+   v2 con convención E-O pero 8 puntos) y los reemplaza por los 6 puntos definitivos.
+   Solo elimina puntos legacy SIN fotos asociadas. Si el usuario tomó fotos sobre alguno
+   de los puntos antiguos, ese punto se conserva intacto para no orfanar las fotos. */
 async function upgradeSeededPhotopoints(puntos){
-  let actualizados=0;
+  const LEGACY_SEEDED_NAMES=new Set([
+    /* v1 seed (orientaciones pre-corrección E-O) */
+    'Sarah Bernhardt - Acceso norte',
+    'Sarah Bernhardt - Centro',
+    'Sarah Bernhardt - Zona sur',
+    'Bowl of Cream - Cuartel completo',
+    'Bowl of Cream - Detalle planta',
+    'Festiva Maxima - Cuartel completo',
+    'Festiva Maxima - Detalle planta',
+    'Panorámica general huerto',
+    /* v2 seed (post-corrección E-O, 8 puntos) */
+    'Sarah Bernhardt - Cabecera poniente, vista al oriente',
+    'Sarah Bernhardt - Centro, vista al norte',
+    'Sarah Bernhardt - Cabecera oriente, vista al poniente',
+    'Bowl of Cream - Cabecera poniente, vista al oriente',
+    'Festiva Maxima - Cabecera poniente, vista al oriente'
+  ]);
+  let photos=[];try{photos=await getAll('photos');}catch(e){photos=[];}
+  const photoCountByPoint={};
+  photos.forEach(f=>{photoCountByPoint[f.pointId]=(photoCountByPoint[f.pointId]||0)+1});
+  let eliminados=0;
   for(const p of puntos){
-    const legacyNombre=PHOTOPOINT_LEGACY_NAMES[p.codigo];
-    if(!legacyNombre)continue;
-    /* Solo actualizamos si el nombre coincide con el seed original (no si el usuario lo personalizó) */
-    if(p.nombre!==legacyNombre)continue;
-    const nuevo=PUNTOS_FOTO_RECOMENDADOS.find(r=>r.codigo===p.codigo);
-    if(!nuevo)continue;
-    /* Mantenemos id y bloque originales por seguridad; pisamos solo nombre, orientacion y descripcion */
-    await put('photopoints',{...p,nombre:nuevo.nombre,orientacion:nuevo.orientacion,descripcion:nuevo.descripcion,hora:p.hora||nuevo.hora});
-    actualizados++;
+    if(LEGACY_SEEDED_NAMES.has(p.nombre)&&(photoCountByPoint[p.id]||0)===0){
+      try{await del('photopoints',p.id);eliminados++;}
+      catch(e){console.warn('[photopoints v3] no se pudo borrar legacy',p.id,e);}
+    }
   }
-  if(actualizados)console.log('[photopoints] referencias actualizadas a hileras E-O:',actualizados);
+  const restantes=eliminados>0?await getAll('photopoints'):puntos;
+  let agregados=0;
+  for(const r of PUNTOS_FOTO_RECOMENDADOS){
+    const existe=restantes.find(p=>p.codigo===r.codigo&&p.nombre===r.nombre);
+    if(!existe){
+      try{await add('photopoints',r);agregados++;}
+      catch(e){console.warn('[photopoints v3] no se pudo agregar',r.codigo,e);}
+    }
+  }
+  if(eliminados||agregados)console.log('[photopoints v3] eliminados:',eliminados,'agregados:',agregados);
 }
 
 /* ============ HELPERS ============ */
@@ -587,6 +600,107 @@ function fileToDataURL(file,maxW=1400,targetKB=300){
 function approxDocSize(obj){try{return new Blob([JSON.stringify(obj)]).size}catch(e){return JSON.stringify(obj).length}}
 function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal').classList.add('open')}
 function closeModal(){document.getElementById('modal').classList.remove('open')}
+
+/* ============ COLA OFFLINE DE FOTOS (IndexedDB) ============
+   Cuando el usuario está en el huerto sin señal o se cae la conexión a Firestore,
+   las fotos se guardan localmente y se suben automáticamente al recuperar conexión. */
+const OFFLINE_DB_NAME='santaAnaOffline';
+const OFFLINE_DB_VERSION=1;
+const OFFLINE_PHOTO_STORE='pendingPhotos';
+function openOfflineDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(OFFLINE_DB_NAME,OFFLINE_DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(OFFLINE_PHOTO_STORE)){
+        db.createObjectStore(OFFLINE_PHOTO_STORE,{keyPath:'localId',autoIncrement:true});
+      }
+    };
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error||new Error('No se pudo abrir IndexedDB'));
+  });
+}
+function idbReq(store,mode,fn){
+  return openOfflineDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(store,mode);
+    const os=tx.objectStore(store);
+    const r=fn(os);
+    tx.oncomplete=()=>res(r&&'result'in r?r.result:r);
+    tx.onerror=()=>rej(tx.error);
+  }));
+}
+async function queuePhotoOffline(doc){
+  return idbReq(OFFLINE_PHOTO_STORE,'readwrite',os=>os.add({...doc,_queuedAt:new Date().toISOString()}));
+}
+async function getPendingPhotos(){
+  return idbReq(OFFLINE_PHOTO_STORE,'readonly',os=>{
+    return new Promise(res=>{
+      const out=[];const cur=os.openCursor();
+      cur.onsuccess=()=>{const c=cur.result;if(c){out.push(c.value);c.continue()}else res(out)};
+    });
+  });
+}
+async function deletePendingPhoto(localId){
+  return idbReq(OFFLINE_PHOTO_STORE,'readwrite',os=>os.delete(localId));
+}
+async function countPendingPhotos(){
+  try{const arr=await getPendingPhotos();return arr.length;}catch(e){return 0;}
+}
+let _flushing=false;
+async function flushPendingPhotos(silent=true){
+  if(_flushing)return {ok:0,fail:0,skipped:true};
+  if(navigator.onLine===false){if(!silent)toast('Sin conexión — no se pueden subir las pendientes aún','warn');return {ok:0,fail:0};}
+  if(!window.FB_DB||!CURRENT_USER){return {ok:0,fail:0};}
+  _flushing=true;
+  let ok=0,fail=0;const errores=[];
+  try{
+    const pendientes=await getPendingPhotos();
+    if(pendientes.length===0){if(!silent)toast('No hay fotos pendientes');return {ok:0,fail:0};}
+    if(!silent)toast('Subiendo '+pendientes.length+' foto(s) pendiente(s)…');
+    for(const p of pendientes){
+      try{
+        const {localId,_queuedAt,...doc}=p;
+        await add('photos',doc);
+        await deletePendingPhoto(localId);
+        ok++;
+      }catch(e){
+        fail++;errores.push((e&&e.message)||String(e));
+        console.warn('flushPendingPhotos falló:',e);
+      }
+    }
+    if(!silent||ok>0){
+      let msg='';
+      if(ok)msg+=ok+' subida(s). ';
+      if(fail)msg+=fail+' siguen pendientes';
+      toast(msg.trim()||'Listo',fail?'warn':'ok');
+    }
+    renderPendingBadge();
+  }finally{_flushing=false;}
+  return {ok,fail};
+}
+function renderPendingBadge(){
+  countPendingPhotos().then(n=>{
+    let el=document.getElementById('pending-photos-pill');
+    if(n<=0){if(el)el.remove();return;}
+    if(!el){
+      el=document.createElement('div');
+      el.id='pending-photos-pill';
+      el.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px;margin:0 14px 10px;background:rgba(245,158,11,.28);color:#fff;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;box-shadow:0 0 0 1px rgba(245,158,11,.35)';
+      el.title='Fotos guardadas localmente, se subirán al recuperar conexión';
+      el.onclick=()=>flushPendingPhotos(false);
+      const sb=document.querySelector('.sidebar')||document.body;
+      const versionPill=document.getElementById('version-pill');
+      if(versionPill&&versionPill.parentNode)versionPill.parentNode.insertBefore(el,versionPill);
+      else sb.appendChild(el);
+    }
+    el.innerHTML='<span>📤 '+n+' foto(s) pendientes</span><span style="opacity:.85">Subir</span>';
+  });
+}
+/* Auto-flush cuando vuelve la conexión */
+window.addEventListener('online',()=>{
+  console.log('[offline] conexión recuperada, intentando flush…');
+  setTimeout(()=>flushPendingPhotos(true),1500);
+});
 function viewImage(src){if(!src)return;const existing=document.getElementById('img-viewer');if(existing)existing.remove();const div=document.createElement('div');div.id='img-viewer';div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';div.onclick=()=>div.remove();div.innerHTML=`<img src="${src}" style="max-width:95%;max-height:95%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5)"><button style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.9);border:none;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:bold">×</button>`;document.body.appendChild(div);}
 function toast(msg,type='ok'){
   const t=document.createElement('div');
@@ -1155,7 +1269,9 @@ async function uploadPhoto(pointId){
 function quickUpload(pointId){uploadPhoto(pointId)}
 
 async function savePhoto(){
-  const pointId=parseInt(document.getElementById('f-point').value);
+  /* FIX: pointId es string en Firestore, no integer. Antes parseInt() devolvía NaN
+     y bloqueaba la subida con "Selecciona un punto". */
+  const pointId=(document.getElementById('f-point').value||'').trim();
   if(!pointId){toast('Selecciona un punto','warn');return}
   const fecha=document.getElementById('f-fecha').value;
   const fase=document.getElementById('f-fase').value;
@@ -1163,20 +1279,59 @@ async function savePhoto(){
   const files=document.getElementById('f-file').files;
   if(!files.length){toast('Selecciona al menos una imagen','warn');return}
   toast('Procesando '+files.length+' imagen(es)...');
-  let okCount=0,failCount=0;
+  let okCount=0,failCount=0,queuedCount=0;
+  const errores=[];
+  const online=navigator.onLine!==false;
   for(const f of files){
+    let img='';
     try{
-      const img=await fileToDataURL(f);
-      const doc={pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()};
-      const sz=approxDocSize(doc);
-      if(sz>950000){failCount++;console.warn('savePhoto: '+f.name+' supera 950KB ('+(sz/1024).toFixed(0)+'KB)');continue;}
-      await add('photos',doc);
-      okCount++;
-    }catch(e){failCount++;console.error('savePhoto falló para '+f.name+':',e);}
+      img=await fileToDataURL(f);
+    }catch(e){
+      failCount++;errores.push(f.name+': '+(e&&e.message?e.message:'no se pudo procesar la imagen'));
+      console.error('savePhoto fileToDataURL falló para '+f.name+':',e);continue;
+    }
+    /* Si la foto resultante es demasiado pesada incluso para Firestore, intentamos
+       una compresión extra agresiva como último recurso. */
+    let doc={pointId,fecha,fase,notas,img,filename:f.name,createdBy:CURRENT_USER,createdAt:new Date().toISOString(),created:new Date().toISOString()};
+    let sz=approxDocSize(doc);
+    if(sz>950000){
+      try{
+        const imgExtra=await fileToDataURL(f,400,180);
+        doc={...doc,img:imgExtra};
+        sz=approxDocSize(doc);
+      }catch(e){console.warn('compresión extra falló:',e);}
+    }
+    if(sz>950000){
+      failCount++;errores.push(f.name+': demasiado pesada ('+(sz/1024).toFixed(0)+' KB) tras compresión máxima');continue;
+    }
+    /* Online: subir a Firestore. Offline o error de red: guardar en cola IndexedDB. */
+    if(online){
+      try{
+        await add('photos',doc);
+        okCount++;
+      }catch(e){
+        const msg=(e&&e.message?e.message:String(e));
+        const esRed=/network|offline|unavailable|deadline|fetch/i.test(msg);
+        if(esRed){
+          try{await queuePhotoOffline(doc);queuedCount++;}
+          catch(qe){failCount++;errores.push(f.name+': '+msg);}
+        }else{
+          failCount++;errores.push(f.name+': '+msg);
+          console.error('savePhoto falló para '+f.name+':',e);
+        }
+      }
+    }else{
+      try{await queuePhotoOffline(doc);queuedCount++;}
+      catch(e){failCount++;errores.push(f.name+': no se pudo encolar offline ('+(e&&e.message||e)+')');}
+    }
   }
   closeModal();
-  if(failCount>0)toast(okCount+' guardada(s), '+failCount+' con error (ver consola)','warn');
-  else toast(okCount+' foto(s) guardada(s)');
+  let msg='';
+  if(okCount)msg+=okCount+' foto(s) subida(s). ';
+  if(queuedCount)msg+=queuedCount+' guardada(s) offline (se subirán al recuperar señal). ';
+  if(failCount)msg+=failCount+' con error: '+errores.slice(0,2).join(' · ');
+  toast(msg.trim()||'Sin acción',failCount?'warn':'ok');
+  if(queuedCount)renderPendingBadge();
   renderPhotos();
 }
 
@@ -2854,6 +3009,9 @@ function showUpdateBanner(remoteVer){
       if(!window._versionInterval){
         window._versionInterval=setInterval(()=>checkForNewVersion(true),15*60*1000);
       }
+      /* Cola offline de fotos: mostrar badge si hay pendientes y reintentar subida */
+      renderPendingBadge();
+      setTimeout(()=>flushPendingPhotos(true),3000);
     } else {
       CURRENT_USER=null;
       renderLogin();
