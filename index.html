@@ -357,7 +357,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.04.27.6';
+const APP_VERSION='2026.04.27.7';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1462,16 +1462,59 @@ function getTaskFotos(t){
   if(t.foto)return[t.foto];
   return[];
 }
-/* Estado en memoria para fotos existentes durante edición de labor (permite eliminar antes de guardar). */
+/* Estado en memoria para fotos durante edición de labor.
+   Patrón INCREMENTAL: cada vez que el usuario elige fotos, se comprimen al toque
+   y se SUMAN a la lista (no se reemplazan). Resuelve el caso típico iOS Safari
+   donde la cámara sólo deja capturar una foto a la vez y `multiple` queda inerte:
+   el usuario puede tocar "Agregar fotos" tantas veces como quiera y siempre se
+   acumulan. Después de guardar, esta lista se persiste en `data.fotos`. */
 let _editTaskFotosExistentes=[];
 function removeEditTaskFoto(idx){
   _editTaskFotosExistentes.splice(idx,1);
   const cont=document.getElementById('f-labfotos-existentes');
   if(cont)cont.innerHTML=renderEditTaskFotosExistentes();
+  const cnt=document.getElementById('f-labfotos-count');
+  if(cnt)cnt.textContent=_editTaskFotosExistentes.length;
 }
 function renderEditTaskFotosExistentes(){
-  if(!_editTaskFotosExistentes.length)return'<small style="color:var(--gris);font-size:11px">Sin fotos previas.</small>';
+  if(!_editTaskFotosExistentes.length)return'<small style="color:var(--gris);font-size:11px">Aún no hay fotos. Toca "Agregar fotos" — puedes hacerlo varias veces para sumar más.</small>';
   return _editTaskFotosExistentes.map((src,i)=>`<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img src="${src}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><button type="button" onclick="removeEditTaskFoto(${i})" title="Quitar esta foto" style="position:absolute;top:-6px;right:-6px;background:#c0392b;color:#fff;border:none;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.3)">×</button></div>`).join('');
+}
+/* Procesa los archivos recién elegidos en el input, los comprime y los SUMA
+   a _editTaskFotosExistentes. Después limpia el value del input para permitir
+   nueva selección (en iOS, sin .value='' un segundo cambio con el mismo archivo
+   no dispara onchange). */
+async function addEditTaskFotos(input){
+  if(!input||!input.files||!input.files.length)return;
+  const files=Array.from(input.files);
+  const cont=document.getElementById('f-labfotos-existentes');
+  if(cont)cont.innerHTML='<small style="color:var(--verde-d);font-size:11px">Procesando '+files.length+' foto'+(files.length>1?'s':'')+'…</small>';
+  /* targetKB dinámico: cuantas más fotos haya, más bajo el target. */
+  const totalAprox=_editTaskFotosExistentes.length+files.length;
+  let perPhotoKB=300;
+  if(totalAprox>=2)perPhotoKB=220;
+  if(totalAprox>=3)perPhotoKB=170;
+  if(totalAprox>=4)perPhotoKB=130;
+  if(totalAprox>=5)perPhotoKB=100;
+  let okCount=0,failCount=0;const errores=[];
+  for(const f of files){
+    try{
+      const dataURL=await fileToDataURL(f,1400,perPhotoKB);
+      _editTaskFotosExistentes.push(dataURL);
+      okCount++;
+    }catch(e){
+      failCount++;
+      errores.push((f.name||'foto')+': '+(e&&e.message?e.message:'no se pudo procesar'));
+    }
+  }
+  /* Limpiar input para permitir nueva selección (incluso del mismo archivo). */
+  try{input.value='';}catch(e){}
+  /* Re-renderizar miniaturas y contador. */
+  if(cont)cont.innerHTML=renderEditTaskFotosExistentes();
+  const cnt=document.getElementById('f-labfotos-count');
+  if(cnt)cnt.textContent=_editTaskFotosExistentes.length;
+  if(failCount){toast('Se agregaron '+okCount+' foto(s). '+failCount+' fallaron: '+errores.join('; '),'warn');}
+  else if(okCount){toast(okCount+' foto'+(okCount>1?'s agregadas':' agregada')+' (total: '+_editTaskFotosExistentes.length+')','ok');}
 }
 async function editTask(id,template){
   const blocks=await getAll('blocks');
@@ -1501,10 +1544,19 @@ async function editTask(id,template){
       <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
     </div>
     <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
-    <div class="form-row"><label>📷 Fotos de la labor (puedes subir varias)</label>
-      <div id="f-labfotos-existentes" style="margin-bottom:8px;display:flex;flex-wrap:wrap">${renderEditTaskFotosExistentes()}</div>
-      <input id="f-labfotos" type="file" accept="image/*" multiple>
-      <small style="color:var(--gris);font-size:11px">Evidencia de la labor (poda, fertilización, monitoreo, etc.). Puedes seleccionar varias fotos a la vez desde la cámara o la galería del teléfono. Las fotos previas se conservan a menos que las quites con la "×".</small></div>
+    <div class="form-row"><label>📷 Fotos de la labor (<span id="f-labfotos-count">${_editTaskFotosExistentes.length}</span> agregada/s)</label>
+      <div id="f-labfotos-existentes" style="margin-bottom:10px;display:flex;flex-wrap:wrap;min-height:24px">${renderEditTaskFotosExistentes()}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <label class="btn small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">
+          📷 Tomar foto con cámara
+          <input type="file" accept="image/*" capture="environment" onchange="addEditTaskFotos(this)" style="display:none">
+        </label>
+        <label class="btn small ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">
+          🖼 Elegir de la galería
+          <input type="file" accept="image/*" multiple onchange="addEditTaskFotos(this)" style="display:none">
+        </label>
+      </div>
+      <small style="color:var(--gris);font-size:11px">Tip: en celular toca "Tomar foto" cuantas veces quieras para sumar fotos una a una, o "Elegir de la galería" para seleccionar varias de golpe. Cada foto que agregues queda guardada al instante; la lista se confirma al apretar "Guardar".</small></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveTask(${id?`'${id}'`:'null'})">Guardar</button></div>`);
   toggleFechaEjec();
 }
@@ -1516,51 +1568,15 @@ async function saveTask(id){
   const data={nombre:document.getElementById('f-nom').value,categoria:document.getElementById('f-cat').value,estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloque:document.getElementById('f-bloq').value,horas:parseFloat(document.getElementById('f-horas').value)||null,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
   if(!data.nombre){toast('Nombre requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
-  /* === Manejo de múltiples fotos (retro-compatible con campo legacy `foto`) ===
-     - Conservamos las que el usuario no quitó (_editTaskFotosExistentes).
-     - Procesamos los archivos nuevos del input "multiple".
-     - Si el documento se acerca al límite Firestore (~1 MB), recompactamos
-       las nuevas con un targetKB más bajo para que entren más fotos.
-     - Móvil: el input ya no usa capture="environment" (eso forzaba sólo cámara
-       en iOS) y sí soporta multiple, lo que permite elegir varias desde galería. */
-  const fLabInput=document.getElementById('f-labfotos');
-  const nuevosFiles=(fLabInput&&fLabInput.files)?Array.from(fLabInput.files):[];
-  const fotosPrevias=Array.isArray(_editTaskFotosExistentes)?_editTaskFotosExistentes.slice():[];
-  let fotosNuevas=[];
-  const totalFotosFinal=fotosPrevias.length+nuevosFiles.length;
-  /* Presupuesto por foto: si hay muchas, comprimimos más. */
-  let perPhotoKB=300;
-  if(totalFotosFinal>=2)perPhotoKB=220;
-  if(totalFotosFinal>=3)perPhotoKB=170;
-  if(totalFotosFinal>=4)perPhotoKB=130;
-  if(totalFotosFinal>=5)perPhotoKB=100;
-  const erroresFotos=[];
-  for(const f of nuevosFiles){
-    try{
-      const dataURL=await fileToDataURL(f,1400,perPhotoKB);
-      fotosNuevas.push(dataURL);
-    }catch(e){
-      erroresFotos.push((f.name||'foto')+': '+(e&&e.message?e.message:'no se pudo procesar'));
-    }
-  }
-  data.fotos=[...fotosPrevias,...fotosNuevas];
-  /* Si subimos nuevas, eliminamos el campo legacy `foto` para no duplicar storage. */
+  /* === Fotos: ya están comprimidas en _editTaskFotosExistentes (patrón incremental).
+     Cada selección del usuario las añadió al toque vía addEditTaskFotos(). */
+  data.fotos=Array.isArray(_editTaskFotosExistentes)?_editTaskFotosExistentes.slice():[];
+  /* Eliminamos el campo legacy `foto` para no duplicar storage. */
   data.foto=null;
   let isNew=!id;
-  /* Verificación de tamaño + recompresión agresiva si se pasa de 1 MB. */
   let sz=approxDocSize(data);
-  if(sz>950000&&fotosNuevas.length){
-    /* Re-comprimir las nuevas a un objetivo aún más bajo (50 KB c/u). */
-    const filesAComprimir=nuevosFiles;
-    fotosNuevas=[];
-    for(const f of filesAComprimir){
-      try{fotosNuevas.push(await fileToDataURL(f,720,60));}catch(e){}
-    }
-    data.fotos=[...fotosPrevias,...fotosNuevas];
-    sz=approxDocSize(data);
-  }
   if(sz>950000){
-    toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Quita alguna foto previa o sube menos.','warn');
+    toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Quita alguna foto antes de guardar.','warn');
     return;
   }
   try{
@@ -1568,8 +1584,7 @@ async function saveTask(id){
     else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('tasks',data)}
   }catch(e){console.error('saveTask falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return;}
   closeModal();
-  if(erroresFotos.length){toast('Labor guardada. Algunas fotos fallaron: '+erroresFotos.join('; '),'warn');}
-  else toast('Labor guardada'+(fotosNuevas.length?` (${fotosNuevas.length} foto${fotosNuevas.length>1?'s':''} agregada${fotosNuevas.length>1?'s':''})`:''));
+  toast('Labor guardada'+(data.fotos.length?' ('+data.fotos.length+' foto'+(data.fotos.length>1?'s':'')+')':''));
   if(isNew||data.estado==='realizada'){
     const estLabel=data.estado==='realizada'?'✓ Realizada':data.estado==='en_curso'?'🔵 En curso':data.estado==='cancelada'?'Cancelada':'🟡 Planificada';
     notifyHook('Labor',`${estLabel}: ${data.nombre}`,`Cuartel: ${data.bloque||'General'}\nCategoría: ${data.categoria||'-'}\nFecha: ${fmt(data.fechaPlanificada||data.fecha)}${data.horas?'\nHoras-hombre: '+data.horas:''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.notas?'\n📝 '+data.notas.slice(0,200):''}`,'tasks');
