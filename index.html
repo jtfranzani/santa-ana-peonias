@@ -357,7 +357,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.04.24.1';
+const APP_VERSION='2026.04.27.3';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -421,28 +421,108 @@ function subscribe(store,callback){
 }
 function unsubscribeAll(){Object.values(LISTENERS).forEach(un=>un&&un());}
 
+/* ============ DATOS DEL PLANO DE RIEGO (BAUM As-Built 13/12/2024 — 24-046) ============ */
+const PLANO_DATA={
+  'Sarah Bernhardt':{etapa:'Etapa 1',sectores:['1.1','2.1','3.1','4.1','5.1','6.1','7.1','8.1','9.1','10.1','11.1','12.1','13.1','14.1','15.1','16.1'],subcuarteles:32,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:1.8,caudalEstim:'~50 m³/h (Etapa 1)',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',orientacionHileras:'Oriente-Poniente (E-O)',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'},
+  'Bowl of Cream':{etapa:'Etapa 2',sectores:['17.1','18.1'],subcuarteles:4,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:0.225,caudalEstim:'~10 m³/h',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',orientacionHileras:'Oriente-Poniente (E-O)',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'},
+  'Festiva Maxima':{etapa:'Etapa 2',sectores:['19.1','20.1'],subcuarteles:4,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:0.225,caudalEstim:'~10 m³/h',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',orientacionHileras:'Oriente-Poniente (E-O)',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'},
+  'Reserva (sin plantar)':{etapa:'Reserva',sectores:['21.1','22.1','23.1'],subcuarteles:0,divisionNS:false,marco:'—',densidad:0,hectareas:2.0,caudalEstim:'Red de riego instalada',valvulas:'DOROT S-75 2"',goteros:'Líneas listas para conectar',orientacionHileras:'Oriente-Poniente (E-O)',camino:'Camino central E-O paralelo a las hileras',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'}
+};
+
+/* Valores antiguos que la migración debe sobreescribir por estar incorrectos */
+const PLANO_LEGACY_OVERRIDES={
+  camino:['Camino central N-S divide cada sector en mitad Norte y mitad Sur','Camino central N-S']
+};
+
+async function upgradeBlocksWithPlanoData(blocks){
+  let actualizados=0;let creadaReserva=false;
+  for(const b of blocks){
+    const planoKey=Object.keys(PLANO_DATA).find(k=>b.nombre&&b.nombre.toLowerCase()===k.toLowerCase());
+    if(!planoKey)continue;
+    const plano=PLANO_DATA[planoKey];
+    const patch={};let cambios=false;
+    for(const k of Object.keys(plano)){
+      const cur=b[k];
+      const esVacio=(cur===undefined||cur===null||cur===''||(Array.isArray(cur)&&cur.length===0));
+      const esLegacy=PLANO_LEGACY_OVERRIDES[k]&&PLANO_LEGACY_OVERRIDES[k].includes(cur);
+      if(esVacio||esLegacy){patch[k]=plano[k];cambios=true;}
+    }
+    if(cambios){await put('blocks',{...b,...patch});actualizados++;}
+  }
+  /* Si todavía no existe la "Reserva (sin plantar)", la agregamos */
+  const tieneReserva=blocks.some(b=>b.nombre&&b.nombre.toLowerCase().includes('reserva'));
+  if(!tieneReserva){
+    const r=PLANO_DATA['Reserva (sin plantar)'];
+    await add('blocks',{nombre:'Reserva (sin plantar)',variedad:'—',cantidad:0,plantacion:'',tipo:'Área disponible para expansión',notas:'~2 ha disponibles para futuras variedades (Coral Charm/Sunset, Itoh híbridas Bartzella, ensayos varietales o madre-rizoma).',color:'#e9efe9',...r});
+    creadaReserva=true;
+  }
+  if(actualizados||creadaReserva){console.log('[plano] cuarteles actualizados:',actualizados,'reserva creada:',creadaReserva);}
+}
+
 /* ============ SEED DATA (solo si está vacío en la nube) ============ */
 async function seedIfEmpty(){
   const blocks=await getAll('blocks');
   if(blocks.length===0){
-    await add('blocks',{nombre:'Sarah Bernhardt',variedad:'Paeonia lactiflora Sarah Bernhardt',cantidad:40000,plantacion:'2025-01-15',tipo:'Floral rosa doble',notas:'Variedad referente exportación. Vida en florero 7-10 días. Aroma suave.',color:'#e8a7b8'});
-    await add('blocks',{nombre:'Bowl of Cream',variedad:'Paeonia lactiflora Bowl of Cream',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral crema doble',notas:'Botón grande, muy productiva. Recién plantada (temporada 0).',color:'#faf0cc'});
-    await add('blocks',{nombre:'Festiva Maxima',variedad:'Paeonia lactiflora Festiva Maxima',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral blanca con tintes rojos',notas:'Variedad histórica (1851). Muy fragante. Recién plantada.',color:'#fff8f0'});
+    await add('blocks',{nombre:'Sarah Bernhardt',variedad:'Paeonia lactiflora Sarah Bernhardt',cantidad:40000,plantacion:'2025-01-15',tipo:'Floral rosa doble',notas:'Variedad referente exportación. Vida en florero 7-10 días. Aroma suave.',color:'#e8a7b8',etapa:'Etapa 1',sectores:['1.1','2.1','3.1','4.1','5.1','6.1','7.1','8.1','9.1','10.1','11.1','12.1','13.1','14.1','15.1','16.1'],subcuarteles:32,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:1.8,caudalEstim:'~50 m³/h (Etapa 1)',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'});
+    await add('blocks',{nombre:'Bowl of Cream',variedad:'Paeonia lactiflora Bowl of Cream',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral crema doble',notas:'Botón grande, muy productiva. Recién plantada (temporada 0).',color:'#faf0cc',etapa:'Etapa 2',sectores:['17.1','18.1'],subcuarteles:4,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:0.225,caudalEstim:'~10 m³/h',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'});
+    await add('blocks',{nombre:'Festiva Maxima',variedad:'Paeonia lactiflora Festiva Maxima',cantidad:5000,plantacion:'2026-02-15',tipo:'Floral blanca con tintes rojos',notas:'Variedad histórica (1851). Muy fragante. Recién plantada.',color:'#fff8f0',etapa:'Etapa 2',sectores:['19.1','20.1'],subcuarteles:4,divisionNS:true,marco:'0.9 × 0.5 m',densidad:22222,hectareas:0.225,caudalEstim:'~10 m³/h',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',camino:'Camino central E-O paralelo a las hileras divide cada sector en mitad Norte y mitad Sur',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'});
+    await add('blocks',{nombre:'Reserva (sin plantar)',variedad:'—',cantidad:0,plantacion:'',tipo:'Área disponible para expansión',notas:'~2 ha disponibles para futuras variedades (Coral Charm/Sunset, Itoh híbridas Bartzella, ensayos varietales o madre-rizoma).',color:'#e9efe9',etapa:'Reserva',sectores:['21.1','22.1','23.1'],subcuarteles:0,divisionNS:false,marco:'—',densidad:0,hectareas:2.0,caudalEstim:'Red de riego instalada',valvulas:'DOROT S-75 2"',goteros:'Líneas listas para conectar',camino:'Camino central E-O paralelo a las hileras',planoRef:'Plano As-Built BAUM 13/12/2024 — código 24-046'});
+  }else{
+    /* Migración: agregar campos del plano a cuarteles existentes que no los tengan */
+    await upgradeBlocksWithPlanoData(blocks);
   }
   const pp=await getAll('photopoints');
   if(pp.length===0){
-    const recomendados=[
-      {codigo:'P1',nombre:'Sarah Bernhardt - Acceso norte',bloque:'Sarah Bernhardt',orientacion:'Sur (hacia hilera)',descripcion:'Al inicio del cuartel, desde la cabecera mirando hacia el sur. Poste de estaca con cinta roja como referencia. Tomar a 1.7m altura.',hora:'10:00-11:00'},
-      {codigo:'P2',nombre:'Sarah Bernhardt - Centro',bloque:'Sarah Bernhardt',orientacion:'Oeste',descripcion:'Mitad del cuartel, vista panorámica de 3 hileras. Incluir poste de tutor con referencia graduada.',hora:'10:00-11:00'},
-      {codigo:'P3',nombre:'Sarah Bernhardt - Zona sur',bloque:'Sarah Bernhardt',orientacion:'Norte',descripcion:'Extremo sur del cuartel, zona más expuesta al sol. Foto hacia el norte.',hora:'10:00-11:00'},
-      {codigo:'P4',nombre:'Bowl of Cream - Cuartel completo',bloque:'Bowl of Cream',orientacion:'Este',descripcion:'Vista general del cuartel, incluir camellón y orientación de la hilera.',hora:'10:00-11:00'},
-      {codigo:'P5',nombre:'Bowl of Cream - Detalle planta',bloque:'Bowl of Cream',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca amarilla. Foto desde arriba para medir cobertura foliar.',hora:'10:00-11:00'},
-      {codigo:'P6',nombre:'Festiva Maxima - Cuartel completo',bloque:'Festiva Maxima',orientacion:'Este',descripcion:'Vista general, incluir camellón, mulch y zona de acceso.',hora:'10:00-11:00'},
-      {codigo:'P7',nombre:'Festiva Maxima - Detalle planta',bloque:'Festiva Maxima',orientacion:'Cenital',descripcion:'Planta individual marcada con estaca verde. Vista cenital para cobertura.',hora:'10:00-11:00'},
-      {codigo:'P8',nombre:'Panorámica general huerto',bloque:'Todos',orientacion:'Variable',descripcion:'Vista desde punto alto (ej. bodega) mostrando los tres cuarteles. Mismo encuadre cada vez.',hora:'10:00-11:00'}
-    ];
-    for(const p of recomendados){await add('photopoints',p)}
+    for(const p of PUNTOS_FOTO_RECOMENDADOS){await add('photopoints',p)}
+  }else{
+    await upgradeSeededPhotopoints(pp);
   }
+}
+
+/* ============ PUNTOS DE FOTO RECOMENDADOS ============ */
+/* Diseño basado en hileras orientadas Oriente-Poniente (E-O):
+   - Vistas "a lo largo de la hilera" → cámara apuntando al Este o al Oeste
+   - Vistas "perpendiculares a las hileras" → cámara apuntando al Norte o al Sur
+   - Detalle cenital → cámara apuntando hacia abajo
+   La hora 10:00-11:00 evita sombras duras y reduce contraluz. */
+const PUNTOS_FOTO_RECOMENDADOS=[
+  {codigo:'P1',nombre:'Sarah Bernhardt - Cabecera poniente, vista al oriente',bloque:'Sarah Bernhardt',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Parado en el extremo poniente del cuartel, cámara mirando hacia el oriente — a lo largo de las hileras. Las hileras se alejan en perspectiva. Tomar a 1,7 m de altura. Incluir estaca de referencia con cinta roja en primer plano.',hora:'10:00-11:00'},
+  {codigo:'P2',nombre:'Sarah Bernhardt - Centro, vista al norte',bloque:'Sarah Bernhardt',orientacion:'Vista al Norte (perpendicular a las hileras)',descripcion:'Mitad del cuartel, parado entre dos hileras, cámara mirando al norte — atravesando las hileras. Vista panorámica que muestra varios camellones en cross-section. Útil para evaluar cobertura y uniformidad. Incluir poste tutor con referencia graduada.',hora:'10:00-11:00'},
+  {codigo:'P3',nombre:'Sarah Bernhardt - Cabecera oriente, vista al poniente',bloque:'Sarah Bernhardt',orientacion:'Vista al Oeste (a lo largo de la hilera)',descripcion:'Extremo oriente del cuartel, cámara mirando al poniente — vista contraria a P1, a lo largo de las hileras. Permite contrastar zonas oriente vs poniente del bloque. Tomar a 1,7 m de altura.',hora:'10:00-11:00'},
+  {codigo:'P4',nombre:'Bowl of Cream - Cabecera poniente, vista al oriente',bloque:'Bowl of Cream',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Parado en el extremo poniente del cuartel, cámara mirando hacia el oriente — a lo largo de las hileras. Incluir camellón y línea de gotero como referencia.',hora:'10:00-11:00'},
+  {codigo:'P5',nombre:'Bowl of Cream - Detalle planta',bloque:'Bowl of Cream',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca amarilla. Foto perpendicular al suelo (cenital) para medir cobertura foliar. Encuadre fijo: planta centrada en el cuadro.',hora:'10:00-11:00'},
+  {codigo:'P6',nombre:'Festiva Maxima - Cabecera poniente, vista al oriente',bloque:'Festiva Maxima',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'Vista general a lo largo de las hileras, parado en cabecera poniente mirando al oriente. Incluir camellón, mulch y zona de acceso.',hora:'10:00-11:00'},
+  {codigo:'P7',nombre:'Festiva Maxima - Detalle planta',bloque:'Festiva Maxima',orientacion:'Cenital (desde arriba)',descripcion:'Planta individual marcada con estaca verde. Vista cenital para cobertura foliar.',hora:'10:00-11:00'},
+  {codigo:'P8',nombre:'Panorámica general huerto',bloque:'Todos',orientacion:'Variable (desde punto fijo)',descripcion:'Vista desde punto alto (ej. bodega) mostrando los tres cuarteles. Mismo encuadre cada vez. Anotar dirección exacta de cámara la primera vez (ej. "vista al sur") y mantenerla.',hora:'10:00-11:00'}
+];
+
+/* Migración: actualiza los puntos seedeados originales (P1-P8) si todavía tienen
+   las orientaciones antiguas que confundían el sentido de las hileras.
+   No toca puntos personalizados por el usuario. */
+const PHOTOPOINT_LEGACY_NAMES={
+  'P1':'Sarah Bernhardt - Acceso norte',
+  'P2':'Sarah Bernhardt - Centro',
+  'P3':'Sarah Bernhardt - Zona sur',
+  'P4':'Bowl of Cream - Cuartel completo',
+  'P5':'Bowl of Cream - Detalle planta',
+  'P6':'Festiva Maxima - Cuartel completo',
+  'P7':'Festiva Maxima - Detalle planta',
+  'P8':'Panorámica general huerto'
+};
+async function upgradeSeededPhotopoints(puntos){
+  let actualizados=0;
+  for(const p of puntos){
+    const legacyNombre=PHOTOPOINT_LEGACY_NAMES[p.codigo];
+    if(!legacyNombre)continue;
+    /* Solo actualizamos si el nombre coincide con el seed original (no si el usuario lo personalizó) */
+    if(p.nombre!==legacyNombre)continue;
+    const nuevo=PUNTOS_FOTO_RECOMENDADOS.find(r=>r.codigo===p.codigo);
+    if(!nuevo)continue;
+    /* Mantenemos id y bloque originales por seguridad; pisamos solo nombre, orientacion y descripcion */
+    await put('photopoints',{...p,nombre:nuevo.nombre,orientacion:nuevo.orientacion,descripcion:nuevo.descripcion,hora:p.hora||nuevo.hora});
+    actualizados++;
+  }
+  if(actualizados)console.log('[photopoints] referencias actualizadas a hileras E-O:',actualizados);
 }
 
 /* ============ HELPERS ============ */
@@ -716,8 +796,19 @@ async function renderDashboard(){
   if(invPorVencer.length){alertas.push({tipo:'warn',txt:`<strong>${invPorVencer.length} producto${invPorVencer.length>1?'s':''} vence${invPorVencer.length===1?'':'n'} en 30 días</strong>: ${invPorVencer.slice(0,3).map(i=>`${i.nombre} (${fmt(i.vencimiento)})`).join(', ')}${invPorVencer.length>3?' y más':''}.`})}
   /* Clima: HF progreso + lluvia próxima */
   const anioAct=hoy.getFullYear();
-  const inicioHF=(mesActual>=5?anioAct:anioAct-1)+'-05-01';
-  const hfAcum=weather.filter(w=>w.fecha>=inicioHF).reduce((s,w)=>s+computeHF(parseFloat(w.tmin),parseFloat(w.tmax)),0);
+  /* La dormancia de la peonía en el HS va de mayo (post-senescencia) a septiembre (pre-brotación).
+     Si estamos entre enero y abril, el conteo válido es el de la temporada anterior (mayo año-1 a hoy);
+     desde mayo en adelante arranca la temporada nueva. */
+  const tempInicioAnio=(mesActual>=5?anioAct:anioAct-1);
+  const tempFinAnio=tempInicioAnio+1;
+  const inicioHF=tempInicioAnio+'-05-01';
+  const tempLabel=tempInicioAnio+'-'+String(tempFinAnio).slice(-2);
+  const datosHF=weather.filter(w=>w.fecha>=inicioHF&&w.fecha<=today());
+  const diasConDato=datosHF.length;
+  const hfAcum=datosHF.reduce((s,w)=>s+computeHF(parseFloat(w.tmin),parseFloat(w.tmax)),0);
+  /* Texto explícito del período cubierto */
+  const inicioHFFmt=fmt(inicioHF);
+  const hfFootTxt=`Temp. ${tempLabel} · desde ${inicioHFFmt}${diasConDato?' · '+diasConDato+' día'+(diasConDato!==1?'s':'')+' con dato':' · sin datos cargados aún'} · meta Sarah ≥500 h`;
   const lluvia7d=weather.filter(w=>w.fecha>=addDays(today(),-7)).reduce((s,w)=>s+(parseFloat(w.precipMm)||0),0);
   const forecast=window._wForecast||[];
   const lluviaProxFuerte=forecast.find(f=>f.precip>=15);
@@ -734,7 +825,7 @@ async function renderDashboard(){
     </div>
     <div class="grid grid-4">
       <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${blocks.length} cuarteles activos</div></div>
-      <div class="kpi info"><div class="kpi-header"><div class="label">Horas-frío acum.</div><div class="kpi-icon"><i data-lucide="snowflake"></i></div></div><div class="value">${Math.round(hfAcum)}</div><div class="foot">Desde 1-may · objetivo Sarah 500h</div></div>
+      <div class="kpi info" title="Período de dormancia ${tempLabel}: desde ${inicioHFFmt}. Sarah Bernhardt requiere ≥500 horas <7°C para floración pareja."><div class="kpi-header"><div class="label">Horas-frío acum.</div><div class="kpi-icon"><i data-lucide="snowflake"></i></div></div><div class="value">${Math.round(hfAcum)}</div><div class="foot" style="font-size:10.5px">${hfFootTxt}</div></div>
       <div class="kpi rosa"><div class="kpi-header"><div class="label">Lluvia 7 días</div><div class="kpi-icon"><i data-lucide="cloud-rain"></i></div></div><div class="value">${lluvia7d.toFixed(1)}<small style="font-size:14px;color:var(--gris)"> mm</small></div><div class="foot">${lluviaProxTotal>0?'Pronóstico: '+lluviaProxTotal.toFixed(0)+' mm prox. 7d':'Sin pronóstico cargado'}</div></div>
       <div class="kpi warn"><div class="kpi-header"><div class="label">Aplicaciones</div><div class="kpi-icon"><i data-lucide="droplet"></i></div></div><div class="value">${apps.length}</div><div class="foot">${apps.filter(a=>daysBetween(a.fecha,hoy)<=30).length} últimos 30 días</div></div>
     </div>
@@ -780,28 +871,85 @@ async function renderDashboard(){
 }
 
 /* ============ BLOQUES ============ */
+function bloqueColorTag(nombre){if(!nombre)return 'info';const n=nombre.toLowerCase();if(n.includes('sarah'))return 'sarah';if(n.includes('bowl'))return 'bowl';if(n.includes('festiva'))return 'festiva';if(n.includes('reserva'))return 'info';return 'info';}
+function blockTemporada(b,hoy){if(!b.plantacion)return '—';const t=Math.floor(daysBetween(b.plantacion,hoy)/365)+1;return 'T'+t;}
+function blockHectareas(b){if(b.hectareas)return Number(b.hectareas).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2})+' ha';if(b.cantidad&&b.densidad)return (b.cantidad/b.densidad).toFixed(2)+' ha';return '—';}
+function blockSectoresTxt(b){if(Array.isArray(b.sectores)&&b.sectores.length)return b.sectores.join(' · ');return '—';}
+
 async function renderBlocks(){
   const blocks=await getAll('blocks');
+  /* Orden: Sarah → Bowl → Festiva → Reserva → otros */
+  const ordRev=n=>{const x=(n||'').toLowerCase();if(x.includes('sarah'))return 1;if(x.includes('bowl'))return 2;if(x.includes('festiva'))return 3;if(x.includes('reserva'))return 9;return 5;};
+  blocks.sort((a,b)=>ordRev(a.nombre)-ordRev(b.nombre));
   const hoy=new Date();
+  const totalRiz=blocks.reduce((s,b)=>s+(parseInt(b.cantidad)||0),0);
+  const totalHa=blocks.reduce((s,b)=>s+(parseFloat(b.hectareas)||0),0);
+  const cuartelesActivos=blocks.filter(b=>(parseInt(b.cantidad)||0)>0).length;
   document.getElementById('main').innerHTML=`
-    <div class="page-header"><div><h2>Cuarteles</h2><div class="sub">Gestión por variedad de peonía</div></div>
+    <div class="page-header"><div><h2>Cuarteles</h2><div class="sub">Gestión por variedad de peonía · Plano As-Built BAUM 24-046</div></div>
     <button class="btn" onclick="editBlock()">+ Nuevo cuartel</button></div>
+
+    <div class="grid grid-3" style="margin-bottom:18px">
+      <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas plantados</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${cuartelesActivos} cuarteles plantados · ${blocks.length} en total</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Superficie plantada</div><div class="kpi-icon"><i data-lucide="map"></i></div></div><div class="value">${totalHa.toFixed(2).replace('.',',')} ha</div><div class="foot">Marco 0,9 × 0,5 m · densidad ≈ 22.222 riz/ha</div></div>
+      <div class="kpi"><div class="kpi-header"><div class="label">Sectores de riego</div><div class="kpi-icon"><i data-lucide="droplets"></i></div></div><div class="value">20 + 3</div><div class="foot">20 plantados (1.1–20.1) · 3 reserva (21.1–23.1) · ~70 m³/h total</div></div>
+    </div>
+
     <div class="grid grid-3">
-      ${blocks.map(b=>`<div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><h3 style="margin:0">${b.nombre}</h3><div style="font-size:11px;color:var(--gris)">${b.variedad}</div></div>
-          <span class="tag ${b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva'}">${b.cantidad.toLocaleString()}</span>
+      ${blocks.map(b=>{
+        const tag=bloqueColorTag(b.nombre);
+        const reservaCard=(b.nombre||'').toLowerCase().includes('reserva');
+        const fila=(label,val)=>val!==undefined&&val!==null&&val!==''?`<div style="padding:6px 0;border-bottom:1px dashed var(--gris-xl);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--gris);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px">${label}</span><span style="color:var(--texto);font-size:12.5px;text-align:right;max-width:62%">${val}</span></div>`:'';
+        const sectoresHtml=Array.isArray(b.sectores)&&b.sectores.length?b.sectores.map(s=>`<span class="tag info" style="font-size:10.5px;padding:2px 7px;margin:2px 3px 2px 0">${s}</span>`).join(''):'—';
+        return `<div class="card" style="${reservaCard?'background:linear-gradient(135deg,#f5f9f5,#fff);border:1px dashed var(--gris-l)':''}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div style="flex:1;min-width:0"><h3 style="margin:0;font-size:17px">${b.nombre}</h3><div style="font-size:11px;color:var(--gris);margin-top:2px">${b.variedad||'—'}</div></div>
+            <span class="tag ${tag}" style="white-space:nowrap">${(parseInt(b.cantidad)||0).toLocaleString('es-CL')}${reservaCard?' riz.':' riz.'}</span>
+          </div>
+          ${b.etapa?`<div style="margin-top:10px"><span class="tag ${b.etapa==='Etapa 1'?'sarah':b.etapa==='Etapa 2'?'bowl':'info'}" style="font-size:10.5px">${b.etapa}</span>${b.divisionNS?'<span class="tag info" style="font-size:10.5px;margin-left:5px">División N/S</span>':''}</div>`:''}
+          <div style="margin-top:12px;font-size:13px">
+            ${fila('Plantación',b.plantacion?fmt(b.plantacion):'—')}
+            ${reservaCard?'':fila('Temporada actual',blockTemporada(b,hoy))}
+            ${fila('Tipo de flor',b.tipo||'—')}
+            ${fila('Superficie',blockHectareas(b))}
+            ${fila('Marco plantación',b.marco||'—')}
+            ${b.densidad?fila('Densidad',Number(b.densidad).toLocaleString('es-CL')+' riz/ha'):''}
+            ${b.subcuarteles?fila('Sub-cuarteles físicos',b.subcuarteles+(b.divisionNS?' (div. N/S)':'')):''}
+            ${fila('Orientación hileras',b.orientacionHileras||'Oriente-Poniente (E-O)')}
+            ${fila('Caudal estimado',b.caudalEstim||'—')}
+            ${fila('Válvulas',b.valvulas||'—')}
+          </div>
+          ${Array.isArray(b.sectores)&&b.sectores.length?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Sectores de riego</div><div style="display:flex;flex-wrap:wrap">${sectoresHtml}</div></div>`:''}
+          ${b.notas?`<div style="margin-top:10px;padding:8px 10px;background:var(--gris-xl);border-radius:8px;font-size:12px;color:var(--gris-d);line-height:1.45"><strong>Notas:</strong> ${b.notas}</div>`:''}
+          ${b.planoRef?`<div style="margin-top:8px;font-size:10.5px;color:var(--gris);font-style:italic">📐 ${b.planoRef}</div>`:''}
+          <div style="margin-top:12px;display:flex;gap:8px"><button class="btn small ghost" onclick="editBlock('${b.id}')">Editar</button><button class="btn small danger" onclick="delBlock('${b.id}')">Eliminar</button></div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3 style="margin-top:0"><i data-lucide="map-pin"></i> Layout del huerto</h3>
+      <div style="font-size:13px;color:var(--gris-d);line-height:1.55">
+        El huerto se ordena de <strong>norte a sur</strong> con las hileras orientadas <strong>oriente-poniente</strong> (E-O). Un camino central E-O paralelo a las hileras divide cada sector de riego en una mitad <strong>Norte</strong> y otra <strong>Sur</strong>:
+        <ol style="margin:10px 0 0 18px;padding:0">
+          <li><strong>Sarah Bernhardt</strong> ocupa los sectores <strong>1.1 a 16.1</strong> (Etapa 1, plantada en enero 2025) — 16 sectores × 2 mitades = 32 sub-cuarteles físicos · ≈ 1,8 ha · 40.000 rizomas.</li>
+          <li><strong>Bowl of Cream</strong> ocupa los sectores <strong>17.1 y 18.1</strong> (Etapa 2, plantada en febrero 2026) — 4 sub-cuarteles · ≈ 0,225 ha · 5.000 rizomas.</li>
+          <li><strong>Festiva Maxima</strong> ocupa los sectores <strong>19.1 y 20.1</strong> (Etapa 2, plantada en febrero 2026) — 4 sub-cuarteles · ≈ 0,225 ha · 5.000 rizomas.</li>
+          <li><strong>Reserva</strong> en los sectores <strong>21.1, 22.1 y 23.1</strong> — ~2 ha sin plantar, red de riego ya instalada.</li>
+        </ol>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px;font-size:12.5px">
+          <strong>Plano de referencia:</strong> As-Built BAUM 13/12/2024 — código 24-046 (Floricultura Santa Ana).<br>
+          <strong>Orientación de hileras:</strong> oriente-poniente (E-O). Las plantas reciben sol simétrico mañana y tarde por ambos costados de la hilera.<br>
+          <strong>Riego:</strong> goteros integrados, válvulas DOROT S-75 2", caudal total ~70 m³/h.<br>
+          <strong>Marco de plantación:</strong> 0,9 m entre hileras × 0,5 m sobre la hilera → densidad ≈ 22.222 rizomas/ha.
         </div>
-        <div style="margin-top:15px;font-size:13px"><div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Plantación:</strong> ${fmt(b.plantacion)}</div>
-        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Temporada actual:</strong> ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</div>
-        <div style="padding:6px 0;border-bottom:1px solid var(--gris-l)"><strong>Tipo:</strong> ${b.tipo||'-'}</div>
-        <div style="padding:6px 0"><strong>Notas:</strong> ${b.notas||'-'}</div></div>
-        <div style="margin-top:12px;display:flex;gap:8px"><button class="btn small ghost" onclick="editBlock('${b.id}')">Editar</button><button class="btn small danger" onclick="delBlock('${b.id}')">Eliminar</button></div>
-      </div>`).join('')}
+      </div>
     </div>`;
+  lucideInit();
 }
 async function editBlock(id){
-  const b=id?await get('blocks',id):{nombre:'',variedad:'',cantidad:0,plantacion:today(),tipo:'',notas:''};
+  const b=id?await get('blocks',id):{nombre:'',variedad:'',cantidad:0,plantacion:today(),tipo:'',notas:'',etapa:'',sectores:[],subcuarteles:0,divisionNS:false,marco:'0.9 × 0.5 m',densidad:22222,hectareas:0,caudalEstim:'',valvulas:'DOROT S-75 2"',goteros:'Goteros integrados',camino:'',planoRef:''};
+  const sectoresStr=Array.isArray(b.sectores)?b.sectores.join(', '):(b.sectores||'');
   openModal(`<h3>${id?'Editar':'Nuevo'} cuartel</h3>
     <div class="form-grid">
       <div class="form-row"><label>Nombre</label><input id="f-nombre" value="${b.nombre||''}"></div>
@@ -809,20 +957,56 @@ async function editBlock(id){
       <div class="form-row"><label>Cantidad rizomas</label><input id="f-cant" type="number" value="${b.cantidad||0}"></div>
       <div class="form-row"><label>Fecha plantación</label><input id="f-plant" type="date" value="${b.plantacion||today()}"></div>
       <div class="form-row"><label>Tipo de flor</label><input id="f-tipo" value="${b.tipo||''}"></div>
+      <div class="form-row"><label>Etapa</label><select id="f-etapa"><option value="">—</option><option ${b.etapa==='Etapa 1'?'selected':''}>Etapa 1</option><option ${b.etapa==='Etapa 2'?'selected':''}>Etapa 2</option><option ${b.etapa==='Reserva'?'selected':''}>Reserva</option></select></div>
+    </div>
+    <div class="form-row" style="margin-top:6px"><label style="font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px">📐 Datos del plano de riego</label></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Sectores de riego (separados por coma)</label><input id="f-sectores" placeholder="ej. 1.1, 2.1, 3.1" value="${sectoresStr}"></div>
+      <div class="form-row"><label>Sub-cuarteles físicos</label><input id="f-subcuart" type="number" value="${b.subcuarteles||0}"></div>
+      <div class="form-row"><label>División Norte/Sur</label><select id="f-divNS"><option value="false" ${!b.divisionNS?'selected':''}>No</option><option value="true" ${b.divisionNS?'selected':''}>Sí</option></select></div>
+      <div class="form-row"><label>Hectáreas</label><input id="f-ha" type="number" step="0.01" value="${b.hectareas||0}"></div>
+      <div class="form-row"><label>Marco plantación</label><input id="f-marco" value="${b.marco||''}"></div>
+      <div class="form-row"><label>Densidad (riz/ha)</label><input id="f-dens" type="number" value="${b.densidad||0}"></div>
+      <div class="form-row"><label>Caudal estimado</label><input id="f-caudal" value="${b.caudalEstim||''}"></div>
+      <div class="form-row"><label>Válvulas</label><input id="f-valv" value="${b.valvulas||''}"></div>
     </div>
     <div class="form-row"><label>Notas</label><textarea id="f-notas" rows="3">${b.notas||''}</textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveBlock(${id?`'${id}'`:'null'})">Guardar</button></div>`);
 }
 async function saveBlock(id){
-  const data={nombre:document.getElementById('f-nombre').value,variedad:document.getElementById('f-variedad').value,cantidad:parseInt(document.getElementById('f-cant').value)||0,plantacion:document.getElementById('f-plant').value,tipo:document.getElementById('f-tipo').value,notas:document.getElementById('f-notas').value};
+  const sectoresRaw=document.getElementById('f-sectores').value||'';
+  const sectores=sectoresRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const data={
+    nombre:document.getElementById('f-nombre').value,
+    variedad:document.getElementById('f-variedad').value,
+    cantidad:parseInt(document.getElementById('f-cant').value)||0,
+    plantacion:document.getElementById('f-plant').value,
+    tipo:document.getElementById('f-tipo').value,
+    etapa:document.getElementById('f-etapa').value,
+    sectores:sectores,
+    subcuarteles:parseInt(document.getElementById('f-subcuart').value)||0,
+    divisionNS:document.getElementById('f-divNS').value==='true',
+    hectareas:parseFloat(document.getElementById('f-ha').value)||0,
+    marco:document.getElementById('f-marco').value,
+    densidad:parseInt(document.getElementById('f-dens').value)||0,
+    caudalEstim:document.getElementById('f-caudal').value,
+    valvulas:document.getElementById('f-valv').value,
+    notas:document.getElementById('f-notas').value
+  };
   if(id){data.id=id;await put('blocks',data)}else{await add('blocks',data)}
   closeModal();toast('Cuartel guardado');renderBlocks();
 }
 async function delBlock(id){if(!confirm('¿Eliminar cuartel?'))return;await del('blocks',id);toast('Eliminado');renderBlocks();}
 
 /* ============ PUNTOS DE FOTO ============ */
+/* Orden natural para códigos de punto: P1, P2, P10 (no P1, P10, P2) */
+function naturalCompare(a,b){return (a||'').localeCompare(b||'',undefined,{numeric:true,sensitivity:'base'})}
+function ordenBloque(nombre){if(!nombre)return 99;const n=nombre.toLowerCase();if(n.includes('sarah'))return 1;if(n.includes('bowl'))return 2;if(n.includes('festiva'))return 3;return 50}
+function ordenarPuntos(arr){return [...arr].sort((a,b)=>{const ob=ordenBloque(a.bloque)-ordenBloque(b.bloque);if(ob!==0)return ob;return naturalCompare(a.codigo,b.codigo)})}
+
 async function renderPhotoPoints(){
-  const points=await getAll('photopoints');
+  const pointsRaw=await getAll('photopoints');
+  const points=ordenarPuntos(pointsRaw);
   const blocks=await getAll('blocks');
   const photos=await getAll('photos');
   document.getElementById('main').innerHTML=`
@@ -833,7 +1017,7 @@ async function renderPhotoPoints(){
       <ul>
         <li><strong>Ubicación:</strong> Marcar físicamente cada punto con estaca pintada o cinta de color. Registrar coordenadas GPS si es posible.</li>
         <li><strong>Altura:</strong> Siempre a 1.70m (altura de pecho) o usar trípode con la misma altura. Considerar comprar un <em>bastón de fotografía graduado</em>.</li>
-        <li><strong>Orientación:</strong> Respetar la dirección indicada por cada punto (Norte/Sur/Este/Oeste o cenital).</li>
+        <li><strong>Orientación:</strong> Las hileras del huerto corren <strong>oriente-poniente (E-O)</strong>. "Vista al Este/Oeste" = cámara a lo largo de la hilera (perspectiva profunda). "Vista al Norte/Sur" = cámara perpendicular (atraviesa varias hileras). Respeta la dirección indicada por cada punto.</li>
         <li><strong>Hora:</strong> Mismas 2 horas cada vez (preferente 10:00-11:00 AM: luz pareja, sin sombras duras).</li>
         <li><strong>Condiciones:</strong> Evitar días con lluvia activa o viento fuerte. Día nublado uniforme es ideal.</li>
         <li><strong>Distancia focal:</strong> Celular en modo normal 1x (no zoom digital). Si usas cámara, mismo foco siempre.</li>
@@ -862,13 +1046,23 @@ async function renderPhotoPoints(){
 }
 async function editPoint(id){
   const blocks=await getAll('blocks');
-  const p=id?await get('photopoints',id):{codigo:'',nombre:'',bloque:blocks[0]?.nombre||'',orientacion:'Norte',descripcion:'',hora:'10:00-11:00'};
+  const p=id?await get('photopoints',id):{codigo:'',nombre:'',bloque:blocks[0]?.nombre||'',orientacion:'Vista al Este (a lo largo de la hilera)',descripcion:'',hora:'10:00-11:00'};
+  const orientOpciones=[
+    'Vista al Este (a lo largo de la hilera)',
+    'Vista al Oeste (a lo largo de la hilera)',
+    'Vista al Norte (perpendicular a las hileras)',
+    'Vista al Sur (perpendicular a las hileras)',
+    'Cenital (desde arriba)',
+    'Variable (desde punto fijo)',
+    'Norte','Sur','Este','Oeste'
+  ];
   openModal(`<h3>${id?'Editar':'Nuevo'} punto de foto</h3>
+    <div style="font-size:11.5px;color:var(--gris);margin-bottom:8px;padding:8px 10px;background:var(--gris-xl);border-radius:6px;line-height:1.4">📌 <strong>Convención:</strong> las hileras del huerto corren <strong>oriente-poniente (E-O)</strong>. "Vista al Este/Oeste" = foto a lo largo de la hilera. "Vista al Norte/Sur" = foto perpendicular a las hileras.</div>
     <div class="form-grid">
       <div class="form-row"><label>Código (ej. P9)</label><input id="f-cod" value="${p.codigo||''}"></div>
       <div class="form-row"><label>Nombre</label><input id="f-nom" value="${p.nombre||''}"></div>
       <div class="form-row"><label>Cuartel/Bloque</label><select id="f-bloq">${['Todos',...blocks.map(b=>b.nombre)].map(n=>`<option ${p.bloque===n?'selected':''}>${n}</option>`).join('')}</select></div>
-      <div class="form-row"><label>Orientación</label><select id="f-ori">${['Norte','Sur','Este','Oeste','Noreste','Noroeste','Sureste','Suroeste','Cenital','Variable'].map(o=>`<option ${p.orientacion===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Orientación de cámara</label><input id="f-ori" list="orient-list" value="${(p.orientacion||'').replace(/"/g,'&quot;')}" placeholder="Ej. Vista al Este (a lo largo de la hilera)"><datalist id="orient-list">${orientOpciones.map(o=>`<option value="${o}">`).join('')}</datalist></div>
       <div class="form-row"><label>Hora sugerida</label><input id="f-hora" value="${p.hora||'10:00-11:00'}"></div>
     </div>
     <div class="form-row"><label>Descripción / Referencia física</label><textarea id="f-desc" rows="3">${p.descripcion||''}</textarea></div>
@@ -883,20 +1077,64 @@ async function delPoint(id){if(!confirm('¿Eliminar punto de foto?'))return;awai
 
 /* ============ GALERÍA FOTOS ============ */
 let fotoFiltro={point:'all',text:''};
+const _photoGroupsExpanded={};
+function togglePhotoGroup(pid){_photoGroupsExpanded[pid]=!_photoGroupsExpanded[pid];renderPhotos()}
 async function renderPhotos(){
-  const [photos,points]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const [photosRaw,pointsRaw]=await Promise.all([getAll('photos'),getAll('photopoints')]);
+  const points=ordenarPuntos(pointsRaw);
   const pointsMap=Object.fromEntries(points.map(p=>[p.id,p]));
-  let fotos=[...photos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
-  if(fotoFiltro.point!=='all')fotos=fotos.filter(f=>f.pointId==fotoFiltro.point);
+  /* Aplica filtro de texto (el filtro por punto se aplica al pintar grupos) */
+  let fotos=[...photosRaw];
   if(fotoFiltro.text)fotos=fotos.filter(f=>(f.notas||'').toLowerCase().includes(fotoFiltro.text.toLowerCase()));
+  /* Agrupa por pointId */
+  const byPoint={};
+  fotos.forEach(f=>{const k=f.pointId||'__sin__';if(!byPoint[k])byPoint[k]=[];byPoint[k].push(f)});
+  Object.values(byPoint).forEach(arr=>arr.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)));
+  /* Construye lista ordenada de grupos según orden de huerto (Sarah → Bowl → Festiva) */
+  const grupos=points.map(p=>({punto:p,fotos:byPoint[p.id]||[]}));
+  if(byPoint['__sin__'])grupos.push({punto:{id:'__sin__',codigo:'—',nombre:'Sin punto asignado',bloque:'—'},fotos:byPoint['__sin__']});
+  /* Filtro de punto */
+  const visibles=fotoFiltro.point==='all'?grupos:grupos.filter(g=>String(g.punto.id)===String(fotoFiltro.point));
   document.getElementById('main').innerHTML=`
-    <div class="page-header"><div><h2>Galería fotográfica</h2><div class="sub">${photos.length} fotos registradas · ${points.length} puntos fijos</div></div>
-    <button class="btn" onclick="uploadPhoto()">📸 Subir foto(s)</button></div>
+    <div class="page-header"><div><h2>Galería fotográfica</h2><div class="sub">${photosRaw.length} fotos registradas · ${points.length} puntos fijos · ordenadas por punto</div></div>
+    <button class="btn" onclick="uploadPhoto()"><i data-lucide="camera"></i>Subir foto(s)</button></div>
     <div class="toolbar">
-      <select id="filt-point" onchange="fotoFiltro.point=this.value;renderPhotos()"><option value="all">Todos los puntos</option>${points.map(p=>`<option value="${p.id}" ${fotoFiltro.point==p.id?'selected':''}>${p.codigo} · ${p.nombre}</option>`).join('')}</select>
+      <select id="filt-point" onchange="fotoFiltro.point=this.value;renderPhotos()"><option value="all">Todos los puntos</option>${points.map(p=>`<option value="${p.id}" ${String(fotoFiltro.point)===String(p.id)?'selected':''}>${p.codigo} · ${p.nombre} (${p.bloque})</option>`).join('')}</select>
       <input class="search-input" placeholder="Buscar en notas..." value="${fotoFiltro.text}" oninput="fotoFiltro.text=this.value;clearTimeout(window._t);window._t=setTimeout(renderPhotos,300)">
     </div>
-    ${fotos.length?`<div class="grid grid-3">${fotos.map(f=>{const p=pointsMap[f.pointId];return `<div class="photo-card" onclick="viewPhoto('${f.id}')"><img src="${f.img}" class="photo-thumb" loading="lazy"><div class="info"><strong>${p?p.codigo+' · '+p.nombre:'Sin punto'}</strong><span>${fmt(f.fecha)}${f.fase?' · '+f.fase:''}</span>${f.createdBy?'<div style="margin-top:4px">'+userBadgeHTML(f.createdBy)+'</div>':''}${f.notas?'<div style="margin-top:4px;color:#374151">'+f.notas.substring(0,60)+(f.notas.length>60?'...':'')+'</div>':''}</div></div>`}).join('')}</div>`:'<div class="empty"><div style="font-size:48px;margin-bottom:10px">📸</div><h3>Sin fotos aún</h3><p>Comienza subiendo la primera foto de un punto fijo</p><button class="btn" onclick="uploadPhoto()" style="margin-top:15px">Subir primera foto</button></div>'}`;
+    ${photosRaw.length===0?'<div class="empty"><div style="font-size:48px;margin-bottom:10px">📸</div><h3>Sin fotos aún</h3><p>Comienza subiendo la primera foto de un punto fijo</p><button class="btn" onclick="uploadPhoto()" style="margin-top:15px">Subir primera foto</button></div>':''}
+    ${visibles.map(g=>{
+      const p=g.punto;
+      const fs=g.fotos;
+      const fsCount=fs.length;
+      /* Si hay filtro o pocos puntos, expandido por defecto. Colapsable manual. */
+      const autoExpand=visibles.length<=2||fotoFiltro.point!=='all'||fotoFiltro.text;
+      const expanded=_photoGroupsExpanded[p.id]!==undefined?_photoGroupsExpanded[p.id]:autoExpand;
+      const ult=fs[0];
+      const dias=ult?daysBetween(ult.fecha,new Date()):null;
+      const colorBloque=p.bloque&&p.bloque.toLowerCase().includes('sarah')?'sarah':p.bloque&&p.bloque.toLowerCase().includes('bowl')?'bowl':p.bloque&&p.bloque.toLowerCase().includes('festiva')?'festiva':'info';
+      return `<div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:14px 18px;background:var(--gris-xl);border-bottom:1px solid var(--gris-l);display:flex;align-items:center;gap:12px;cursor:pointer" onclick="togglePhotoGroup('${p.id}')">
+          <i data-lucide="${expanded?'chevron-down':'chevron-right'}" style="width:18px;height:18px;color:var(--gris)"></i>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <strong style="font-size:14px">📍 ${p.codigo} · ${p.nombre}</strong>
+              <span class="tag ${colorBloque}">${p.bloque||'—'}</span>
+              ${ult?(dias>21?`<span class="tag warn">hace ${dias} días</span>`:`<span class="tag ok">hace ${dias} día${dias!==1?'s':''}</span>`):'<span class="tag alert">sin fotos</span>'}
+            </div>
+            ${p.orientacion||p.hora?`<div style="font-size:11px;color:var(--gris);margin-top:3px">${p.orientacion?'Orientación: '+p.orientacion:''}${p.orientacion&&p.hora?' · ':''}${p.hora?'Hora: '+p.hora:''}</div>`:''}
+          </div>
+          <div style="text-align:right;display:flex;gap:8px;align-items:center">
+            <div><div style="font-size:18px;font-weight:700;color:var(--verde-d);font-variant-numeric:tabular-nums">${fsCount}</div><div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px">fotos</div></div>
+            <button class="btn small" onclick="event.stopPropagation();quickUpload('${p.id}')" title="Tomar foto en este punto"><i data-lucide="camera"></i></button>
+          </div>
+        </div>
+        ${expanded?(fsCount?`<div class="grid grid-3" style="padding:14px">${fs.map(f=>`<div class="photo-card" onclick="viewPhoto('${f.id}')"><img src="${f.img}" class="photo-thumb" loading="lazy"><div class="info"><strong>${fmt(f.fecha)}</strong><span>${f.fase||''}</span>${f.createdBy?'<div style="margin-top:4px">'+userBadgeHTML(f.createdBy)+'</div>':''}${f.notas?'<div style="margin-top:4px;color:#374151;font-size:11px">'+f.notas.substring(0,60)+(f.notas.length>60?'…':'')+'</div>':''}</div></div>`).join('')}</div>`:`<div style="padding:18px;color:var(--gris);font-size:13px;text-align:center"><em>Sin fotos en este punto. </em><a onclick="quickUpload('${p.id}')" style="color:var(--verde-d);cursor:pointer;font-weight:600">Subir la primera</a></div>`):''}
+      </div>`;
+    }).join('')}
+    ${photosRaw.length>0&&visibles.every(g=>g.fotos.length===0)?'<div class="empty">Sin fotos para el filtro actual</div>':''}
+  `;
+  lucideInit();
 }
 
 async function uploadPhoto(pointId){
