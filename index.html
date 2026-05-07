@@ -369,14 +369,14 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.07.6';
+const APP_VERSION='2026.05.07.7';
 
 /* ============ USUARIOS ============ */
 const USERS=[
-  {id:'atocornal',  nombre:'A. Tocornal',  email:'atocornal@santaana.cl',  color:'#2563eb', avatar:'AT'},
-  {id:'sserrano',   nombre:'S. Serrano',   email:'sserrano@santaana.cl',   color:'#059669', avatar:'SS'},
-  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@santaana.cl', color:'#c97a90', avatar:'JT'},
-  {id:'cafranzani', nombre:'CA. Franzani', email:'cafranzani@santaana.cl', color:'#f59e0b', avatar:'CA'}
+  {id:'atocornal',  nombre:'A. Tocornal',  email:'a.tocornal@baumsystem.com',     color:'#2563eb', avatar:'AT'},
+  {id:'sserrano',   nombre:'S. Serrano',   email:'s.serrano@baumsystem.com',      color:'#059669', avatar:'SS'},
+  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@gmail.com',          color:'#c97a90', avatar:'JT'},
+  {id:'cafranzani', nombre:'CA. Franzani', email:'cfranzani@granelesdechile.com', color:'#f59e0b', avatar:'CA'}
 ];
 let CURRENT_USER=null;
 function userById(id){return USERS.find(u=>u.id===id)||{id:id||'?',nombre:id||'Desconocido',color:'#999',avatar:'?'}}
