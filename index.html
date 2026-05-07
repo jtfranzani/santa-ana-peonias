@@ -369,14 +369,16 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.07.7';
+const APP_VERSION='2026.05.07.9';
 
 /* ============ USUARIOS ============ */
 const USERS=[
-  {id:'atocornal',  nombre:'A. Tocornal',  email:'a.tocornal@baumsystem.com',     color:'#2563eb', avatar:'AT'},
-  {id:'sserrano',   nombre:'S. Serrano',   email:'s.serrano@baumsystem.com',      color:'#059669', avatar:'SS'},
-  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@gmail.com',          color:'#c97a90', avatar:'JT'},
-  {id:'cafranzani', nombre:'CA. Franzani', email:'cfranzani@granelesdechile.com', color:'#f59e0b', avatar:'CA'}
+  /* email = credencial de Firebase Auth (NO TOCAR; rompe el login).
+     emailNotif = correo real al que llegan las notificaciones EmailJS. */
+  {id:'atocornal',  nombre:'A. Tocornal',  email:'atocornal@santaana.cl',  emailNotif:'a.tocornal@baumsystem.com',     color:'#2563eb', avatar:'AT'},
+  {id:'sserrano',   nombre:'S. Serrano',   email:'sserrano@santaana.cl',   emailNotif:'s.serrano@baumsystem.com',      color:'#059669', avatar:'SS'},
+  {id:'jtfranzani', nombre:'JT. Franzani', email:'jtfranzani@santaana.cl', emailNotif:'jtfranzani@gmail.com',          color:'#c97a90', avatar:'JT'},
+  {id:'cafranzani', nombre:'CA. Franzani', email:'cafranzani@santaana.cl', emailNotif:'cfranzani@granelesdechile.com', color:'#f59e0b', avatar:'CA'}
 ];
 let CURRENT_USER=null;
 function userById(id){return USERS.find(u=>u.id===id)||{id:id||'?',nombre:id||'Desconocido',color:'#999',avatar:'?'}}
@@ -832,15 +834,20 @@ async function notifyEmailToTeam(tipo,titulo,mensaje,eventKey,cfg){
   }
   const fromUser=userById(CURRENT_USER);
   const fechaTxt=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
-  /* Destinatarios: todos los USERS con email distinto del usuario actual. */
-  const recipients=USERS.filter(u=>u.id!==CURRENT_USER&&u.email);
+  /* Destinatarios: todos los USERS con correo de notificación, distintos del usuario actual.
+     Excepción: si cfg.__includeSelfTest===true (modo prueba) también se incluye al usuario actual.
+     Nota: r.emailNotif es el correo real (gmail/baumsystem/etc); r.email es la credencial Firebase Auth.
+     Si emailNotif no está, caemos a email para no perder destinatarios. */
+  const baseList=cfg.__includeSelfTest?USERS:USERS.filter(u=>u.id!==CURRENT_USER);
+  const recipients=baseList.filter(u=>(u.emailNotif||u.email));
   for(const r of recipients){
+    const toAddr=r.emailNotif||r.email;
     try{
       await emailjs.send(cfg.emailjsServiceId,cfg.emailjsTemplateId,{
-        to_email:r.email,
+        to_email:toAddr,
         to_name:r.nombre,
         from_user:fromUser.nombre||'Equipo',
-        from_email:fromUser.email||'',
+        from_email:fromUser.emailNotif||fromUser.email||'',
         event_type:tipo,
         title:titulo,
         message:mensaje,
@@ -848,7 +855,7 @@ async function notifyEmailToTeam(tipo,titulo,mensaje,eventKey,cfg){
         link:PLATAFORMA_URL,
         subject:`[Santa Ana] ${tipo}: ${titulo}`
       });
-    }catch(e){console.warn('EmailJS falló para '+r.email+':',e);}
+    }catch(e){console.warn('EmailJS falló para '+toAddr+':',e);}
   }
 }
 async function notifyHook(tipo,titulo,mensaje,eventKey){
@@ -880,11 +887,11 @@ async function testWebhook(){
 async function testEmailNotify(){
   const cfg=await getNotifyConfig();
   if(!cfg.emailjsServiceId||!cfg.emailjsTemplateId||!cfg.emailjsPublicKey){toast('Primero completa Service ID, Template ID y Public Key de EmailJS','warn');return}
-  /* Forzamos email habilitado solo para la prueba: pasamos un cfg con emailEnabled:true. */
-  const cfgTest=Object.assign({},cfg,{emailEnabled:true});
-  await notifyEmailToTeam('Test',`Correo de prueba desde ${userById(CURRENT_USER).nombre||'Santa Ana'}`,'Si recibes este correo, la integración con EmailJS está funcionando. Llega a todos los usuarios del equipo excepto a quien dispara la prueba.','hitos',cfgTest);
-  const otros=USERS.filter(u=>u.id!==CURRENT_USER&&u.email).length;
-  toast(`Prueba enviada a ${otros} usuario${otros===1?'':'s'} ✓`);
+  /* En modo prueba: forzamos emailEnabled:true e incluimos al usuario actual para que también reciba el correo. */
+  const cfgTest=Object.assign({},cfg,{emailEnabled:true,__includeSelfTest:true});
+  await notifyEmailToTeam('Test',`Correo de prueba desde ${userById(CURRENT_USER).nombre||'Santa Ana'}`,'Si recibes este correo, la integración con EmailJS está funcionando. (En este test también te lo enviamos a ti; en eventos reales el correo NO llega a quien dispara la acción).','hitos',cfgTest);
+  const total=USERS.filter(u=>(u.emailNotif||u.email)).length;
+  toast(`Prueba enviada a ${total} usuario${total===1?'':'s'} (incluido tú) ✓`);
 }
 /* ============ NAVIGATION ============ */
 const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,prices:renderPrices,reports:renderReports,settings:renderSettings};
@@ -3128,7 +3135,7 @@ async function renderSettings(){
           <div class="form-row"><label>EmailJS Public Key</label><input id="cfg-email-key" value="${cfg.emailjsPublicKey||''}" placeholder="abcDEF123_xxxxxxxxxxx"></div>
         </div>
         <div style="font-size:12px;color:#6b4400;background:#fff7e6;padding:8px 10px;border-radius:6px;margin-top:6px">
-          <strong>Destinatarios actuales:</strong> ${USERS.map(u=>`${u.nombre} &lt;${u.email}&gt;`).join(' · ')}<br>
+          <strong>Destinatarios actuales:</strong> ${USERS.map(u=>`${u.nombre} &lt;${u.emailNotif||u.email}&gt;`).join(' · ')}<br>
           <span style="color:#8a5a00">El que dispara el evento queda excluido automáticamente.</span>
         </div>
         <div style="margin-top:10px"><button class="btn small ghost" onclick="testEmailNotify()"><i data-lucide="send"></i> Probar correo</button></div>
