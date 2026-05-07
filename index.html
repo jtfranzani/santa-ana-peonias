@@ -16,6 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <!-- Mammoth para extraer texto de archivos Word (.docx) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -90,10 +91,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .kpi .label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .kpi .value{font-size:28px;font-weight:700;color:var(--texto);margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .kpi .foot{font-size:11.5px;color:var(--gris);margin-top:6px;font-weight:500}
+/* Wrapper para tablas: permite scroll horizontal cuando el contenido excede
+   el ancho del card, evitando que columnas como "acciones" se salgan del
+   recuadro. Usar SIEMPRE como contenedor inmediato de un <table>. */
+.table-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
+.table-scroll::-webkit-scrollbar{height:8px}
+.table-scroll::-webkit-scrollbar-track{background:var(--gris-xl);border-radius:4px}
+.table-scroll::-webkit-scrollbar-thumb{background:var(--gris-l);border-radius:4px}
+.table-scroll::-webkit-scrollbar-thumb:hover{background:var(--gris-m)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-table th{text-align:left;padding:11px 10px;background:var(--gris-xl);color:var(--texto-m);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gris-l)}
-table td{padding:11px 10px;border-bottom:1px solid var(--gris-xl);color:var(--texto-m)}
+table th{text-align:left;padding:11px 10px;background:var(--gris-xl);color:var(--texto-m);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gris-l);white-space:nowrap}
+table td{padding:11px 10px;border-bottom:1px solid var(--gris-xl);color:var(--texto-m);vertical-align:top}
 table td strong{color:var(--texto);font-weight:600}
+/* Columna de acciones: siempre visible y sin compresión. Aplicar con clase. */
+table .col-acciones{white-space:nowrap;text-align:right}
+table .col-acciones .btn{margin-left:2px}
 table tr{transition:background .1s}
 table tr:hover{background:var(--gris-xl)}
 input,select,textarea{width:100%;padding:10px 13px;border:1px solid var(--gris-l);border-radius:var(--radio-sm);font-size:13px;font-family:inherit;background:#fff;color:var(--texto);transition:all .15s;font-feature-settings:inherit}
@@ -196,10 +208,10 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .form-grid{grid-template-columns:1fr;gap:10px}
   .compare-grid{grid-template-columns:1fr}
   .user-grid{grid-template-columns:1fr}
-  /* Tablas: scroll horizontal suave sin cortar nada */
-  table{font-size:12px;min-width:auto}
-  .card{padding:16px 14px;overflow-x:auto}
-  .card table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+  /* Tablas: scroll horizontal suave sin cortar nada (manejado por .table-scroll) */
+  table{font-size:12px}
+  .card{padding:16px 14px}
+  .table-scroll table{white-space:nowrap}
   /* Modales a pantalla completa */
   .modal-bg{padding:0;align-items:flex-end}
   .modal{max-width:100%;width:100%;max-height:95vh;border-radius:16px 16px 0 0;padding:20px 18px;animation:slideUpFull .25s ease}
@@ -357,7 +369,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.04.27.7';
+const APP_VERSION='2026.05.07.6';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -801,30 +813,78 @@ const FUENTES_PRECIOS=[
   {nombre:'SAG Chile - Estadísticas Exportación',url:'https://www.sag.gob.cl/',desc:'Datos de exportación hortofrutícola Chile'}
 ];
 /* ============ NOTIFICACIONES WEBHOOK (WhatsApp/Telegram) ============ */
-async function getNotifyConfig(){try{const c=await get('config','notifications');return c||{id:'notifications',enabled:false,webhookUrl:'',webhookType:'generic',events:{apps:true,tasks:true,inventory:false,studies:true,prices:false,hitos:true}};}catch(e){return{id:'notifications',enabled:false,webhookUrl:'',webhookType:'generic',events:{apps:true,tasks:true,inventory:false,studies:true,prices:false,hitos:true}};}}
+function _defaultNotifyCfg(){return{id:'notifications',enabled:false,webhookUrl:'',webhookType:'generic',emailEnabled:false,emailjsServiceId:'',emailjsTemplateId:'',emailjsPublicKey:'',events:{apps:true,tasks:true,inventory:false,studies:true,prices:false,hitos:true}};}
+async function getNotifyConfig(){try{const c=await get('config','notifications');return c?Object.assign(_defaultNotifyCfg(),c):_defaultNotifyCfg();}catch(e){return _defaultNotifyCfg();}}
 async function saveNotifyConfig(c){c.id='notifications';await put('config',c);}
+/* Envía un correo a TODOS los usuarios del equipo EXCEPTO el usuario actual (CURRENT_USER).
+   Usa EmailJS (cliente, sin backend). Necesita serviceId/templateId/publicKey configurados. */
+let _emailjsInited=false;
+async function notifyEmailToTeam(tipo,titulo,mensaje,eventKey,cfg){
+  if(!cfg)cfg=await getNotifyConfig();
+  if(!cfg.emailEnabled)return;
+  if(eventKey&&cfg.events&&cfg.events[eventKey]===false)return;
+  if(!cfg.emailjsServiceId||!cfg.emailjsTemplateId||!cfg.emailjsPublicKey){console.warn('EmailJS sin configurar');return;}
+  if(typeof emailjs==='undefined'){console.warn('EmailJS SDK no cargado');return;}
+  if(!_emailjsInited){
+    try{emailjs.init({publicKey:cfg.emailjsPublicKey});}
+    catch(e){try{emailjs.init(cfg.emailjsPublicKey);}catch(e2){console.warn('init EmailJS falló',e2);return;}}
+    _emailjsInited=true;
+  }
+  const fromUser=userById(CURRENT_USER);
+  const fechaTxt=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
+  /* Destinatarios: todos los USERS con email distinto del usuario actual. */
+  const recipients=USERS.filter(u=>u.id!==CURRENT_USER&&u.email);
+  for(const r of recipients){
+    try{
+      await emailjs.send(cfg.emailjsServiceId,cfg.emailjsTemplateId,{
+        to_email:r.email,
+        to_name:r.nombre,
+        from_user:fromUser.nombre||'Equipo',
+        from_email:fromUser.email||'',
+        event_type:tipo,
+        title:titulo,
+        message:mensaje,
+        date:fechaTxt,
+        link:PLATAFORMA_URL,
+        subject:`[Santa Ana] ${tipo}: ${titulo}`
+      });
+    }catch(e){console.warn('EmailJS falló para '+r.email+':',e);}
+  }
+}
 async function notifyHook(tipo,titulo,mensaje,eventKey){
+  let cfg;
+  try{cfg=await getNotifyConfig();}catch(e){return;}
+  /* 1) Webhook (WhatsApp/Telegram/Slack/Discord) — comportamiento original. */
   try{
-    const cfg=await getNotifyConfig();
-    if(!cfg.enabled||!cfg.webhookUrl)return;
-    if(eventKey&&cfg.events&&cfg.events[eventKey]===false)return;
-    const usuario=userById(CURRENT_USER).nombre;
-    const fecha=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
-    const textPlain=`🌸 *Santa Ana Peonías* — ${tipo}\n*${titulo}*\n${mensaje}\n👤 ${usuario}  🕒 ${fecha}\n🔗 ${PLATAFORMA_URL}`;
-    const payload={tipo,titulo,mensaje,usuario,fecha,url:PLATAFORMA_URL,text:textPlain};
-    /* Adapta payload para servicios conocidos */
-    let body=payload;let headers={'Content-Type':'application/json'};
-    if(cfg.webhookType==='telegram'){body={chat_id:cfg.telegramChatId||'',text:textPlain,parse_mode:'Markdown',disable_web_page_preview:false};}
-    else if(cfg.webhookType==='slack'||cfg.webhookType==='discord'){body={text:textPlain,content:textPlain};}
-    else if(cfg.webhookType==='callmebot'){/* URL ya trae número y apikey; se envía como query */ return fetch(cfg.webhookUrl+'&text='+encodeURIComponent(textPlain),{method:'GET',mode:'no-cors'}).catch(()=>{});}
-    await fetch(cfg.webhookUrl,{method:'POST',mode:'no-cors',headers,body:JSON.stringify(body)});
-  }catch(e){console.warn('notifyHook falló:',e);}
+    if(cfg.enabled&&cfg.webhookUrl&&!(eventKey&&cfg.events&&cfg.events[eventKey]===false)){
+      const usuario=userById(CURRENT_USER).nombre;
+      const fecha=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
+      const textPlain=`🌸 *Santa Ana Peonías* — ${tipo}\n*${titulo}*\n${mensaje}\n👤 ${usuario}  🕒 ${fecha}\n🔗 ${PLATAFORMA_URL}`;
+      const payload={tipo,titulo,mensaje,usuario,fecha,url:PLATAFORMA_URL,text:textPlain};
+      let body=payload;let headers={'Content-Type':'application/json'};
+      if(cfg.webhookType==='telegram'){body={chat_id:cfg.telegramChatId||'',text:textPlain,parse_mode:'Markdown',disable_web_page_preview:false};}
+      else if(cfg.webhookType==='slack'||cfg.webhookType==='discord'){body={text:textPlain,content:textPlain};}
+      else if(cfg.webhookType==='callmebot'){fetch(cfg.webhookUrl+'&text='+encodeURIComponent(textPlain),{method:'GET',mode:'no-cors'}).catch(()=>{});}
+      else{fetch(cfg.webhookUrl,{method:'POST',mode:'no-cors',headers,body:JSON.stringify(body)}).catch(()=>{});}
+    }
+  }catch(e){console.warn('notifyHook webhook falló:',e);}
+  /* 2) Email a los demás usuarios del equipo. */
+  try{await notifyEmailToTeam(tipo,titulo,mensaje,eventKey,cfg);}catch(e){console.warn('notifyEmail falló:',e);}
 }
 async function testWebhook(){
   const cfg=await getNotifyConfig();
   if(!cfg.webhookUrl){toast('Primero ingresa un webhook URL','warn');return}
   await notifyHook('Test','Mensaje de prueba','Esta es una notificación de prueba desde Santa Ana Peonías. Si llega, la integración está operativa.','hitos');
   toast('Prueba enviada. Revisa el grupo ✓');
+}
+async function testEmailNotify(){
+  const cfg=await getNotifyConfig();
+  if(!cfg.emailjsServiceId||!cfg.emailjsTemplateId||!cfg.emailjsPublicKey){toast('Primero completa Service ID, Template ID y Public Key de EmailJS','warn');return}
+  /* Forzamos email habilitado solo para la prueba: pasamos un cfg con emailEnabled:true. */
+  const cfgTest=Object.assign({},cfg,{emailEnabled:true});
+  await notifyEmailToTeam('Test',`Correo de prueba desde ${userById(CURRENT_USER).nombre||'Santa Ana'}`,'Si recibes este correo, la integración con EmailJS está funcionando. Llega a todos los usuarios del equipo excepto a quien dispara la prueba.','hitos',cfgTest);
+  const otros=USERS.filter(u=>u.id!==CURRENT_USER&&u.email).length;
+  toast(`Prueba enviada a ${otros} usuario${otros===1?'':'s'} ✓`);
 }
 /* ============ NAVIGATION ============ */
 const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,prices:renderPrices,reports:renderReports,settings:renderSettings};
@@ -885,7 +945,7 @@ async function renderDashboard(){
   /* Alertas de labores atrasadas (pendientes con fecha planificada vencida) */
   const atrasadas=tasks.filter(t=>laborAtrasada(t));
   if(atrasadas.length){
-    const lista=atrasadas.slice(0,5).map(t=>`<li><strong>${t.nombre}</strong> · ${t.bloque||'General'} · planificada ${fmt(t.fechaPlanificada||t.fecha)}</li>`).join('');
+    const lista=atrasadas.slice(0,5).map(t=>`<li><strong>${t.nombre}</strong> · ${getBloques(t).join(', ')||'General'} · planificada ${fmt(t.fechaPlanificada||t.fecha)}</li>`).join('');
     alertas.unshift({tipo:'danger',txt:`⏰ <strong>${atrasadas.length} labor${atrasadas.length>1?'es':''} pendiente${atrasadas.length>1?'s':''} atrasada${atrasadas.length>1?'s':''}</strong>:<ul style="margin:8px 0 0 18px">${lista}</ul>${atrasadas.length>5?`<div style="margin-top:5px;font-size:11px;color:var(--gris)">+ ${atrasadas.length-5} más en Bitácora de labores</div>`:''}`});
   }
   /* Alertas de cuarteles en carencia activa (soporta múltiples cuarteles por aplicación) */
@@ -969,7 +1029,7 @@ async function renderDashboard(){
       </div>
     </div>
     <div class="grid grid-2">
-      <div class="card"><h3><i data-lucide="clipboard-list"></i>Últimas labores</h3>${ultimasTareas.length?ultimasTareas.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px;color:var(--texto)">${t.nombre}</strong>${userBadgeHTML(t.createdBy)}</div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(t.fecha)} · ${t.bloque||'General'} · ${t.responsable||'-'}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay labores registradas</div></div>`}</div>
+      <div class="card"><h3><i data-lucide="clipboard-list"></i>Últimas labores</h3>${ultimasTareas.length?ultimasTareas.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px;color:var(--texto)">${t.nombre}</strong>${userBadgeHTML(t.createdBy)}</div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(t.fecha)} · ${getBloques(t).join(', ')||'General'} · ${t.responsable||'-'}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay labores registradas</div></div>`}</div>
       <div class="card"><h3><i data-lucide="droplet"></i>Últimas aplicaciones</h3>${ultimasApp.length?ultimasApp.map(a=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;color:var(--texto)">${a.producto}</strong><div style="display:flex;gap:4px;align-items:center"><span class="tag info">${a.categoria}</span>${userBadgeHTML(a.createdBy)}</div></div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(a.fecha)} · ${a.dosis} · ${bloquesTxt(a)}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay aplicaciones registradas</div></div>`}</div>
     </div>`;
   /* CHARTS */
@@ -1397,6 +1457,17 @@ async function cmpPoint(pointId){
 
 /* ============ BITÁCORA DE LABORES ============ */
 let _tasksFiltroEstado='todas';
+let _tasksFiltroCategoria='todas';
+/* _tasksFiltroCuartel: array de cuarteles seleccionados. [] = todos. Puede contener '__general' para labores sin cuartel. */
+let _tasksFiltroCuartel=[];
+let _tasksFiltroAno='todos';
+let _tasksFiltroSearch='';
+function setTasksFiltroCat(v){_tasksFiltroCategoria=v;renderTasks()}
+function toggleTasksFiltroCuartel(v){const i=_tasksFiltroCuartel.indexOf(v);if(i>=0)_tasksFiltroCuartel.splice(i,1);else _tasksFiltroCuartel.push(v);renderTasks()}
+function setTasksFiltroCuartelTodos(){_tasksFiltroCuartel=[];renderTasks()}
+function setTasksFiltroAno(v){_tasksFiltroAno=v;renderTasks()}
+function setTasksFiltroSearch(v){_tasksFiltroSearch=v;filterTasks(v)}
+function clearTasksFiltros(){_tasksFiltroEstado='todas';_tasksFiltroCategoria='todas';_tasksFiltroCuartel=[];_tasksFiltroAno='todos';_tasksFiltroSearch='';renderTasks()}
 async function renderTasks(){
   const [tasks,blocks]=await Promise.all([getAll('tasks'),getAll('blocks')]);
   const mesActual=new Date().getMonth()+1;
@@ -1413,18 +1484,46 @@ async function renderTasks(){
   });
   const counts={todas:tasks.length,pendiente:0,en_curso:0,realizada:0,cancelada:0,atrasada:0};
   tasks.forEach(t=>{counts[estadoLabor(t)]=(counts[estadoLabor(t)]||0)+1;if(laborAtrasada(t))counts.atrasada++});
+  /* Listas únicas para los dropdowns de filtro. */
+  const categoriasUnicas=[...new Set(tasks.map(t=>(t.categoria||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  /* Cuarteles únicos: aplanamos todos los bloques de cada labor (puede tener varios). */
+  const cuartelesSet=new Set();
+  tasks.forEach(t=>{getBloques(t).forEach(b=>{if(b)cuartelesSet.add(String(b).trim());});});
+  const cuartelesUnicos=[...cuartelesSet].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+  const anosUnicos=[...new Set(tasks.map(t=>{const f=t.fecha||t.fechaPlanificada;return f?new Date(f).getFullYear():null}).filter(Boolean))].sort((a,b)=>b-a);
+  /* Filtro combinado AND: todos los criterios deben cumplirse. */
   const filtered=sorted.filter(t=>{
-    if(_tasksFiltroEstado==='todas')return true;
-    if(_tasksFiltroEstado==='atrasada')return laborAtrasada(t);
-    return estadoLabor(t)===_tasksFiltroEstado;
+    if(_tasksFiltroEstado!=='todas'){
+      if(_tasksFiltroEstado==='atrasada'){if(!laborAtrasada(t))return false;}
+      else if(estadoLabor(t)!==_tasksFiltroEstado)return false;
+    }
+    if(_tasksFiltroCategoria!=='todas'&&(t.categoria||'').trim()!==_tasksFiltroCategoria)return false;
+    if(_tasksFiltroCuartel.length>0){
+      const bs=getBloques(t).map(x=>String(x).trim()).filter(Boolean);
+      if(bs.length===0){
+        /* Labor general (sin cuarteles): pasa solo si '__general' está en la selección. */
+        if(!_tasksFiltroCuartel.includes('__general'))return false;
+      }else{
+        /* Pasa si AL MENOS UNO de los cuarteles de la labor está seleccionado. */
+        const match=_tasksFiltroCuartel.some(c=>c==='__general'?false:bs.includes(c));
+        if(!match)return false;
+      }
+    }
+    if(_tasksFiltroAno!=='todos'){
+      const f=t.fecha||t.fechaPlanificada;
+      if(!f||String(new Date(f).getFullYear())!==String(_tasksFiltroAno))return false;
+    }
+    return true;
   });
   const chip=(k,lbl)=>`<span class="chip ${_tasksFiltroEstado===k?'active':''}" onclick="setTasksFiltro('${k}')">${lbl} <strong>${counts[k]||0}</strong></span>`;
+  const filtrosActivos=(_tasksFiltroEstado!=='todas')+(_tasksFiltroCategoria!=='todas')+(_tasksFiltroCuartel.length>0?1:0)+(_tasksFiltroAno!=='todos')+(_tasksFiltroSearch?1:0);
+  const sinCuartelCount=tasks.filter(t=>getBloques(t).length===0).length;
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Bitácora de labores</h2><div class="sub">Planifica, ejecuta y registra todas las faenas del huerto</div></div>
     <button class="btn" onclick="editTask()">+ Nueva labor</button></div>
     ${sugeridas.length?`<div class="card"><h3>💡 Sugeridas para este mes (${new Date().toLocaleDateString('es-CL',{month:'long'})})</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${sugeridas.map(s=>`<button class="btn small ghost" onclick='quickTask(${JSON.stringify(s).replace(/'/g,"&apos;")})'>+ ${s.nombre}</button>`).join('')}</div></div>`:''}
     <div class="card">
-      <div style="margin-bottom:12px">
+      <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">
         ${chip('todas','Todas')}
         ${chip('atrasada','⚠ Atrasadas')}
         ${chip('pendiente','🟡 Pendientes')}
@@ -1432,11 +1531,34 @@ async function renderTasks(){
         ${chip('realizada','🟢 Realizadas')}
         ${chip('cancelada','⚪ Canceladas')}
       </div>
-      <div class="toolbar">
-        <input class="search-input" id="lab-search" placeholder="Buscar..." oninput="filterTasks(this.value)">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
+        <div style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
+          <select onchange="setTasksFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
+            <option value="todas" ${_tasksFiltroCategoria==='todas'?'selected':''}>Todas (${tasks.length})</option>
+            ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_tasksFiltroCategoria===c?'selected':''}>${c} (${tasks.filter(t=>(t.categoria||'').trim()===c).length})</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_tasksFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_tasksFiltroCuartel.length} seleccionado${_tasksFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+            <span class="chip ${!_tasksFiltroCuartel.length?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="setTasksFiltroCuartelTodos()">Todos</span>
+            ${sinCuartelCount>0?`<span class="chip ${_tasksFiltroCuartel.includes('__general')?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleTasksFiltroCuartel('__general')">Sin cuartel <strong>${sinCuartelCount}</strong></span>`:''}
+            ${cuartelesUnicos.map(c=>`<span class="chip ${_tasksFiltroCuartel.includes(c)?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleTasksFiltroCuartel(${JSON.stringify(c).replace(/"/g,'&quot;')})">${c} <strong>${tasks.filter(t=>getBloques(t).map(x=>String(x).trim()).includes(c)).length}</strong></span>`).join('')}
+          </div>
+        </div>
+        <div style="flex:0 0 auto;min-width:120px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Año</label>
+          <select onchange="setTasksFiltroAno(this.value)" style="padding:7px 10px;font-size:12px">
+            <option value="todos" ${_tasksFiltroAno==='todos'?'selected':''}>Todos</option>
+            ${anosUnicos.map(a=>`<option value="${a}" ${String(_tasksFiltroAno)===String(a)?'selected':''}>${a}</option>`).join('')}
+          </select>
+        </div>
+        ${filtrosActivos?`<button class="btn small ghost" onclick="clearTasksFiltros()" title="Quitar todos los filtros" style="margin-bottom:0"><i data-lucide="x"></i> Limpiar (${filtrosActivos})</button>`:''}
       </div>
-      <table id="tbl-tasks">
-        <thead><tr><th>Estado</th><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Horas</th><th>Responsable</th><th>Registrado por</th><th>📷</th><th>Notas</th><th></th></tr></thead>
+      <div class="toolbar">
+        <input class="search-input" id="lab-search" placeholder="Buscar en labor, notas, responsable..." value="${(_tasksFiltroSearch||'').replace(/"/g,'&quot;')}" oninput="setTasksFiltroSearch(this.value)">
+      </div>
+      <div style="font-size:12px;color:var(--gris);margin-bottom:8px">${filtered.length} de ${tasks.length} labores</div>
+      <div class="table-scroll"><table id="tbl-tasks">
+        <thead><tr><th>Estado</th><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Tiempo</th><th>Responsable</th><th>Registrado por</th><th>📷</th><th>Notas</th><th></th></tr></thead>
         <tbody>${filtered.length?filtered.map(t=>{
           const est=estadoLabor(t);
           const atr=laborAtrasada(t);
@@ -1445,13 +1567,20 @@ async function renderTasks(){
           const estHTML=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
           const fotosTbl=getTaskFotos(t);
           const fotoTxt=fotosTbl.length?`<div style="position:relative;display:inline-block"><img src="${fotosTbl[0]}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();viewImage('${fotosTbl[0].replace(/'/g,"\\'")}')" title="Ver foto${fotosTbl.length>1?'s ('+fotosTbl.length+')':''}">${fotosTbl.length>1?`<span style="position:absolute;top:-4px;right:-4px;background:var(--verde-d);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-weight:bold">${fotosTbl.length}</span>`:''}</div>`:'<span style="color:var(--gris);font-size:11px">-</span>';
-          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td>${t.bloque||'-'}</td><td>${t.horas||'-'}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td style="max-width:220px;font-size:12px">${t.notas||''}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          const tiempoTxt=formatTiempoLabor(t);
+          const notasFull=(t.notas||'').toString();
+          const notasEsc=notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          const notasCelda=notasFull?`<div title="${notasEsc}" style="width:220px;max-width:220px;font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;white-space:normal;color:var(--texto-m,var(--texto))">${notasFull.length>180?notasFull.slice(0,180)+'…':notasFull}</div>`:'<span style="color:var(--gris);font-size:11px">-</span>';
+          const bloquesCelda=(()=>{const bs=getBloques(t);return bs.length?bloquesTags(t):'<span style="color:var(--gris-m);font-size:11px">General</span>';})();
+          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td>${tiempoTxt}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
-      </table>
+      </table></div>
     </div>`;
+  if(typeof lucideInit==='function')lucideInit();
+  if(_tasksFiltroSearch)filterTasks(_tasksFiltroSearch);
 }
 function setTasksFiltro(k){_tasksFiltroEstado=k;renderTasks()}
-function filterTasks(v){const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none'})}
+function filterTasks(v){_tasksFiltroSearch=v||'';const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes((v||'').toLowerCase())?'':'none'})}
 function quickTask(template){editTask(null,template)}
 
 /* Helper retro-compatible: devuelve el array de fotos de una labor.
@@ -1461,6 +1590,43 @@ function getTaskFotos(t){
   if(Array.isArray(t.fotos)&&t.fotos.length)return t.fotos.filter(Boolean);
   if(t.foto)return[t.foto];
   return[];
+}
+/* Devuelve la lista deduplicada de categorías disponibles, mezclando las
+   predefinidas en LABOR_TEMPLATES con las que el usuario ya haya creado
+   y guardado en labores existentes. Así si una vez tipeó "Bioestimulantes"
+   queda en el datalist para futuras labores. */
+async function getAllLaborCategorias(){
+  const set=new Set();
+  try{LABOR_TEMPLATES.forEach(l=>{if(l.cat)set.add(l.cat)});}catch(e){}
+  try{
+    const tasks=await getAll('tasks');
+    tasks.forEach(t=>{if(t&&t.categoria)set.add(String(t.categoria).trim());});
+  }catch(e){}
+  return Array.from(set).filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+}
+/* Formatea horas+unidad para mostrar en tabla y detalle.
+   Compatible con datos legacy donde sólo existía `horas` (sin unidad). */
+function formatTiempoLabor(t){
+  if(!t)return'-';
+  const h=t.horas;
+  if(h===null||h===undefined||h==='')return'-';
+  const u=t.unidadTiempo||'horas';
+  const num=parseFloat(h);
+  if(isNaN(num))return'-';
+  const plural=num===1?'':'s';
+  if(u==='jornadas')return num+' jornada'+plural;
+  if(u==='dias'||u==='días')return num+' día'+plural;
+  return num+' h';
+}
+/* Convierte la cantidad ingresada a horas equivalentes para análisis/agregaciones.
+   Asume jornada estándar agro Chile = 8 horas, día = 8 horas. */
+function tiempoAHoras(num,unidad){
+  const n=parseFloat(num);
+  if(isNaN(n))return null;
+  const u=unidad||'horas';
+  if(u==='jornadas')return n*8;
+  if(u==='dias'||u==='días')return n*8;
+  return n;
 }
 /* Estado en memoria para fotos durante edición de labor.
    Patrón INCREMENTAL: cada vez que el usuario elige fotos, se comprimen al toque
@@ -1519,10 +1685,13 @@ async function addEditTaskFotos(input){
 async function editTask(id,template){
   const blocks=await getAll('blocks');
   const curName=userById(CURRENT_USER).nombre;
-  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,fotos:[]}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',horas:'',responsable:curName,fotos:[]});
+  const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',bloques:[],horas:'',unidadTiempo:'horas',responsable:curName,fotos:[]}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',bloques:[],horas:'',unidadTiempo:'horas',responsable:curName,fotos:[]});
   _editTaskFotosExistentes=getTaskFotos(t).slice();
-  const cats=[...new Set(LABOR_TEMPLATES.map(l=>l.cat))];
+  /* Cuarteles seleccionados (soporta array nuevo `bloques` o legacy `bloque` string). */
+  const bloquesSel=getBloques(t);
+  const cats=await getAllLaborCategorias();
   const estAct=estadoLabor(t);
+  const unidadAct=t.unidadTiempo||'horas';
   openModal(`<h3>${id?'Editar':'Registrar'} labor</h3>
     <div class="form-row"><label>Plantilla rápida (opcional)</label><select onchange="if(this.value){const t=LABOR_TEMPLATES[this.value];document.getElementById('f-nom').value=t.nombre;document.getElementById('f-cat').value=t.cat;document.getElementById('f-notas').value=t.desc}">
       <option value="">-- Elegir plantilla --</option>
@@ -1530,17 +1699,34 @@ async function editTask(id,template){
     </select></div>
     <div class="form-grid">
       <div class="form-row"><label>Nombre de la labor</label><input id="f-nom" value="${t.nombre||''}"></div>
-      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Categoría <small style="color:var(--gris);font-weight:normal">(elige una o escribe una nueva)</small></label>
+        <input id="f-cat" list="lab-cats-list" value="${(t.categoria||'').replace(/"/g,'&quot;')}" placeholder="Ej: Nutrición, Sanidad, Cosecha…" autocomplete="off">
+        <datalist id="lab-cats-list">${cats.map(c=>`<option value="${c.replace(/"/g,'&quot;')}"></option>`).join('')}</datalist>
+      </div>
       <div class="form-row"><label>Estado</label><select id="f-estado" onchange="toggleFechaEjec()">
         <option value="pendiente" ${estAct==='pendiente'?'selected':''}>🟡 Pendiente (planificada)</option>
         <option value="en_curso" ${estAct==='en_curso'?'selected':''}>🔵 En curso</option>
         <option value="realizada" ${estAct==='realizada'?'selected':''}>🟢 Realizada</option>
         <option value="cancelada" ${estAct==='cancelada'?'selected':''}>⚪ Cancelada</option>
       </select></div>
-      <div class="form-row"><label>Cuartel</label><select id="f-bloq"><option value="">General / Todos</option>${blocks.map(b=>`<option ${t.bloque===b.nombre?'selected':''}>${b.nombre}</option>`).join('')}</select></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Cuarteles <small style="color:var(--gris);font-weight:normal">(marca uno o varios; deja todos sin marcar = labor general)</small></label>
+        <div class="checkbox-grid">
+          ${blocks.map(b=>`<div class="check-item"><input type="checkbox" id="cb-task-${b.id}" class="f-bloq-chk" value="${b.nombre.replace(/"/g,'&quot;')}" ${bloquesSel.includes(b.nombre)?'checked':''}><label for="cb-task-${b.id}">${b.nombre} <small style="font-weight:400;color:var(--gris-m)">(${(b.cantidad||0).toLocaleString()} riz.)</small></label></div>`).join('')}
+        </div>
+      </div>
       <div class="form-row"><label>Fecha planificada</label><input id="f-fplan" type="date" value="${t.fechaPlanificada||t.fecha||today()}"></div>
       <div class="form-row" id="row-fejec"><label>Fecha ejecutada</label><input id="f-fejec" type="date" value="${t.fecha||''}"></div>
-      <div class="form-row"><label>Horas-hombre</label><input id="f-horas" type="number" step="0.5" value="${t.horas||''}"></div>
+      <div class="form-row"><label>Tiempo trabajado</label>
+        <div style="display:flex;gap:6px">
+          <input id="f-horas" type="number" step="0.5" min="0" value="${t.horas||''}" placeholder="Cantidad" style="flex:1;min-width:0">
+          <select id="f-unidad" style="flex:0 0 auto;width:auto">
+            <option value="horas" ${unidadAct==='horas'?'selected':''}>horas</option>
+            <option value="jornadas" ${unidadAct==='jornadas'?'selected':''}>jornadas</option>
+            <option value="dias" ${unidadAct==='dias'||unidadAct==='días'?'selected':''}>días</option>
+          </select>
+        </div>
+        <small style="color:var(--gris);font-size:11px">1 jornada = 8 h estándar agro Chile.</small>
+      </div>
       <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
     </div>
     <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
@@ -1565,7 +1751,12 @@ async function saveTask(id){
   const estado=document.getElementById('f-estado').value;
   const fplan=document.getElementById('f-fplan').value;
   const fejec=document.getElementById('f-fejec').value;
-  const data={nombre:document.getElementById('f-nom').value,categoria:document.getElementById('f-cat').value,estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloque:document.getElementById('f-bloq').value,horas:parseFloat(document.getElementById('f-horas').value)||null,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
+  const unidadEl=document.getElementById('f-unidad');
+  const unidadVal=unidadEl?unidadEl.value:'horas';
+  /* Cuarteles seleccionados (multi). Guardamos array `bloques` y mantenemos `bloque` con el primero
+     para compatibilidad con código antiguo que aún lee t.bloque. */
+  const bloquesSel=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
+  const data={nombre:document.getElementById('f-nom').value,categoria:(document.getElementById('f-cat').value||'').trim(),estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloques:bloquesSel,bloque:bloquesSel[0]||'',horas:parseFloat(document.getElementById('f-horas').value)||null,unidadTiempo:unidadVal,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
   if(!data.nombre){toast('Nombre requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
   /* === Fotos: ya están comprimidas en _editTaskFotosExistentes (patrón incremental).
@@ -1587,7 +1778,9 @@ async function saveTask(id){
   toast('Labor guardada'+(data.fotos.length?' ('+data.fotos.length+' foto'+(data.fotos.length>1?'s':'')+')':''));
   if(isNew||data.estado==='realizada'){
     const estLabel=data.estado==='realizada'?'✓ Realizada':data.estado==='en_curso'?'🔵 En curso':data.estado==='cancelada'?'Cancelada':'🟡 Planificada';
-    notifyHook('Labor',`${estLabel}: ${data.nombre}`,`Cuartel: ${data.bloque||'General'}\nCategoría: ${data.categoria||'-'}\nFecha: ${fmt(data.fechaPlanificada||data.fecha)}${data.horas?'\nHoras-hombre: '+data.horas:''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.notas?'\n📝 '+data.notas.slice(0,200):''}`,'tasks');
+    const tiempoFmt=formatTiempoLabor(data);
+    const bloquesTxtNotif=(getBloques(data).join(', ')||'General');
+    notifyHook('Labor',`${estLabel}: ${data.nombre}`,`Cuarteles: ${bloquesTxtNotif}\nCategoría: ${data.categoria||'-'}\nFecha: ${fmt(data.fechaPlanificada||data.fecha)}${tiempoFmt!=='-'?'\nTiempo: '+tiempoFmt:''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.notas?'\n📝 '+data.notas.slice(0,200):''}`,'tasks');
   }
   renderTasks();
 }
@@ -1604,19 +1797,26 @@ async function viewTask(id){
   const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
   const fotosArr=getTaskFotos(t);
   const fotoBlock=fotosArr.length?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotos de la labor (${fotosArr.length})</h4><div style="display:flex;flex-wrap:wrap;gap:8px">${fotosArr.map(src=>`<img src="${src}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:zoom-in;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')">`).join('')}</div>`:'';
+  const tiempoFmt=formatTiempoLabor(t);
+  const horasEquiv=tiempoAHoras(t.horas,t.unidadTiempo);
+  const tiempoExtra=(t.unidadTiempo&&t.unidadTiempo!=='horas'&&horasEquiv!=null)?` <small style="color:var(--gris);font-weight:normal">(≈ ${horasEquiv} h)</small>`:'';
+  /* Bloque de notas separado: full text con saltos de línea preservados,
+     scroll vertical si es muy largo, sin truncado. */
+  const notasFull=(t.notas||'').toString();
+  const notasBlock=notasFull?`<h4 style="color:var(--verde-d);margin:14px 0 8px;font-size:13px"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Notas / observaciones</h4><div style="background:var(--fondo-suave,#f7f7f5);border:1px solid var(--gris-xl);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto">${notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
   openModal(`
     <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}</span>${estTag}</h3>
     ${atr?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
     <div style="margin-bottom:8px">
       ${row('Categoría',t.categoria)}
-      ${row('Cuartel',t.bloque||'General / Todos')}
+      ${row('Cuarteles',(()=>{const bs=getBloques(t);return bs.length?bs.join(', '):'General / Todos';})())}
       ${row('Fecha planificada',t.fechaPlanificada?fmt(t.fechaPlanificada):'—')}
       ${row('Fecha ejecutada',(est==='realizada'||est==='en_curso')&&t.fecha?fmt(t.fecha):'—')}
-      ${row('Horas-hombre',t.horas!=null&&t.horas!==''?t.horas+' h':'')}
+      ${row('Tiempo trabajado',tiempoFmt!=='-'?tiempoFmt+tiempoExtra:'')}
       ${row('Responsable',t.responsable)}
-      ${row('Notas / observaciones',t.notas)}
       ${creador?row('Registrado por',creador.nombre+(t.createdAt?' · '+new Date(t.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}):'')):''}
     </div>
+    ${notasBlock}
     ${fotoBlock}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Cerrar</button>
@@ -1627,18 +1827,88 @@ async function viewTask(id){
 }
 
 /* ============ APLICACIONES ============ */
+let _appsFiltroCategoria='todas';
+/* _appsFiltroCuartel: array de cuarteles seleccionados. [] = todos. */
+let _appsFiltroCuartel=[];
+let _appsFiltroAno='todos';
+let _appsFiltroCarencia='todas';
+let _appsFiltroSearch='';
+function setAppsFiltroCat(v){_appsFiltroCategoria=v;renderApplications()}
+function toggleAppsFiltroCuartel(v){const i=_appsFiltroCuartel.indexOf(v);if(i>=0)_appsFiltroCuartel.splice(i,1);else _appsFiltroCuartel.push(v);renderApplications()}
+function setAppsFiltroCuartelTodos(){_appsFiltroCuartel=[];renderApplications()}
+function setAppsFiltroAno(v){_appsFiltroAno=v;renderApplications()}
+function setAppsFiltroCarencia(v){_appsFiltroCarencia=v;renderApplications()}
+function setAppsFiltroSearch(v){_appsFiltroSearch=v||'';filterApps(v)}
+function clearAppsFiltros(){_appsFiltroCategoria='todas';_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
 async function renderApplications(){
   const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
-  const sorted=[...apps].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const sortedAll=[...apps].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  /* Listas únicas para los dropdowns. */
+  const categoriasUnicas=[...new Set(apps.map(a=>(a.categoria||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  /* Cuarteles: cada aplicación puede tener varios; aplanamos. */
+  const cuartelesSet=new Set();
+  apps.forEach(a=>{const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);bs.forEach(b=>{if(b)cuartelesSet.add(String(b).trim());});});
+  const cuartelesUnicos=[...cuartelesSet].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+  const anosUnicos=[...new Set(apps.map(a=>a.fecha?new Date(a.fecha).getFullYear():null).filter(Boolean))].sort((a,b)=>b-a);
+  /* Filtro combinado AND. */
+  const sorted=sortedAll.filter(a=>{
+    if(_appsFiltroCategoria!=='todas'&&(a.categoria||'').trim()!==_appsFiltroCategoria)return false;
+    if(_appsFiltroCuartel.length>0){
+      const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
+      const bsKeys=bs.map(x=>String(x).trim());
+      /* La aplicación pasa si tiene AL MENOS UNO de los cuarteles seleccionados (OR). */
+      const match=_appsFiltroCuartel.some(c=>bsKeys.includes(c));
+      if(!match)return false;
+    }
+    if(_appsFiltroAno!=='todos'){
+      if(!a.fecha||String(new Date(a.fecha).getFullYear())!==String(_appsFiltroAno))return false;
+    }
+    if(_appsFiltroCarencia!=='todas'){
+      const activa=carenciaActiva(a);
+      if(_appsFiltroCarencia==='activa'&&!activa)return false;
+      if(_appsFiltroCarencia==='vencida'&&activa)return false;
+    }
+    return true;
+  });
+  const filtrosActivos=(_appsFiltroCategoria!=='todas')+(_appsFiltroCuartel.length>0?1:0)+(_appsFiltroAno!=='todos')+(_appsFiltroCarencia!=='todas')+(_appsFiltroSearch?1:0);
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Productos fitosanitarios, fertilizantes y bioestimulantes aplicados</div></div>
     <button class="btn" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
     <div class="alert-box warn"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Importante:</strong> Registra TODA aplicación incluyendo dosis, motivo, carencia y condiciones climáticas. Obligatorio para GlobalG.A.P. / MPS y trazabilidad de exportación.</div></div>
     <div class="card">
-      <div class="toolbar">
-        <input class="search-input" placeholder="Buscar producto..." oninput="filterApps(this.value)">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
+        <div style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
+          <select onchange="setAppsFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
+            <option value="todas" ${_appsFiltroCategoria==='todas'?'selected':''}>Todas (${apps.length})</option>
+            ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>(a.categoria||'').trim()===c).length})</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_appsFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCuartel.length} seleccionado${_appsFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+            <span class="chip ${!_appsFiltroCuartel.length?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="setAppsFiltroCuartelTodos()">Todos</span>
+            ${cuartelesUnicos.map(c=>`<span class="chip ${_appsFiltroCuartel.includes(c)?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleAppsFiltroCuartel(${JSON.stringify(c).replace(/"/g,'&quot;')})">${c} <strong>${apps.filter(a=>{const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);return bs.map(x=>String(x).trim()).includes(c)}).length}</strong></span>`).join('')}
+          </div>
+        </div>
+        <div style="flex:0 0 auto;min-width:120px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Año</label>
+          <select onchange="setAppsFiltroAno(this.value)" style="padding:7px 10px;font-size:12px">
+            <option value="todos" ${_appsFiltroAno==='todos'?'selected':''}>Todos</option>
+            ${anosUnicos.map(a=>`<option value="${a}" ${String(_appsFiltroAno)===String(a)?'selected':''}>${a}</option>`).join('')}
+          </select>
+        </div>
+        <div style="flex:0 0 auto;min-width:140px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Carencia</label>
+          <select onchange="setAppsFiltroCarencia(this.value)" style="padding:7px 10px;font-size:12px">
+            <option value="todas" ${_appsFiltroCarencia==='todas'?'selected':''}>Todas</option>
+            <option value="activa" ${_appsFiltroCarencia==='activa'?'selected':''}>🚫 Activa (no apto)</option>
+            <option value="vencida" ${_appsFiltroCarencia==='vencida'?'selected':''}>✓ Vencida (apto)</option>
+          </select>
+        </div>
+        ${filtrosActivos?`<button class="btn small ghost" onclick="clearAppsFiltros()" title="Quitar todos los filtros" style="margin-bottom:0"><i data-lucide="x"></i> Limpiar (${filtrosActivos})</button>`:''}
       </div>
-      <table id="tbl-apps">
+      <div class="toolbar">
+        <input class="search-input" placeholder="Buscar producto, motivo, prestador..." value="${(_appsFiltroSearch||'').replace(/"/g,'&quot;')}" oninput="setAppsFiltroSearch(this.value)">
+      </div>
+      <div style="font-size:12px;color:var(--gris);margin-bottom:8px">${sorted.length} de ${apps.length} aplicaciones</div>
+      <div class="table-scroll"><table id="tbl-apps">
         <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
         <tbody>${sorted.length?sorted.map(a=>{
           const fin=fechaFinCarencia(a);
@@ -1657,11 +1927,12 @@ async function renderApplications(){
           const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
           return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')){viewApp('${a.id}')}" style="cursor:pointer"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="12" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
-      </table>
+      </table></div>
     </div>`;
   lucideInit();
+  if(_appsFiltroSearch)filterApps(_appsFiltroSearch);
 }
-function filterApps(v){document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v.toLowerCase())?'':'none')}
+function filterApps(v){_appsFiltroSearch=v||'';document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes((v||'').toLowerCase())?'':'none')}
 
 /* Ver detalle completo de aplicación (ideal para móvil donde la tabla se corta). */
 async function viewApp(id){
@@ -2135,7 +2406,7 @@ async function renderInventory(){
       <div class="toolbar">
         <input class="search-input" placeholder="Buscar producto, marca o ingrediente..." oninput="filterInv(this.value)">
       </div>
-      <table id="tbl-inv">
+      <div class="table-scroll"><table id="tbl-inv">
         <thead><tr><th>Estado</th><th>Producto</th><th>Categoría</th><th>Marca</th><th>Presentación</th><th>Stock</th><th>Mínimo</th><th>Vencimiento</th><th>Ubicación</th><th>Precio unit.</th><th></th></tr></thead>
         <tbody>${sorted.length?sorted.map(i=>{
           const st=invStockStatus(i);
@@ -2145,7 +2416,7 @@ async function renderInventory(){
           const vencCls=ven!=null&&ven<0?'color:var(--alerta);font-weight:600':(ven!=null&&ven<=30?'color:#b45309;font-weight:600':'color:var(--texto-m)');
           return `<tr><td><span class="tag ${stockCls}">${st.lbl}</span></td><td><strong>${i.nombre}</strong>${i.ingrediente?`<div style="font-size:11px;color:var(--gris);margin-top:1px">${i.ingrediente}</div>`:''}</td><td><span class="tag info">${i.categoria||'-'}</span></td><td>${i.marca||'—'}</td><td>${i.presentacion||'—'}</td><td><strong style="font-variant-numeric:tabular-nums">${(i.stock||0).toLocaleString('es-CL')}</strong> <small style="color:var(--gris)">${i.unidad||''}</small></td><td style="color:var(--gris-m)">${i.stockMinimo||'—'}</td><td style="${vencCls}">${venc}</td><td style="font-size:12px">${i.ubicacion||'—'}</td><td style="font-variant-numeric:tabular-nums">${i.precio?`$${parseFloat(i.precio).toLocaleString('es-CL')}`:'—'}</td><td style="white-space:nowrap"><button class="btn small" onclick="adjustStock('${i.id}')" title="Ajustar stock"><i data-lucide="edit-3"></i></button> <button class="btn small ghost" onclick="editInvItem('${i.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delInvItem('${i.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):`<tr><td colspan="11" class="empty"><i data-lucide="package"></i><div>Sin productos en inventario</div></td></tr>`}</tbody>
-      </table>
+      </table></div>
     </div>`;
   lucideInit();
 }
@@ -2512,8 +2783,8 @@ async function renderStudies(){
       <div class="filters-bar"><span class="filter-chip ${_studiesFiltroTipo==='todos'?'active':''}" onclick="setStudiesFiltro('todos')">Todos <strong>${studies.length}</strong></span>
       ${ESTUDIO_TIPOS.map(t=>`<span class="filter-chip ${_studiesFiltroTipo===t.key?'active':''}" onclick="setStudiesFiltro('${t.key}')"><i data-lucide="${t.icon}" style="width:12px;height:12px"></i> ${t.label} <strong>${counts[t.key]||0}</strong></span>`).join('')}</div>
       <div class="toolbar" style="margin-top:10px"><input class="search-input" placeholder="Buscar laboratorio, cuartel…" oninput="filterStudies(this.value)"></div>
-      <table id="tbl-studies"><thead><tr><th>Fecha</th><th>Tipo</th><th>Laboratorio</th><th>Cuarteles</th><th>Resumen / Resultados</th><th>Archivo</th><th>Costo</th><th></th></tr></thead>
-      <tbody>${filt.length?filt.map(e=>{const t=estudioTipo(e.tipo);return `<tr><td>${fmt(e.fecha)}</td><td><span class="tag info"><i data-lucide="${t.icon}" style="width:11px;height:11px"></i> ${t.label}</span></td><td><strong>${e.laboratorio||'-'}</strong>${e.codigoMuestra?`<div style="font-size:10px;color:var(--gris)">Cód. ${e.codigoMuestra}</div>`:''}</td><td>${bloquesTags({bloques:e.cuarteles||[]})}</td><td style="max-width:280px">${estudioResumenVal(e)}</td><td>${e.archivo?`<button class="btn small ghost" onclick="viewStudyFile('${e.id}')"><i data-lucide="${fileIcon(e.archivoNombre||'file.pdf')}"></i> Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${e.costo?'$'+parseFloat(e.costo).toLocaleString('es-CL'):'—'}</td><td><button class="btn small ghost" onclick="editStudy('${e.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delStudy('${e.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty"><i data-lucide="flask-conical"></i><div>Sin estudios registrados</div></td></tr>'}</tbody></table>
+      <div class="table-scroll"><table id="tbl-studies"><thead><tr><th>Fecha</th><th>Tipo</th><th>Laboratorio</th><th>Cuarteles</th><th>Resumen / Resultados</th><th>Archivo</th><th>Costo</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(e=>{const t=estudioTipo(e.tipo);return `<tr><td>${fmt(e.fecha)}</td><td><span class="tag info"><i data-lucide="${t.icon}" style="width:11px;height:11px"></i> ${t.label}</span></td><td><strong>${e.laboratorio||'-'}</strong>${e.codigoMuestra?`<div style="font-size:10px;color:var(--gris)">Cód. ${e.codigoMuestra}</div>`:''}</td><td>${bloquesTags({bloques:e.cuarteles||[]})}</td><td style="max-width:280px">${estudioResumenVal(e)}</td><td>${e.archivo?`<button class="btn small ghost" onclick="viewStudyFile('${e.id}')"><i data-lucide="${fileIcon(e.archivoNombre||'file.pdf')}"></i> Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${e.costo?'$'+parseFloat(e.costo).toLocaleString('es-CL'):'—'}</td><td class="col-acciones"><button class="btn small ghost" onclick="editStudy('${e.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delStudy('${e.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty"><i data-lucide="flask-conical"></i><div>Sin estudios registrados</div></td></tr>'}</tbody></table></div>
     </div>`;
   lucideInit();
 }
@@ -2634,8 +2905,8 @@ async function renderPrices(){
       <div class="filters-bar"><span class="filter-chip ${_pricesFiltroMercado==='todos'?'active':''}" onclick="setPricesFiltro('todos')">Todos <strong>${prices.length}</strong></span>
       ${MERCADOS.map(m=>{const n=prices.filter(p=>p.mercado===m).length;return n?`<span class="filter-chip ${_pricesFiltroMercado===m?'active':''}" onclick="setPricesFiltro('${m.replace(/'/g,"\\'")}')">${m} <strong>${n}</strong></span>`:''}).join('')}</div>
       <div class="toolbar" style="margin-top:10px"><input class="search-input" placeholder="Buscar variedad, mercado…" oninput="filterPrices(this.value)"></div>
-      <table id="tbl-prices"><thead><tr><th>Semana</th><th>Mercado</th><th>Variedad</th><th>Grado</th><th>Precio / tallo</th><th>≈ EUR</th><th>≈ CLP</th><th>Volumen</th><th>Notas</th><th></th></tr></thead>
-      <tbody>${filt.length?filt.map(p=>{const eur=priceInEUR(p);const clp=eur&&fx&&fx.EUR_CLP?eur*fx.EUR_CLP:null;return `<tr><td>${fmt(p.fecha)}</td><td><span class="tag info">${p.mercado||'-'}</span></td><td><strong>${p.variedad||'-'}</strong></td><td>${p.grado||'-'}</td><td><strong>${p.precioUnit} ${p.moneda}</strong></td><td>${eur!=null?'€'+eur.toFixed(2):'—'}</td><td>${clp!=null?'$'+Math.round(clp).toLocaleString('es-CL'):'—'}</td><td>${p.volumen||'—'}</td><td style="font-size:11px;color:var(--gris);max-width:180px">${p.notas||'—'}</td><td><button class="btn small ghost" onclick="editPrice('${p.id}')"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delPrice('${p.id}')"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="10" class="empty"><i data-lucide="line-chart"></i><div>Sin precios registrados</div></td></tr>'}</tbody></table>
+      <div class="table-scroll"><table id="tbl-prices"><thead><tr><th>Semana</th><th>Mercado</th><th>Variedad</th><th>Grado</th><th>Precio / tallo</th><th>≈ EUR</th><th>≈ CLP</th><th>Volumen</th><th>Notas</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(p=>{const eur=priceInEUR(p);const clp=eur&&fx&&fx.EUR_CLP?eur*fx.EUR_CLP:null;return `<tr><td>${fmt(p.fecha)}</td><td><span class="tag info">${p.mercado||'-'}</span></td><td><strong>${p.variedad||'-'}</strong></td><td>${p.grado||'-'}</td><td><strong>${p.precioUnit} ${p.moneda}</strong></td><td>${eur!=null?'€'+eur.toFixed(2):'—'}</td><td>${clp!=null?'$'+Math.round(clp).toLocaleString('es-CL'):'—'}</td><td>${p.volumen||'—'}</td><td style="font-size:11px;color:var(--gris);max-width:180px">${p.notas||'—'}</td><td class="col-acciones"><button class="btn small ghost" onclick="editPrice('${p.id}')"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delPrice('${p.id}')"><i data-lucide="trash-2"></i></button></td></tr>`}).join(''):'<tr><td colspan="10" class="empty"><i data-lucide="line-chart"></i><div>Sin precios registrados</div></td></tr>'}</tbody></table></div>
     </div>
     ${prices.length>=3?`<div class="card"><h3><i data-lucide="trending-up"></i>Evolución de precios (tallo EUR equivalente)</h3><div class="chart-container"><canvas id="chart-prices"></canvas></div></div>`:''}`;
   if(prices.length>=3&&document.getElementById('chart-prices')){
@@ -2737,10 +3008,10 @@ async function renderReports(){
   /* Labores sin frecuencia esperada */
   const monitoreos=tasks.filter(t=>t.nombre&&t.nombre.toLowerCase().includes('monitoreo')&&daysBetween(t.fecha,hoy)<=14);
   if(mes>=9&&mes<=11&&monitoreos.length===0)alertasSanitarias.push({tipo:'warn',bloque:'General',msg:'No hay monitoreos fitosanitarios en últimas 2 semanas. En temporada activa se recomienda monitoreo semanal.'});
-  /* Costos horas-hombre */
-  const hhUltMes=tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).reduce((s,t)=>s+(parseFloat(t.horas)||0),0);
+  /* Costos horas-hombre — convierte jornadas/días a horas equivalentes para sumar consistente. */
+  const hhUltMes=tasks.filter(t=>daysBetween(t.fecha,hoy)<=30).reduce((s,t)=>s+(tiempoAHoras(t.horas,t.unidadTiempo)||0),0);
   const hhPorCat={};
-  tasks.forEach(t=>{hhPorCat[t.categoria||'Sin categoría']=(hhPorCat[t.categoria||'Sin categoría']||0)+(parseFloat(t.horas)||0)});
+  tasks.forEach(t=>{hhPorCat[t.categoria||'Sin categoría']=(hhPorCat[t.categoria||'Sin categoría']||0)+(tiempoAHoras(t.horas,t.unidadTiempo)||0)});
   /* Total aplicaciones por categoría */
   const appPorCat={};apps.forEach(a=>{appPorCat[a.categoria||'Otro']=(appPorCat[a.categoria||'Otro']||0)+1});
 
@@ -2845,7 +3116,46 @@ async function renderSettings(){
         <div class="check-item"><input type="checkbox" id="cfg-ev-pri" ${cfg.events?.prices?'checked':''}><label for="cfg-ev-pri">💶 Precios de mercado</label></div>
         <div class="check-item"><input type="checkbox" id="cfg-ev-hit" ${cfg.events?.hitos!==false?'checked':''}><label for="cfg-ev-hit">📌 Hitos importantes (manuales)</label></div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveSettingsNotif()"><i data-lucide="save"></i>Guardar configuración</button><button class="btn secondary" onclick="testWebhook()"><i data-lucide="send"></i>Probar envío</button></div>
+      <div style="margin-top:18px;padding:14px;background:#fef9f1;border:1px solid #f3d9a4;border-radius:8px">
+        <h4 style="margin:0 0 8px;color:#8a5a00"><i data-lucide="mail"></i> Notificación por correo a los socios</h4>
+        <p style="font-size:12.5px;color:#6b4400;margin:0 0 12px">Cuando alguien crea o edita una labor, aplicación, hito o estudio, los <strong>otros ${USERS.length-1} usuarios del equipo</strong> reciben un correo automático (al usuario que hace el cambio NO le llega). Usa <strong>EmailJS</strong> (gratis hasta 200 correos/mes, sin backend). Configúralo una sola vez con los IDs que te entrega su panel.</p>
+        <div class="form-grid">
+          <div class="form-row"><label>Habilitar correos</label><select id="cfg-email-enabled"><option value="true" ${cfg.emailEnabled?'selected':''}>Sí (activo)</option><option value="false" ${!cfg.emailEnabled?'selected':''}>No</option></select></div>
+          <div class="form-row"><label>EmailJS Service ID</label><input id="cfg-email-svc" value="${cfg.emailjsServiceId||''}" placeholder="service_xxxxxxx"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>EmailJS Template ID</label><input id="cfg-email-tpl" value="${cfg.emailjsTemplateId||''}" placeholder="template_xxxxxxx"></div>
+          <div class="form-row"><label>EmailJS Public Key</label><input id="cfg-email-key" value="${cfg.emailjsPublicKey||''}" placeholder="abcDEF123_xxxxxxxxxxx"></div>
+        </div>
+        <div style="font-size:12px;color:#6b4400;background:#fff7e6;padding:8px 10px;border-radius:6px;margin-top:6px">
+          <strong>Destinatarios actuales:</strong> ${USERS.map(u=>`${u.nombre} &lt;${u.email}&gt;`).join(' · ')}<br>
+          <span style="color:#8a5a00">El que dispara el evento queda excluido automáticamente.</span>
+        </div>
+        <div style="margin-top:10px"><button class="btn small ghost" onclick="testEmailNotify()"><i data-lucide="send"></i> Probar correo</button></div>
+        <details style="margin-top:12px;font-size:12.5px">
+          <summary style="cursor:pointer;font-weight:600;color:#8a5a00">📖 Cómo configurar EmailJS (5 minutos)</summary>
+          <ol style="margin:10px 0 0 18px;line-height:1.7">
+            <li>Crear cuenta gratis en <code>https://www.emailjs.com</code>.</li>
+            <li>Add Email Service → conectar Gmail (u otro). Copiar el <strong>Service ID</strong>.</li>
+            <li>Email Templates → Create New Template. Asunto: <code>{{subject}}</code>. Contenido (puede ser HTML):<br>
+              <code style="display:block;background:#fff;padding:8px;margin-top:4px;border-radius:4px;border:1px solid #f3d9a4;font-size:11.5px;white-space:pre-wrap">Hola {{to_name}},
+
+{{from_user}} registró un nuevo evento en Santa Ana Peonías:
+
+[{{event_type}}] {{title}}
+
+{{message}}
+
+Fecha: {{date}}
+Abrir plataforma: {{link}}</code>
+              En "To Email" pon <code>{{to_email}}</code>. Guardar y copiar el <strong>Template ID</strong>.
+            </li>
+            <li>Account → General → copiar la <strong>Public Key</strong>.</li>
+            <li>Pegar los 3 valores aquí arriba, marcar "Sí (activo)" y guardar. Probar con el botón.</li>
+          </ol>
+        </details>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="saveSettingsNotif()"><i data-lucide="save"></i>Guardar configuración</button><button class="btn secondary" onclick="testWebhook()"><i data-lucide="send"></i>Probar webhook</button></div>
       <details style="margin-top:15px;padding:12px;background:var(--gris-xl);border-radius:var(--radio-sm);font-size:12.5px">
         <summary style="cursor:pointer;font-weight:600;color:var(--verde-d)">📖 Cómo configurar cada opción</summary>
         <div style="margin-top:10px;line-height:1.7">
@@ -2918,7 +3228,9 @@ async function renderSettings(){
   lucideInit();
 }
 async function saveSettingsNotif(){
-  const cfg={id:'notifications',enabled:document.getElementById('cfg-enabled').value==='true',webhookType:document.getElementById('cfg-type').value,webhookUrl:document.getElementById('cfg-url').value.trim(),telegramChatId:document.getElementById('cfg-tgchat')?document.getElementById('cfg-tgchat').value.trim():'',events:{apps:document.getElementById('cfg-ev-apps').checked,tasks:document.getElementById('cfg-ev-tasks').checked,inventory:document.getElementById('cfg-ev-inv').checked,studies:document.getElementById('cfg-ev-std').checked,prices:document.getElementById('cfg-ev-pri').checked,hitos:document.getElementById('cfg-ev-hit').checked}};
+  const cfg={id:'notifications',enabled:document.getElementById('cfg-enabled').value==='true',webhookType:document.getElementById('cfg-type').value,webhookUrl:document.getElementById('cfg-url').value.trim(),telegramChatId:document.getElementById('cfg-tgchat')?document.getElementById('cfg-tgchat').value.trim():'',emailEnabled:document.getElementById('cfg-email-enabled')?document.getElementById('cfg-email-enabled').value==='true':false,emailjsServiceId:document.getElementById('cfg-email-svc')?document.getElementById('cfg-email-svc').value.trim():'',emailjsTemplateId:document.getElementById('cfg-email-tpl')?document.getElementById('cfg-email-tpl').value.trim():'',emailjsPublicKey:document.getElementById('cfg-email-key')?document.getElementById('cfg-email-key').value.trim():'',events:{apps:document.getElementById('cfg-ev-apps').checked,tasks:document.getElementById('cfg-ev-tasks').checked,inventory:document.getElementById('cfg-ev-inv').checked,studies:document.getElementById('cfg-ev-std').checked,prices:document.getElementById('cfg-ev-pri').checked,hitos:document.getElementById('cfg-ev-hit').checked}};
+  /* Reset cache de init para que tome la public key nueva en el próximo envío. */
+  _emailjsInited=false;
   await saveNotifyConfig(cfg);toast('✓ Configuración guardada');
 }
 async function exportAll(){
