@@ -369,7 +369,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.07.9';
+const APP_VERSION='2026.05.18.2';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -573,10 +573,16 @@ const estadoLabor=t=>t.estado||'realizada';
 const ESTADO_LBL={pendiente:'Pendiente',en_curso:'En curso',realizada:'Realizada',cancelada:'Cancelada'};
 const ESTADO_CLS={pendiente:'pendiente',en_curso:'curso',realizada:'realizada',cancelada:'cancelada'};
 function laborAtrasada(t){if(estadoLabor(t)!=='pendiente')return false;const fp=t.fechaPlanificada||t.fecha;if(!fp)return false;return parseLocalDate(fp)<parseLocalDate(today())}
-/* Aplicaciones: helpers de carencia */
+/* Aplicaciones: helpers de carencia + estado (programada / realizada / cancelada) */
 function parseCarenciaDias(x){if(x==null)return null;if(typeof x==='number')return x;const m=String(x).match(/(\d+)/);return m?parseInt(m[1],10):null}
 function addDays(dateStr,days){const d=parseLocalDate(dateStr);if(!d)return dateStr;d.setDate(d.getDate()+days);const y=d.getFullYear();const mo=String(d.getMonth()+1).padStart(2,'0');const dd=String(d.getDate()).padStart(2,'0');return `${y}-${mo}-${dd}`}
-function fechaFinCarencia(app){const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d?addDays(app.fecha,d):null}
+/* Una aplicación se considera 'realizada' si no tiene campo estado (compatibilidad con datos
+   previos a la introducción del flujo programado→realizado). Carencia solo aplica a realizadas. */
+const estadoApp=a=>a.estado||'realizada';
+const APP_ESTADO_LBL={programada:'Programada',realizada:'Realizada',cancelada:'Cancelada'};
+const APP_ESTADO_CLS={programada:'pendiente',realizada:'realizada',cancelada:'cancelada'};
+function aplicacionAtrasada(a){if(estadoApp(a)!=='programada')return false;const fp=a.fechaPlanificada||a.fecha;if(!fp)return false;return parseLocalDate(fp)<parseLocalDate(today())}
+function fechaFinCarencia(app){if(estadoApp(app)!=='realizada')return null;const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d&&app.fecha?addDays(app.fecha,d):null}
 function carenciaActiva(app){const f=fechaFinCarencia(app);return f?parseLocalDate(f)>=parseLocalDate(today()):false}
 /* Comprime iterativamente hasta que el base64 baje de targetKB (default 300KB).
    Firestore limita a 1 MB por documento; con 300KB/foto caben 2-3 fotos + datos. */
@@ -935,7 +941,8 @@ async function renderDashboard(){
   const mesActual=new Date().getMonth()+1;
   const fen=fenologia(mesActual);
   const ultimasTareas=tasks.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
-  const ultimasApp=apps.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  /* Solo aplicaciones realizadas en "Últimas aplicaciones"; las programadas viven en la página de aplicaciones. */
+  const ultimasApp=apps.filter(a=>estadoApp(a)==='realizada'&&a.fecha).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
   const fotosMes=photos.filter(p=>new Date(p.fecha).getMonth()===new Date().getMonth()&&new Date(p.fecha).getFullYear()===new Date().getFullYear()).length;
   const hoy=new Date();
   const alertas=[];
@@ -1828,37 +1835,60 @@ async function viewTask(id){
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Cerrar</button>
       <button class="btn small danger" onclick="closeModal();delTask('${t.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <button class="btn small ghost" onclick="convertTaskToApp('${t.id}')" title="Convertir esta labor a una aplicación"><i data-lucide="arrow-right-left"></i>Convertir a aplicación</button>
       <button class="btn" onclick="closeModal();editTask('${t.id}')"><i data-lucide="pencil"></i>Editar</button>
     </div>`);
   lucideInit();
 }
 
 /* ============ APLICACIONES ============ */
+let _appsFiltroEstado='todas';
 let _appsFiltroCategoria='todas';
 /* _appsFiltroCuartel: array de cuarteles seleccionados. [] = todos. */
 let _appsFiltroCuartel=[];
 let _appsFiltroAno='todos';
 let _appsFiltroCarencia='todas';
 let _appsFiltroSearch='';
+function setAppsFiltroEstado(k){_appsFiltroEstado=k;renderApplications()}
 function setAppsFiltroCat(v){_appsFiltroCategoria=v;renderApplications()}
 function toggleAppsFiltroCuartel(v){const i=_appsFiltroCuartel.indexOf(v);if(i>=0)_appsFiltroCuartel.splice(i,1);else _appsFiltroCuartel.push(v);renderApplications()}
 function setAppsFiltroCuartelTodos(){_appsFiltroCuartel=[];renderApplications()}
 function setAppsFiltroAno(v){_appsFiltroAno=v;renderApplications()}
 function setAppsFiltroCarencia(v){_appsFiltroCarencia=v;renderApplications()}
 function setAppsFiltroSearch(v){_appsFiltroSearch=v||'';filterApps(v)}
-function clearAppsFiltros(){_appsFiltroCategoria='todas';_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
+function clearAppsFiltros(){_appsFiltroEstado='todas';_appsFiltroCategoria='todas';_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
 async function renderApplications(){
   const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
-  const sortedAll=[...apps].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  /* Fecha efectiva para sort y muestra: fecha (ejecutada) si existe, sino fechaPlanificada. */
+  const fechaEfectiva=a=>a.fecha||a.fechaPlanificada;
+  /* Orden: atrasadas → programadas (asc por fecha planif) → realizadas (desc por fecha ejec) → canceladas. */
+  const priEstA={programada:1,realizada:2,cancelada:3};
+  const sortedAll=[...apps].sort((a,b)=>{
+    const atA=aplicacionAtrasada(a)?0:1,atB=aplicacionAtrasada(b)?0:1;
+    if(atA!==atB)return atA-atB;
+    const pA=priEstA[estadoApp(a)]||9,pB=priEstA[estadoApp(b)]||9;
+    if(pA!==pB)return pA-pB;
+    const fA=fechaEfectiva(a),fB=fechaEfectiva(b);
+    /* Programadas se ordenan ascendente (las próximas primero); resto descendente. */
+    if(estadoApp(a)==='programada'&&estadoApp(b)==='programada')return new Date(fA)-new Date(fB);
+    return new Date(fB)-new Date(fA);
+  });
+  /* Contadores por estado para los chips. */
+  const countsApp={todas:apps.length,programada:0,realizada:0,cancelada:0,atrasada:0};
+  apps.forEach(a=>{countsApp[estadoApp(a)]=(countsApp[estadoApp(a)]||0)+1;if(aplicacionAtrasada(a))countsApp.atrasada++});
   /* Listas únicas para los dropdowns. */
   const categoriasUnicas=[...new Set(apps.map(a=>(a.categoria||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
   /* Cuarteles: cada aplicación puede tener varios; aplanamos. */
   const cuartelesSet=new Set();
   apps.forEach(a=>{const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);bs.forEach(b=>{if(b)cuartelesSet.add(String(b).trim());});});
   const cuartelesUnicos=[...cuartelesSet].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
-  const anosUnicos=[...new Set(apps.map(a=>a.fecha?new Date(a.fecha).getFullYear():null).filter(Boolean))].sort((a,b)=>b-a);
+  const anosUnicos=[...new Set(apps.map(a=>{const f=fechaEfectiva(a);return f?new Date(f).getFullYear():null}).filter(Boolean))].sort((a,b)=>b-a);
   /* Filtro combinado AND. */
   const sorted=sortedAll.filter(a=>{
+    if(_appsFiltroEstado!=='todas'){
+      if(_appsFiltroEstado==='atrasada'){if(!aplicacionAtrasada(a))return false;}
+      else if(estadoApp(a)!==_appsFiltroEstado)return false;
+    }
     if(_appsFiltroCategoria!=='todas'&&(a.categoria||'').trim()!==_appsFiltroCategoria)return false;
     if(_appsFiltroCuartel.length>0){
       const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
@@ -1868,7 +1898,8 @@ async function renderApplications(){
       if(!match)return false;
     }
     if(_appsFiltroAno!=='todos'){
-      if(!a.fecha||String(new Date(a.fecha).getFullYear())!==String(_appsFiltroAno))return false;
+      const fe=fechaEfectiva(a);
+      if(!fe||String(new Date(fe).getFullYear())!==String(_appsFiltroAno))return false;
     }
     if(_appsFiltroCarencia!=='todas'){
       const activa=carenciaActiva(a);
@@ -1877,12 +1908,20 @@ async function renderApplications(){
     }
     return true;
   });
-  const filtrosActivos=(_appsFiltroCategoria!=='todas')+(_appsFiltroCuartel.length>0?1:0)+(_appsFiltroAno!=='todos')+(_appsFiltroCarencia!=='todas')+(_appsFiltroSearch?1:0);
+  const filtrosActivos=(_appsFiltroEstado!=='todas')+(_appsFiltroCategoria!=='todas')+(_appsFiltroCuartel.length>0?1:0)+(_appsFiltroAno!=='todos')+(_appsFiltroCarencia!=='todas')+(_appsFiltroSearch?1:0);
+  const chipApp=(k,lbl)=>`<span class="chip ${_appsFiltroEstado===k?'active':''}" onclick="setAppsFiltroEstado('${k}')">${lbl} <strong>${countsApp[k]||0}</strong></span>`;
   document.getElementById('main').innerHTML=`
-    <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Productos fitosanitarios, fertilizantes y bioestimulantes aplicados</div></div>
+    <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Programa, ejecuta y registra fitosanitarios, fertilizantes y bioestimulantes</div></div>
     <button class="btn" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
     <div class="alert-box warn"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Importante:</strong> Registra TODA aplicación incluyendo dosis, motivo, carencia y condiciones climáticas. Obligatorio para GlobalG.A.P. / MPS y trazabilidad de exportación.</div></div>
     <div class="card">
+      <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">
+        ${chipApp('todas','Todas')}
+        ${chipApp('atrasada','⚠ Atrasadas')}
+        ${chipApp('programada','🟡 Programadas')}
+        ${chipApp('realizada','🟢 Realizadas')}
+        ${chipApp('cancelada','⚪ Canceladas')}
+      </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
         <div style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
           <select onchange="setAppsFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
@@ -1916,8 +1955,13 @@ async function renderApplications(){
       </div>
       <div style="font-size:12px;color:var(--gris);margin-bottom:8px">${sorted.length} de ${apps.length} aplicaciones</div>
       <div class="table-scroll"><table id="tbl-apps">
-        <thead><tr><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
+        <thead><tr><th>Estado</th><th>Fecha</th><th>Producto</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Clima</th><th>Método / Prestador</th><th>Fotos</th><th>Carencia</th><th>Apto desde</th><th>Responsable</th><th></th></tr></thead>
         <tbody>${sorted.length?sorted.map(a=>{
+          const estA=estadoApp(a);
+          const atrA=aplicacionAtrasada(a);
+          const fechaMostrar=estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada);
+          const subFechaA=(estA==='programada'&&a.fechaPlanificada)?'plan.':(estA==='realizada'?'ejec.':'');
+          const estHTMLA=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>`;
           const fin=fechaFinCarencia(a);
           const activa=carenciaActiva(a);
           const aptoTxt=fin?(activa?`<span class="tag warn">🚫 ${fmt(fin)}</span>`:`<span class="tag ok">✓ ${fmt(fin)}</span>`):'<span style="color:var(--gris-m);font-size:11px">—</span>';
@@ -1932,8 +1976,8 @@ async function renderApplications(){
           if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
           if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
           const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
-          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')){viewApp('${a.id}')}" style="cursor:pointer"><td>${fmt(a.fecha)}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
-        }).join(''):'<tr><td colspan="12" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
+          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td>${fmt(fechaMostrar)}${subFechaA?`<div style="font-size:10px;color:var(--gris-m)">${subFechaA}</div>`:''}</td><td><strong>${a.producto}</strong>${a.motivo?`<div style="font-size:11px;color:var(--gris);max-width:160px;margin-top:2px">${a.motivo}</div>`:''}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td>${climaTxt}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.carencia||'—'}</td><td>${aptoTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+        }).join(''):'<tr><td colspan="13" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
     </div>`;
   lucideInit();
@@ -1954,11 +1998,16 @@ async function viewApp(id){
   const fotos=[];
   if(a.fotoProducto)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto producto/etiqueta</div><img src="${a.fotoProducto}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"></div>`);
   if(a.fotoAplicacion)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto aplicación</div><img src="${a.fotoAplicacion}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"></div>`);
+  const estDet=estadoApp(a);
+  const atrDet=aplicacionAtrasada(a);
+  const estTagDet=atrDet?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estDet]||'info'}">${APP_ESTADO_LBL[estDet]||estDet}</span>`;
   openModal(`
-    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}</span>${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</h3>
+    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}</span><span style="display:flex;gap:6px;align-items:center">${estTagDet}${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</span></h3>
     ${activa?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="clock"></i><div class="ab-content"><strong>En carencia activa hasta ${fmt(fin)}</strong><br>No cosechar ni reingresar sin EPP hasta esa fecha.</div></div>`:''}
     <div style="margin-bottom:8px">
-      ${row('Fecha',fmt(a.fecha)+(a.horaApp?' '+a.horaApp:''))}
+      ${row('Estado',APP_ESTADO_LBL[estDet]||estDet)}
+      ${row('Fecha planificada',a.fechaPlanificada?fmt(a.fechaPlanificada):'—')}
+      ${estDet==='realizada'?row('Fecha aplicación',a.fecha?fmt(a.fecha)+(a.horaApp?' '+a.horaApp:''):'—'):''}
       ${row('Cuarteles',bloques.length?bloques.join(', '):'General')}
       ${row('Ingrediente activo',a.ingrediente)}
       ${row('Dosis',a.dosis)}
@@ -1976,6 +2025,7 @@ async function viewApp(id){
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">Cerrar</button>
       <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <button class="btn small ghost" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
       <button class="btn" onclick="closeModal();editApp('${a.id}')"><i data-lucide="pencil"></i>Editar</button>
     </div>`);
   lucideInit();
@@ -1984,9 +2034,14 @@ async function viewApp(id){
 async function editApp(id){
   const blocks=await getAll('blocks');
   const curName=userById(CURRENT_USER).nombre;
-  const a=id?await get('applications',id):{fecha:today(),producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:'',fotoProducto:'',fotoAplicacion:''};
+  /* Para nuevas aplicaciones por defecto estado='realizada' (registro de algo ya aplicado).
+     fechaPlanificada se autocompleta con today() en programadas. */
+  const a=id?await get('applications',id):{fecha:today(),fechaPlanificada:today(),estado:'realizada',producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:'',fotoProducto:'',fotoAplicacion:''};
   const bloquesSel=getBloques(a);
-  const cats=[...new Set(PRODUCT_TEMPLATES.map(p=>p.cat))];
+  const estActApp=estadoApp(a);
+  /* Categorías: salen de la biblioteca de productos. Sumamos 'Bioestabilizado'
+     manualmente para que esté disponible aunque aún no haya productos cargados de ese tipo. */
+  const cats=[...new Set([...PRODUCT_TEMPLATES.map(p=>p.cat),'Bioestabilizado'])];
   const metodos=['Barra tractor','Barra espalda','Dron','Mochila manual','Pulverizadora espalda','Aéreo','Riego por goteo','Otro'];
   const cdIni=a.carenciaDias!=null&&a.carenciaDias!==''?a.carenciaDias:(parseCarenciaDias(a.carencia)||'');
   openModal(`<h3>${id?'Editar':'Registrar'} aplicación</h3>
@@ -1995,7 +2050,13 @@ async function editApp(id){
       ${cats.map(c=>`<optgroup label="${c}">${PRODUCT_TEMPLATES.map((p,i)=>p.cat===c?`<option value="${i}">${p.nombre}</option>`:'').join('')}</optgroup>`).join('')}
     </select></div>
     <div class="form-grid">
-      <div class="form-row"><label>Fecha aplicación</label><input id="f-fecha" type="date" value="${a.fecha}" onchange="actualizarAptoDesde()"></div>
+      <div class="form-row"><label>Estado</label><select id="f-app-estado" onchange="toggleAppFechaEjec()">
+        <option value="programada" ${estActApp==='programada'?'selected':''}>🟡 Programada (planificada)</option>
+        <option value="realizada" ${estActApp==='realizada'?'selected':''}>🟢 Realizada</option>
+        <option value="cancelada" ${estActApp==='cancelada'?'selected':''}>⚪ Cancelada</option>
+      </select></div>
+      <div class="form-row"><label>Fecha planificada</label><input id="f-fplan" type="date" value="${a.fechaPlanificada||a.fecha||today()}"></div>
+      <div class="form-row" id="row-app-fejec"><label>Fecha aplicación (ejecutada)</label><input id="f-fecha" type="date" value="${a.fecha||''}" onchange="actualizarAptoDesde()"></div>
       <div class="form-row"><label>Hora aplicación</label><input id="f-hora" type="time" value="${a.horaApp||''}"></div>
       <div class="form-row"><label>Producto comercial</label><input id="f-prod" value="${a.producto||''}"></div>
       <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${a.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
@@ -2033,16 +2094,34 @@ async function editApp(id){
     </div>
     <div class="form-row" style="margin-top:10px"><label>Motivo / plaga o enfermedad objetivo</label><textarea id="f-mot" rows="2">${a.motivo||''}</textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveApp(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  toggleAppFechaEjec();
   actualizarAptoDesde();
   lucideInit();
 }
-function actualizarAptoDesde(){const f=document.getElementById('f-fecha');const d=document.getElementById('f-cdias');const out=document.getElementById('apto-val');const box=document.getElementById('apto-preview');if(!f||!d||!out||!box)return;const dias=parseInt(d.value,10);if(f.value&&!isNaN(dias)&&dias>=0){const fin=addDays(f.value,dias);const activa=new Date(fin)>=new Date(today());out.textContent=fmt(fin)+(activa?' (en carencia)':' (ya apto)');box.className='alert-box '+(activa?'warn':'ok');}else{out.textContent='—';box.className='alert-box info'}}
+/* Muestra/oculta el campo "Fecha aplicación (ejecutada)" según estado.
+   Programada → solo fecha planificada (la ejecutada se completará al pasar a Realizada). */
+function toggleAppFechaEjec(){
+  const e=document.getElementById('f-app-estado');const row=document.getElementById('row-app-fejec');const fe=document.getElementById('f-fecha');
+  if(!e||!row)return;
+  const realizada=e.value==='realizada';
+  row.style.display=realizada?'':'none';
+  if(realizada&&fe&&!fe.value){const fp=document.getElementById('f-fplan');fe.value=(fp&&fp.value)||today();}
+  actualizarAptoDesde();
+}
+function actualizarAptoDesde(){const f=document.getElementById('f-fecha');const d=document.getElementById('f-cdias');const out=document.getElementById('apto-val');const box=document.getElementById('apto-preview');const est=document.getElementById('f-app-estado');if(!f||!d||!out||!box)return;if(est&&est.value!=='realizada'){out.textContent='—';box.className='alert-box info';return}const dias=parseInt(d.value,10);if(f.value&&!isNaN(dias)&&dias>=0){const fin=addDays(f.value,dias);const activa=new Date(fin)>=new Date(today());out.textContent=fmt(fin)+(activa?' (en carencia)':' (ya apto)');box.className='alert-box '+(activa?'warn':'ok');}else{out.textContent='—';box.className='alert-box info'}}
 async function saveApp(id){
   const cdRaw=document.getElementById('f-cdias').value;
   const cdias=cdRaw===''?null:parseInt(cdRaw,10);
   const bloques=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
-  const data={fecha:document.getElementById('f-fecha').value,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null};
+  const estadoSel=document.getElementById('f-app-estado').value;
+  const fplan=document.getElementById('f-fplan').value;
+  const fejec=document.getElementById('f-fecha').value;
+  /* Si está programada, fecha (ejecutada) queda en null. Si está realizada y el usuario no
+     puso fecha de ejecución, asumimos hoy o la planificada. */
+  const fechaEjecFinal=estadoSel==='realizada'?(fejec||fplan||today()):null;
+  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null};
   if(!data.producto){toast('Producto requerido','warn');return}
+  if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
   const fProd=document.getElementById('f-fotoprod');
   const fApl=document.getElementById('f-fotoapl');
   const delProd=document.getElementById('f-del-fotoprod')?.checked;
@@ -2071,10 +2150,118 @@ async function saveApp(id){
   }
   closeModal();toast('Aplicación guardada');
   const fin=fechaFinCarencia(data);
-  notifyHook('Aplicación fitosanitaria',`${data.producto}${data.categoria?' ('+data.categoria+')':''}`,`Fecha: ${fmt(data.fecha)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
+  /* Solo notificamos en altas nuevas o cuando la aplicación pasó a 'realizada'.
+     Para programadas el correo lleva la fecha planificada y un emoji distinto. */
+  const estLabel=data.estado==='realizada'?'🟢 Realizada':data.estado==='programada'?'🟡 Programada':data.estado==='cancelada'?'⚪ Cancelada':data.estado;
+  const fechaNotif=data.estado==='realizada'?(data.fecha||data.fechaPlanificada):data.fechaPlanificada;
+  if(isNew||data.estado==='realizada'){
+    notifyHook('Aplicación fitosanitaria',`${estLabel}: ${data.producto}${data.categoria?' ('+data.categoria+')':''}`,`Fecha: ${fmt(fechaNotif)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
+  }
   renderApplications();
 }
 async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+
+/* ============ CONVERSIÓN LABOR ↔ APLICACIÓN ============
+   Permite mover un registro entre las colecciones 'tasks' y 'applications' cuando
+   fue clasificado incorrectamente. Crea un nuevo registro en la colección destino
+   y elimina el original. Conserva fechas, cuarteles, estado, responsable y fotos. */
+
+/* Mapeo de estados entre labor y aplicación. */
+const _ESTADO_TASK_TO_APP={pendiente:'programada',en_curso:'programada',realizada:'realizada',cancelada:'cancelada'};
+const _ESTADO_APP_TO_TASK={programada:'pendiente',realizada:'realizada',cancelada:'cancelada'};
+
+async function convertTaskToApp(id){
+  const t=await get('tasks',id);
+  if(!t){toast('Labor no encontrada','warn');return}
+  if(!confirm('¿Convertir esta labor en una aplicación?\n\n"'+t.nombre+'" se moverá a Aplicaciones (la labor original se elimina).'))return;
+  const estadoMap=_ESTADO_TASK_TO_APP[estadoLabor(t)]||'realizada';
+  const fotosT=getTaskFotos(t);
+  /* Combinamos notas de la labor en el campo motivo de la aplicación. */
+  const motivoComb=[t.notas,t.horas?'Tiempo: '+formatTiempoLabor(t):''].filter(Boolean).join('\n');
+  const nuevaApp={
+    estado:estadoMap,
+    fechaPlanificada:t.fechaPlanificada||t.fecha||today(),
+    fecha:estadoMap==='realizada'?(t.fecha||t.fechaPlanificada||today()):null,
+    horaApp:null,
+    producto:t.nombre||'(sin nombre)',
+    categoria:t.categoria||'',
+    ingrediente:'',
+    bloques:getBloques(t),
+    bloque:getBloques(t)[0]||'',
+    dosis:'',volumen:'',
+    motivo:motivoComb,
+    carencia:'',carenciaDias:null,
+    responsable:t.responsable||'',
+    prestador:'',metodoAplicacion:'',
+    tempC:null,humedad:null,viento:null,
+    fotoProducto:fotosT[0]||'',
+    fotoAplicacion:fotosT[1]||'',
+    /* Trazabilidad. */
+    createdBy:t.createdBy||CURRENT_USER,
+    createdAt:t.createdAt||new Date().toISOString(),
+    convertedFrom:'task',
+    convertedFromId:id,
+    convertedAt:new Date().toISOString(),
+    convertedBy:CURRENT_USER
+  };
+  try{
+    await add('applications',nuevaApp);
+    await del('tasks',id);
+  }catch(e){console.error('convertTaskToApp falló:',e);toast('Error al convertir: '+(e.message||e.code||'ver consola'),'warn');return}
+  closeModal();
+  toast('Convertida a aplicación ✓');
+  nav('applications');
+}
+
+async function convertAppToTask(id){
+  const a=await get('applications',id);
+  if(!a){toast('Aplicación no encontrada','warn');return}
+  if(!confirm('¿Convertir esta aplicación en una labor?\n\n"'+a.producto+'" se moverá a Bitácora de labores (la aplicación original se elimina).'))return;
+  const estadoMap=_ESTADO_APP_TO_TASK[estadoApp(a)]||'realizada';
+  /* Reunimos toda la info técnica de la aplicación en notas para no perderla. */
+  const climaParts=[a.tempC!=null&&a.tempC!==''?a.tempC+'°C':null,a.humedad!=null&&a.humedad!==''?a.humedad+'% HR':null,a.viento!=null&&a.viento!==''?a.viento+' km/h':null].filter(Boolean).join(' · ');
+  const notasParts=[
+    a.motivo?'Motivo: '+a.motivo:null,
+    a.ingrediente?'Ingrediente activo: '+a.ingrediente:null,
+    a.dosis?'Dosis: '+a.dosis:null,
+    a.volumen?'Volumen: '+a.volumen:null,
+    a.carencia?'Carencia: '+a.carencia:null,
+    a.metodoAplicacion?'Método: '+a.metodoAplicacion:null,
+    a.prestador?'Prestador: '+a.prestador:null,
+    climaParts?'Clima: '+climaParts:null,
+    a.horaApp?'Hora aplicación: '+a.horaApp:null
+  ].filter(Boolean).join('\n');
+  const fotosT=[a.fotoProducto,a.fotoAplicacion].filter(Boolean);
+  const nuevaTask={
+    estado:estadoMap,
+    fechaPlanificada:a.fechaPlanificada||a.fecha||today(),
+    fecha:(estadoMap==='realizada')?(a.fecha||a.fechaPlanificada||today()):null,
+    nombre:a.producto||'(sin nombre)',
+    categoria:a.categoria||'',
+    bloques:getBloques(a),
+    bloque:getBloques(a)[0]||'',
+    horas:null,
+    unidadTiempo:'horas',
+    responsable:a.responsable||'',
+    notas:notasParts,
+    fotos:fotosT,
+    foto:null,
+    /* Trazabilidad. */
+    createdBy:a.createdBy||CURRENT_USER,
+    createdAt:a.createdAt||new Date().toISOString(),
+    convertedFrom:'application',
+    convertedFromId:id,
+    convertedAt:new Date().toISOString(),
+    convertedBy:CURRENT_USER
+  };
+  try{
+    await add('tasks',nuevaTask);
+    await del('applications',id);
+  }catch(e){console.error('convertAppToTask falló:',e);toast('Error al convertir: '+(e.message||e.code||'ver consola'),'warn');return}
+  closeModal();
+  toast('Convertida a labor ✓');
+  nav('tasks');
+}
 
 /* ============ ASESORES ============ */
 async function renderAdvisors(){
