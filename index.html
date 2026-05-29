@@ -376,7 +376,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.4';
+const APP_VERSION='2026.05.18.5';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2054,9 +2054,9 @@ async function editApp(id){
   const a=id?await get('applications',id):{fecha:today(),fechaPlanificada:today(),estado:'realizada',producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:'',fotoProducto:'',fotoAplicacion:''};
   const bloquesSel=getBloques(a);
   const estActApp=estadoApp(a);
-  /* Categorías: salen de la biblioteca de productos. Sumamos 'Bioestabilizado'
-     manualmente para que esté disponible aunque aún no haya productos cargados de ese tipo. */
-  const cats=[...new Set([...PRODUCT_TEMPLATES.map(p=>p.cat),'Bioestabilizado'])];
+  /* Categorías: salen de la biblioteca de productos. Sumamos 'Bioestabilizado' y
+     'Suelo' manualmente para que estén disponibles aunque aún no haya productos cargados de ese tipo. */
+  const cats=[...new Set([...PRODUCT_TEMPLATES.map(p=>p.cat),'Bioestabilizado','Suelo'])];
   const metodos=['Barra tractor','Barra espalda','Dron','Mochila manual','Pulverizadora espalda','Aéreo','Riego por goteo','Otro'];
   const cdIni=a.carenciaDias!=null&&a.carenciaDias!==''?a.carenciaDias:(parseCarenciaDias(a.carencia)||'');
   openModal(`<h3>${id?'Editar':'Registrar'} aplicación</h3>
