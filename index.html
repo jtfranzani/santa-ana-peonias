@@ -334,22 +334,22 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
       <a onclick="nav('dashboard')" id="nav-dashboard" class="active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
       <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
       <a onclick="nav('weather')" id="nav-weather"><i data-lucide="cloud-rain"></i><span>Clima y lluvias</span></a>
-      <div class="nav-section">Registro fotográfico</div>
-      <a onclick="nav('photopoints')" id="nav-photopoints"><i data-lucide="map-pin"></i><span>Puntos de foto</span></a>
-      <a onclick="nav('photos')" id="nav-photos"><i data-lucide="image"></i><span>Galería</span></a>
-      <a onclick="nav('compare')" id="nav-compare"><i data-lucide="git-compare"></i><span>Comparador</span></a>
-      <div class="nav-section">Manejo</div>
       <a onclick="nav('calendar')" id="nav-calendar"><i data-lucide="calendar-days"></i><span>Calendario</span></a>
+      <div class="nav-section">Manejo</div>
       <a onclick="nav('tasks')" id="nav-tasks"><i data-lucide="clipboard-list"></i><span>Bitácora labores</span></a>
       <a onclick="nav('applications')" id="nav-applications"><i data-lucide="droplet"></i><span>Aplicaciones</span></a>
       <a onclick="nav('inventory')" id="nav-inventory"><i data-lucide="package"></i><span>Inventario</span></a>
       <a onclick="nav('studies')" id="nav-studies"><i data-lucide="flask-conical"></i><span>Estudios</span></a>
       <a onclick="nav('advisors')" id="nav-advisors"><i data-lucide="user-check"></i><span>Asesores</span></a>
-      <div class="nav-section">Mercado</div>
-      <a onclick="nav('prices')" id="nav-prices"><i data-lucide="line-chart"></i><span>Precios</span></a>
+      <div class="nav-section">Registro fotográfico</div>
+      <a onclick="nav('photopoints')" id="nav-photopoints"><i data-lucide="map-pin"></i><span>Puntos de foto</span></a>
+      <a onclick="nav('photos')" id="nav-photos"><i data-lucide="image"></i><span>Galería</span></a>
+      <a onclick="nav('compare')" id="nav-compare"><i data-lucide="git-compare"></i><span>Comparador</span></a>
       <div class="nav-section">Análisis</div>
       <a onclick="nav('reports')" id="nav-reports"><i data-lucide="trending-up"></i><span>Informes</span></a>
       <a onclick="nav('settings')" id="nav-settings"><i data-lucide="settings"></i><span>Respaldo y avisos</span></a>
+      <div class="nav-section">Mercado</div>
+      <a onclick="nav('prices')" id="nav-prices"><i data-lucide="line-chart"></i><span>Precios</span></a>
     </div>
     <div class="version-pill" id="version-pill" title="Versión instalada">
       <span class="vlabel"><span class="vdot"></span><span id="version-label">v…</span></span>
@@ -377,7 +377,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.7';
+const APP_VERSION='2026.05.18.10';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -592,6 +592,22 @@ const APP_ESTADO_CLS={programada:'pendiente',realizada:'realizada',cancelada:'ca
 function aplicacionAtrasada(a){if(estadoApp(a)!=='programada')return false;const fp=a.fechaPlanificada||a.fecha;if(!fp)return false;return parseLocalDate(fp)<parseLocalDate(today())}
 function fechaFinCarencia(app){if(estadoApp(app)!=='realizada')return null;const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d&&app.fecha?addDays(app.fecha,d):null}
 function carenciaActiva(app){const f=fechaFinCarencia(app);return f?parseLocalDate(f)>=parseLocalDate(today()):false}
+/* ============ DEPENDENCIAS (PRERREQUISITOS) ============
+   Una labor o aplicación puede declarar `dependeDe: {type:'labor'|'app', id:'xxx'}`.
+   Cuando se intenta pasar el item a estado realizada, validamos que el prereq
+   también esté en estado realizada. Si no, bloqueamos el cambio de estado.
+   Aplica en ambas direcciones (labor→app, app→labor, labor→labor, app→app). */
+function _depColeccion(type){return type==='labor'?'tasks':'applications';}
+async function getDepItem(dep){if(!dep||!dep.type||!dep.id)return null;try{return await get(_depColeccion(dep.type),dep.id);}catch(e){return null;}}
+function depItemCompleto(item,type){if(!item)return false;if(type==='labor')return estadoLabor(item)==='realizada';return estadoApp(item)==='realizada';}
+function depItemLabel(item,type){if(!item)return '(prereq eliminado)';if(type==='labor')return (item.nombre||'Labor sin nombre')+' · '+fmt(item.fechaPlanificada||item.fecha);return (item.producto||'Aplicación')+' · '+fmt(item.fechaPlanificada||item.fecha);}
+async function depStatus(dep){if(!dep)return null;const item=await getDepItem(dep);return {item,completado:depItemCompleto(item,dep.type),label:depItemLabel(item,dep.type),type:dep.type,id:dep.id};}
+/* Sincrónico: dado un dep + cachés de tasks/apps ya cargados, devuelve {item, completado}.
+   Útil dentro de bucles de render donde no podemos hacer await por fila. */
+function depStatusSync(dep,tasksAll,appsAll){if(!dep||!dep.type||!dep.id)return null;const col=dep.type==='labor'?tasksAll:appsAll;const item=(col||[]).find(x=>x.id===dep.id)||null;return {item,completado:depItemCompleto(item,dep.type),label:depItemLabel(item,dep.type),type:dep.type,id:dep.id};}
+/* Serializa la dep a un string usable en <option value>. */
+function depEncode(dep){return dep&&dep.type&&dep.id?dep.type+'::'+dep.id:'';}
+function depDecode(v){if(!v)return null;const[type,id]=v.split('::');return type&&id?{type,id}:null;}
 /* Comprime iterativamente hasta que el base64 baje de targetKB (default 300KB).
    Firestore limita a 1 MB por documento; con 300KB/foto caben 2-3 fotos + datos. */
 function fileToDataURL(file,maxW=1400,targetKB=300){
@@ -849,10 +865,13 @@ async function notifyEmailToTeam(tipo,titulo,mensaje,eventKey,cfg){
   const fromUser=userById(CURRENT_USER);
   const fechaTxt=new Date().toLocaleString('es-CL',{timeZone:'America/Santiago',dateStyle:'short',timeStyle:'short'});
   /* Destinatarios: todos los USERS con correo de notificación, distintos del usuario actual.
-     Excepción: si cfg.__includeSelfTest===true (modo prueba) también se incluye al usuario actual.
+     Excepción 1: si cfg.__includeSelfTest===true (modo prueba) también se incluye al usuario actual.
+     Excepción 2: sserrano (Sergio Serrano) y jtfranzani (JT Franzani) reciben SIEMPRE,
+                  aunque sean los que disparan la acción. Pedido por administración.
      Nota: r.emailNotif es el correo real (gmail/baumsystem/etc); r.email es la credencial Firebase Auth.
      Si emailNotif no está, caemos a email para no perder destinatarios. */
-  const baseList=cfg.__includeSelfTest?USERS:USERS.filter(u=>u.id!==CURRENT_USER);
+  const ALWAYS_NOTIFY=['sserrano','jtfranzani'];
+  const baseList=cfg.__includeSelfTest?USERS:USERS.filter(u=>u.id!==CURRENT_USER||ALWAYS_NOTIFY.includes(u.id));
   const recipients=baseList.filter(u=>(u.emailNotif||u.email));
   for(const r of recipients){
     const toAddr=r.emailNotif||r.email;
@@ -1014,7 +1033,36 @@ async function renderDashboard(){
   /* Estudios pendientes */
   const sueloY=studies.filter(s=>s.tipo==='suelo'&&daysBetween(s.fecha,hoy)<=365).length;
   if(!sueloY&&(mesActual===4||mesActual===5||mesActual===6))alertas.push({tipo:'info',txt:'🧪 Sin análisis de suelo en el último año. Ventana ideal ahora (abril-junio post-senescencia). Cargar resultados en módulo <strong>Estudios</strong>.'});
+  /* Banner de recordatorio al abrir la plataforma: cuenta items programados (labores pendientes/en_curso
+     + aplicaciones programadas) cuya fecha planificada cae hoy, los próximos 7 días, o que estén atrasados.
+     Aparece arriba del page-header. Si no hay nada que avisar, se oculta. */
+  const _hoyParsed=parseLocalDate(today());
+  const _en7d=parseLocalDate(addDays(today(),7));
+  const _tasksAviso=tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&(t.fechaPlanificada||t.fecha));
+  const _appsAviso=apps.filter(a=>estadoApp(a)==='programada'&&(a.fechaPlanificada||a.fecha));
+  const _itemsAviso=[..._tasksAviso.map(t=>({tipo:'labor',fecha:t.fechaPlanificada||t.fecha,atrasada:laborAtrasada(t)})),
+                    ..._appsAviso.map(a=>({tipo:'app',fecha:a.fechaPlanificada||a.fecha,atrasada:aplicacionAtrasada(a)}))];
+  const _avisoAtras=_itemsAviso.filter(i=>i.atrasada).length;
+  const _avisoHoy=_itemsAviso.filter(i=>!i.atrasada&&parseLocalDate(i.fecha)?.getTime()===_hoyParsed.getTime()).length;
+  const _aviso7d=_itemsAviso.filter(i=>{if(i.atrasada)return false;const d=parseLocalDate(i.fecha);return d&&d>_hoyParsed&&d<=_en7d}).length;
+  const _bannerCount=_avisoAtras+_avisoHoy+_aviso7d;
+  const _bannerHTML=_bannerCount?`
+    <div class="alert-box ${_avisoAtras>0?'danger':(_avisoHoy>0?'warn':'info')}" style="margin:0 0 18px;border-radius:var(--radio);box-shadow:var(--sombra);font-size:14px;padding:14px 18px">
+      <i data-lucide="bell" style="flex-shrink:0"></i>
+      <div class="ab-content" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <strong>Recordatorio:</strong>
+          ${_avisoAtras?`<span style="color:var(--alerta);font-weight:600;margin-left:4px">${_avisoAtras} atrasada${_avisoAtras===1?'':'s'}</span>`:''}
+          ${_avisoAtras&&(_avisoHoy||_aviso7d)?' · ':''}
+          ${_avisoHoy?`<strong style="color:var(--warn-d,#b45309);margin-left:4px">${_avisoHoy} para hoy</strong>`:''}
+          ${_avisoHoy&&_aviso7d?' · ':''}
+          ${_aviso7d?`<span style="margin-left:4px">${_aviso7d} próximos 7 días</span>`:''}
+        </div>
+        <button class="btn small" onclick="nav('calendar')" style="margin:0;white-space:nowrap"><i data-lucide="calendar-days"></i>Ver calendario</button>
+      </div>
+    </div>`:'';
   document.getElementById('main').innerHTML=`
+    ${_bannerHTML}
     <div class="page-header">
       <div><h2>Dashboard</h2><div class="sub">${fmtLong(hoy)} · <strong style="color:var(--verde-d)">${fen.fase}</strong></div></div>
       <div class="actions"><button class="btn" onclick="openHitoModal()"><i data-lucide="megaphone"></i>Registrar hito</button><button class="btn secondary" onclick="nav('photos')"><i data-lucide="camera"></i>Foto</button><button class="btn ghost" onclick="nav('tasks')"><i data-lucide="plus"></i>Labor</button></div>
@@ -1026,6 +1074,47 @@ async function renderDashboard(){
       <div class="kpi warn"><div class="kpi-header"><div class="label">Aplicaciones</div><div class="kpi-icon"><i data-lucide="droplet"></i></div></div><div class="value">${apps.length}</div><div class="foot">${apps.filter(a=>daysBetween(a.fecha,hoy)<=30).length} últimos 30 días</div></div>
     </div>
     ${alertas.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Alertas y recomendaciones</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}"><div class="ab-content">${a.txt}</div></div>`).join('')}</div>`:''}
+    ${(()=>{
+      /* Widget de calendario del mes actual: resumen de labores y aplicaciones programadas en el mes en curso.
+         Atrasadas también caen aquí si su fecha está dentro del mes. Click en cualquier fila abre el detalle.
+         Si no hay nada programado para el mes, el widget se oculta. */
+      const m0=new Date(hoy.getFullYear(),hoy.getMonth(),1);
+      const m1=new Date(hoy.getFullYear(),hoy.getMonth()+1,0);
+      const enMes=fechaStr=>{if(!fechaStr)return false;const d=parseLocalDate(fechaStr);if(!d)return false;return d>=m0&&d<=m1;};
+      const tasksMes=tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&enMes(t.fechaPlanificada||t.fecha)).map(t=>({
+        tipo:'labor',id:t.id,fecha:t.fechaPlanificada||t.fecha,titulo:t.nombre||'(sin nombre)',
+        categoria:t.categoria||'',bloques:getBloques(t),responsable:t.responsable||'',atrasada:laborAtrasada(t)
+      }));
+      const appsMes=apps.filter(a=>estadoApp(a)==='programada'&&enMes(a.fechaPlanificada||a.fecha)).map(a=>({
+        tipo:'aplicacion',id:a.id,fecha:a.fechaPlanificada||a.fecha,titulo:a.producto||'(sin producto)',
+        categoria:a.categoria||'',bloques:Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]),responsable:a.responsable||'',atrasada:aplicacionAtrasada(a)
+      }));
+      const itemsMes=[...tasksMes,...appsMes].sort((a,b)=>parseLocalDate(a.fecha)-parseLocalDate(b.fecha));
+      if(!itemsMes.length)return '';
+      const nombreMes=hoy.toLocaleDateString('es-CL',{month:'long',year:'numeric'});
+      return `<div class="card">
+        <h3 style="display:flex;justify-content:space-between;align-items:center"><span><i data-lucide="calendar-days"></i>Calendario · <span style="text-transform:capitalize">${nombreMes}</span> <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${itemsMes.length} programado${itemsMes.length===1?'':'s'}</span></span><button class="btn small ghost" onclick="nav('calendar')" style="margin:0"><i data-lucide="external-link"></i>Ver calendario completo</button></h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th style="width:110px">Fecha</th><th>Tipo</th><th>Item</th><th>Cuarteles</th><th>Responsable</th></tr></thead>
+          <tbody>${itemsMes.map(i=>{
+            const dDif=daysBetween(today(),i.fecha);
+            let estTag='';
+            if(i.atrasada)estTag=`<span class="tag atrasada">⚠ Atrasada</span>`;
+            else if(dDif===0)estTag='<span class="tag warn">📌 Hoy</span>';
+            else if(dDif<=7)estTag=`<span class="tag warn">En ${dDif}d</span>`;
+            else estTag=`<span class="tag info">En ${dDif}d</span>`;
+            const tipoTag=i.tipo==='labor'
+              ?'<span class="tag" style="background:#dbeafe;color:#1d4ed8">📋 Labor</span>'
+              :'<span class="tag" style="background:#fce7f3;color:#be185d">💧 Aplicación</span>';
+            const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+            const bloquesTxt=i.bloques.length
+              ?i.bloques.map(b=>`<span class="chip" style="font-size:10.5px;padding:2px 7px;margin:1px">${b}</span>`).join('')
+              :'<span style="color:var(--gris-m);font-size:11px">General</span>';
+            return `<tr class="clickable-row" onclick="${viewFn}" style="cursor:pointer"><td><strong>${fmt(i.fecha)}</strong><div style="margin-top:3px">${estTag}</div></td><td>${tipoTag}</td><td><strong>${i.titulo}</strong>${i.categoria?`<div style="margin-top:3px"><span class="tag info" style="font-size:10.5px">${i.categoria}</span></div>`:''}</td><td>${bloquesTxt}</td><td style="font-size:12.5px">${i.responsable||'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td></tr>`;
+          }).join('')}</tbody>
+        </table></div>
+      </div>`;
+    })()}
     <div class="grid grid-2" style="margin-top:0">
       <div class="card">
         <h3><i data-lucide="calendar"></i>Fase fenológica actual</h3>
@@ -1086,60 +1175,31 @@ async function renderBlocks(){
     <button class="btn" onclick="editBlock()">+ Nuevo cuartel</button></div>
 
     <div class="grid grid-3" style="margin-bottom:18px">
-      <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas plantados</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${cuartelesActivos} cuarteles plantados · ${blocks.length} en total</div></div>
-      <div class="kpi info"><div class="kpi-header"><div class="label">Superficie plantada</div><div class="kpi-icon"><i data-lucide="map"></i></div></div><div class="value">${totalHa.toFixed(2).replace('.',',')} ha</div><div class="foot">Marco 0,9 × 0,5 m · densidad ≈ 22.222 riz/ha</div></div>
-      <div class="kpi"><div class="kpi-header"><div class="label">Sectores de riego</div><div class="kpi-icon"><i data-lucide="droplets"></i></div></div><div class="value">20 + 3</div><div class="foot">20 plantados (1.1–20.1) · 3 reserva (21.1–23.1) · ~70 m³/h total</div></div>
+      <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas plantados</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">Sarah · Bowl · Festiva</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Superficie plantada</div><div class="kpi-icon"><i data-lucide="map"></i></div></div><div class="value">3 ha</div><div class="foot">Etapa 1 (Sarah) + Etapa 2 (Bowl + Festiva)</div></div>
+      <div class="kpi"><div class="kpi-header"><div class="label">Sectores de riego</div><div class="kpi-icon"><i data-lucide="droplets"></i></div></div><div class="value">5</div><div class="foot">4 Sarah (S1–S4) · 1 Etapa 2 con 2 válvulas (Bowl + Festiva)</div></div>
     </div>
 
     <div class="grid grid-3">
       ${blocks.map(b=>{
         const tag=bloqueColorTag(b.nombre);
         const reservaCard=(b.nombre||'').toLowerCase().includes('reserva');
-        const fila=(label,val)=>val!==undefined&&val!==null&&val!==''?`<div style="padding:6px 0;border-bottom:1px dashed var(--gris-xl);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--gris);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px">${label}</span><span style="color:var(--texto);font-size:12.5px;text-align:right;max-width:62%">${val}</span></div>`:'';
-        const sectoresHtml=Array.isArray(b.sectores)&&b.sectores.length?b.sectores.map(s=>`<span class="tag info" style="font-size:10.5px;padding:2px 7px;margin:2px 3px 2px 0">${s}</span>`).join(''):'—';
+        const sectoresHtml=Array.isArray(b.sectores)&&b.sectores.length?b.sectores.map(s=>`<span class="tag info" style="font-size:10.5px;padding:2px 7px;margin:2px 3px 2px 0">${s}</span>`).join(''):'';
         return `<div class="card" style="${reservaCard?'background:linear-gradient(135deg,#f5f9f5,#fff);border:1px dashed var(--gris-l)':''}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-            <div style="flex:1;min-width:0"><h3 style="margin:0;font-size:17px">${b.nombre}</h3><div style="font-size:11px;color:var(--gris);margin-top:2px">${b.variedad||'—'}</div></div>
-            <span class="tag ${tag}" style="white-space:nowrap">${(parseInt(b.cantidad)||0).toLocaleString('es-CL')}${reservaCard?' riz.':' riz.'}</span>
+            <div style="flex:1;min-width:0"><h3 style="margin:0;font-size:17px">${b.nombre}</h3></div>
+            <span class="tag ${tag}" style="white-space:nowrap">${(parseInt(b.cantidad)||0).toLocaleString('es-CL')} riz.</span>
           </div>
-          ${b.etapa?`<div style="margin-top:10px"><span class="tag ${b.etapa==='Etapa 1'?'sarah':b.etapa==='Etapa 2'?'bowl':'info'}" style="font-size:10.5px">${b.etapa}</span>${b.divisionNS?'<span class="tag info" style="font-size:10.5px;margin-left:5px">División N/S</span>':''}</div>`:''}
-          <div style="margin-top:12px;font-size:13px">
-            ${fila('Plantación',b.plantacion?fmt(b.plantacion):'—')}
-            ${reservaCard?'':fila('Temporada actual',blockTemporada(b,hoy))}
-            ${fila('Tipo de flor',b.tipo||'—')}
-            ${fila('Superficie',blockHectareas(b))}
-            ${fila('Marco plantación',b.marco||'—')}
-            ${b.densidad?fila('Densidad',Number(b.densidad).toLocaleString('es-CL')+' riz/ha'):''}
-            ${b.subcuarteles?fila('Sub-cuarteles físicos',b.subcuarteles+(b.divisionNS?' (div. N/S)':'')):''}
-            ${fila('Orientación hileras',b.orientacionHileras||'Oriente-Poniente (E-O)')}
-            ${fila('Caudal estimado',b.caudalEstim||'—')}
-            ${fila('Válvulas',b.valvulas||'—')}
+          ${b.etapa?`<div style="margin-top:8px"><span class="tag ${b.etapa==='Etapa 1'?'sarah':b.etapa==='Etapa 2'?'bowl':'info'}" style="font-size:10.5px">${b.etapa}</span></div>`:''}
+          <div style="margin-top:12px;display:flex;gap:18px;font-size:13px;color:var(--texto-m)">
+            ${b.plantacion?`<div><div style="font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px">Plantación</div><div style="font-weight:600;color:var(--texto)">${fmt(b.plantacion)}</div></div>`:''}
+            ${(b.hectareas||b.hectareas===0)?`<div><div style="font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px">Superficie</div><div style="font-weight:600;color:var(--texto)">${blockHectareas(b)}</div></div>`:''}
           </div>
-          ${Array.isArray(b.sectores)&&b.sectores.length?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Sectores de riego</div><div style="display:flex;flex-wrap:wrap">${sectoresHtml}</div></div>`:''}
-          ${b.notas?`<div style="margin-top:10px;padding:8px 10px;background:var(--gris-xl);border-radius:8px;font-size:12px;color:var(--gris-d);line-height:1.45"><strong>Notas:</strong> ${b.notas}</div>`:''}
-          ${b.planoRef?`<div style="margin-top:8px;font-size:10.5px;color:var(--gris);font-style:italic">📐 ${b.planoRef}</div>`:''}
+          ${sectoresHtml?`<div style="margin-top:12px"><div style="font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Sectores</div><div style="display:flex;flex-wrap:wrap">${sectoresHtml}</div></div>`:''}
+          ${b.notas?`<div style="margin-top:10px;padding:8px 10px;background:var(--gris-xl);border-radius:8px;font-size:12px;color:var(--gris-d);line-height:1.45">${b.notas}</div>`:''}
           <div style="margin-top:12px;display:flex;gap:8px"><button class="btn small ghost" onclick="editBlock('${b.id}')">Editar</button><button class="btn small danger" onclick="delBlock('${b.id}')">Eliminar</button></div>
         </div>`;
       }).join('')}
-    </div>
-
-    <div class="card" style="margin-top:18px">
-      <h3 style="margin-top:0"><i data-lucide="map-pin"></i> Layout del huerto</h3>
-      <div style="font-size:13px;color:var(--gris-d);line-height:1.55">
-        El huerto se ordena de <strong>norte a sur</strong> con las hileras orientadas <strong>oriente-poniente</strong> (E-O). Un camino central E-O paralelo a las hileras divide cada sector de riego en una mitad <strong>Norte</strong> y otra <strong>Sur</strong>:
-        <ol style="margin:10px 0 0 18px;padding:0">
-          <li><strong>Sarah Bernhardt</strong> ocupa los sectores <strong>1.1 a 16.1</strong> (Etapa 1, plantada en enero 2025) — 16 sectores × 2 mitades = 32 sub-cuarteles físicos · ≈ 1,8 ha · 40.000 rizomas.</li>
-          <li><strong>Bowl of Cream</strong> ocupa los sectores <strong>17.1 y 18.1</strong> (Etapa 2, plantada en febrero 2026) — 4 sub-cuarteles · ≈ 0,225 ha · 5.000 rizomas.</li>
-          <li><strong>Festiva Maxima</strong> ocupa los sectores <strong>19.1 y 20.1</strong> (Etapa 2, plantada en febrero 2026) — 4 sub-cuarteles · ≈ 0,225 ha · 5.000 rizomas.</li>
-          <li><strong>Reserva</strong> en los sectores <strong>21.1, 22.1 y 23.1</strong> — ~2 ha sin plantar, red de riego ya instalada.</li>
-        </ol>
-        <div style="margin-top:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px;font-size:12.5px">
-          <strong>Plano de referencia:</strong> As-Built BAUM 13/12/2024 — código 24-046 (Floricultura Santa Ana).<br>
-          <strong>Orientación de hileras:</strong> oriente-poniente (E-O). Las plantas reciben sol simétrico mañana y tarde por ambos costados de la hilera.<br>
-          <strong>Riego:</strong> goteros integrados, válvulas DOROT S-75 2", caudal total ~70 m³/h.<br>
-          <strong>Marco de plantación:</strong> 0,9 m entre hileras × 0,5 m sobre la hilera → densidad ≈ 22.222 rizomas/ha.
-        </div>
-      </div>
     </div>`;
   lucideInit();
 }
@@ -1491,17 +1551,21 @@ function setTasksFiltroAno(v){_tasksFiltroAno=v;renderTasks()}
 function setTasksFiltroSearch(v){_tasksFiltroSearch=v;filterTasks(v)}
 function clearTasksFiltros(){_tasksFiltroEstado='todas';_tasksFiltroCategoria='todas';_tasksFiltroCuartel=[];_tasksFiltroAno='todos';_tasksFiltroSearch='';renderTasks()}
 async function renderTasks(){
-  const [tasks,blocks]=await Promise.all([getAll('tasks'),getAll('blocks')]);
+  const [tasks,blocks,appsForDeps]=await Promise.all([getAll('tasks'),getAll('blocks'),getAll('applications')]);
   const mesActual=new Date().getMonth()+1;
   const sugeridas=LABOR_TEMPLATES.filter(l=>l.mes.includes(mesActual));
-  /* Orden: atrasadas -> pendientes -> en curso -> resto por fecha desc */
+  /* Orden: atrasadas -> pendientes -> en curso -> resto por fecha desc.
+     Fecha efectiva por estado: pendientes/canceladas se ordenan por fechaPlanificada (la nueva si fue
+     editada); realizadas/en curso por fecha de ejecución (fallback a planificada). Esto evita que
+     un labor pendiente editado quede "fijo" en su fecha vieja por tener t.fecha stale. */
   const priEst={pendiente:1,en_curso:2,realizada:3,cancelada:4};
+  const fechaSortLabor=t=>{const est=estadoLabor(t);if(est==='pendiente'||est==='cancelada')return t.fechaPlanificada||t.fecha;return t.fecha||t.fechaPlanificada;};
   const sorted=[...tasks].sort((a,b)=>{
     const atA=laborAtrasada(a)?0:1,atB=laborAtrasada(b)?0:1;
     if(atA!==atB)return atA-atB;
     const pA=priEst[estadoLabor(a)]||9,pB=priEst[estadoLabor(b)]||9;
     if(pA!==pB)return pA-pB;
-    const fA=a.fecha||a.fechaPlanificada,fB=b.fecha||b.fechaPlanificada;
+    const fA=fechaSortLabor(a),fB=fechaSortLabor(b);
     return new Date(fB)-new Date(fA);
   });
   const counts={todas:tasks.length,pendiente:0,en_curso:0,realizada:0,cancelada:0,atrasada:0};
@@ -1594,7 +1658,10 @@ async function renderTasks(){
           const notasEsc=notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
           const notasCelda=notasFull?`<div title="${notasEsc}" style="width:220px;max-width:220px;font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;white-space:normal;color:var(--texto-m,var(--texto))">${notasFull.length>180?notasFull.slice(0,180)+'…':notasFull}</div>`:'<span style="color:var(--gris);font-size:11px">-</span>';
           const bloquesCelda=(()=>{const bs=getBloques(t);return bs.length?bloquesTags(t):'<span style="color:var(--gris-m);font-size:11px">General</span>';})();
-          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td>${tiempoTxt}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          /* Lock badge: si la labor depende de algo que no está realizado y aún no está realizada ella misma. */
+          const depStRow=depStatusSync(t.dependeDe,tasks,appsForDeps);
+          const lockTag=(depStRow&&!depStRow.completado&&est!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
+          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong>${lockTag}</td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td>${tiempoTxt}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -1705,7 +1772,7 @@ async function addEditTaskFotos(input){
   else if(okCount){toast(okCount+' foto'+(okCount>1?'s agregadas':' agregada')+' (total: '+_editTaskFotosExistentes.length+')','ok');}
 }
 async function editTask(id,template){
-  const blocks=await getAll('blocks');
+  const [blocks,allTasks,allApps]=await Promise.all([getAll('blocks'),getAll('tasks'),getAll('applications')]);
   const curName=userById(CURRENT_USER).nombre;
   const t=id?await get('tasks',id):(template?{nombre:template.nombre,categoria:template.cat,notas:template.desc,fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',bloques:[],horas:'',unidadTiempo:'horas',responsable:curName,fotos:[]}:{nombre:'',categoria:'',notas:'',fecha:'',fechaPlanificada:today(),estado:'pendiente',bloque:'',bloques:[],horas:'',unidadTiempo:'horas',responsable:curName,fotos:[]});
   _editTaskFotosExistentes=getTaskFotos(t).slice();
@@ -1750,6 +1817,17 @@ async function editTask(id,template){
         <small style="color:var(--gris);font-size:11px">1 jornada = 8 h estándar agro Chile.</small>
       </div>
       <div class="form-row"><label>Responsable</label><input id="f-resp" value="${t.responsable||''}"></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Depende de <small style="color:var(--gris);font-weight:normal">(opcional — esta labor no se podrá marcar como realizada hasta que el prereq esté realizado)</small></label>
+        <select id="f-dep">
+          <option value="">— Sin dependencia —</option>
+          <optgroup label="📋 Labores">
+            ${allTasks.filter(x=>x.id!==t.id).map(x=>{const sel=t.dependeDe&&t.dependeDe.type==='labor'&&t.dependeDe.id===x.id?'selected':'';const ico=estadoLabor(x)==='realizada'?'✓':'⏳';return `<option value="labor::${x.id}" ${sel}>${ico} ${(x.nombre||'Labor sin nombre').replace(/"/g,'&quot;')} · ${fmt(x.fechaPlanificada||x.fecha)}</option>`;}).join('')}
+          </optgroup>
+          <optgroup label="💧 Aplicaciones">
+            ${allApps.map(x=>{const sel=t.dependeDe&&t.dependeDe.type==='app'&&t.dependeDe.id===x.id?'selected':'';const ico=estadoApp(x)==='realizada'?'✓':'⏳';return `<option value="app::${x.id}" ${sel}>${ico} ${(x.producto||'Aplicación').replace(/"/g,'&quot;')} · ${fmt(x.fechaPlanificada||x.fecha)}</option>`;}).join('')}
+          </optgroup>
+        </select>
+      </div>
     </div>
     <div class="form-row"><label>Notas / observaciones</label><textarea id="f-notas" rows="3">${t.notas||''}</textarea></div>
     <div class="form-row"><label>📷 Fotos de la labor (<span id="f-labfotos-count">${_editTaskFotosExistentes.length}</span> agregada/s)</label>
@@ -1778,9 +1856,23 @@ async function saveTask(id){
   /* Cuarteles seleccionados (multi). Guardamos array `bloques` y mantenemos `bloque` con el primero
      para compatibilidad con código antiguo que aún lee t.bloque. */
   const bloquesSel=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
-  const data={nombre:document.getElementById('f-nom').value,categoria:(document.getElementById('f-cat').value||'').trim(),estado:estado,fechaPlanificada:fplan||null,fecha:fejec||(estado==='pendiente'?fplan:null)||fplan,bloques:bloquesSel,bloque:bloquesSel[0]||'',horas:parseFloat(document.getElementById('f-horas').value)||null,unidadTiempo:unidadVal,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value};
+  const depRaw=document.getElementById('f-dep')?.value||'';
+  const dependeDe=depDecode(depRaw);
+  /* fecha (ejecución): solo se setea si la labor está realizada o en curso. Para pendientes/canceladas
+     queda en null para que el orden y los filtros usen siempre fechaPlanificada (la nueva si fue
+     editada). Esto evita data fantasma de la fecha original cuando el usuario corrige la planificación. */
+  const fechaEjec=(estado==='realizada'||estado==='en_curso')?(fejec||fplan):null;
+  const data={nombre:document.getElementById('f-nom').value,categoria:(document.getElementById('f-cat').value||'').trim(),estado:estado,fechaPlanificada:fplan||null,fecha:fechaEjec,bloques:bloquesSel,bloque:bloquesSel[0]||'',horas:parseFloat(document.getElementById('f-horas').value)||null,unidadTiempo:unidadVal,responsable:document.getElementById('f-resp').value,notas:document.getElementById('f-notas').value,dependeDe:dependeDe};
   if(!data.nombre){toast('Nombre requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
+  /* Validación de prerrequisito: si se intenta dejar en estado realizada y el prereq no está realizado, bloquear. */
+  if(data.estado==='realizada'&&dependeDe){
+    const depItem=await getDepItem(dependeDe);
+    if(!depItemCompleto(depItem,dependeDe.type)){
+      toast(`Bloqueada: el prereq "${depItemLabel(depItem,dependeDe.type)}" aún no está realizado.`,'warn');
+      return;
+    }
+  }
   /* === Fotos: ya están comprimidas en _editTaskFotosExistentes (patrón incremental).
      Cada selección del usuario las añadió al toque vía addEditTaskFotos(). */
   data.fotos=Array.isArray(_editTaskFotosExistentes)?_editTaskFotosExistentes.slice():[];
@@ -1814,6 +1906,8 @@ async function viewTask(id){
   if(!t){toast('Labor no encontrada','warn');return}
   const est=estadoLabor(t);
   const atr=laborAtrasada(t);
+  const depSt=t.dependeDe?await depStatus(t.dependeDe):null;
+  const depBloqueada=depSt&&!depSt.completado&&est!=='realizada';
   const creador=t.createdBy?userById(t.createdBy):null;
   const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
   const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
@@ -1827,8 +1921,9 @@ async function viewTask(id){
   const notasFull=(t.notas||'').toString();
   const notasBlock=notasFull?`<h4 style="color:var(--verde-d);margin:14px 0 8px;font-size:13px"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Notas / observaciones</h4><div style="background:var(--fondo-suave,#f7f7f5);border:1px solid var(--gris-xl);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto">${notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
   openModal(`
-    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}</span>${estTag}</h3>
+    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}${depBloqueada?' <span class="tag" style="background:#fef3c7;color:#92400e;font-size:11px;margin-left:6px">🔒 Bloqueada</span>':''}</span>${estTag}</h3>
     ${atr?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
+    ${depSt?`<div class="alert-box ${depSt.completado?'ok':'warn'}" style="margin:0 0 12px"><i data-lucide="${depSt.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depSt.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depSt.label} · <strong>${depSt.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depSt.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
     <div style="margin-bottom:8px">
       ${row('Categoría',t.categoria)}
       ${row('Cuarteles',(()=>{const bs=getBloques(t);return bs.length?bs.join(', '):'General / Todos';})())}
@@ -1866,7 +1961,7 @@ function setAppsFiltroCarencia(v){_appsFiltroCarencia=v;renderApplications()}
 function setAppsFiltroSearch(v){_appsFiltroSearch=v||'';filterApps(v)}
 function clearAppsFiltros(){_appsFiltroEstado='todas';_appsFiltroCategoria='todas';_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
 async function renderApplications(){
-  const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
+  const [apps,blocks,tasksForDeps]=await Promise.all([getAll('applications'),getAll('blocks'),getAll('tasks')]);
   /* Fecha efectiva para sort y muestra: fecha (ejecutada) si existe, sino fechaPlanificada. */
   const fechaEfectiva=a=>a.fecha||a.fechaPlanificada;
   /* Orden: atrasadas → programadas (asc por fecha planif) → realizadas (desc por fecha ejec) → canceladas. */
@@ -1990,7 +2085,10 @@ async function renderApplications(){
           const descTxt=motivoVal
             ?`<div class="app-desc-wrap"><div id="appdesc-${a.id}" class="app-desc">${motivoVal}</div>${motivoLargo?`<span id="appdesctog-${a.id}" class="app-desc-toggle" onclick="toggleAppDesc(event,'${a.id}')">ver más</span>`:''}</div>`
             :'<span class="app-desc-empty">—</span>';
-          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td>${fmt(fechaMostrar)}${subFechaA?`<div style="font-size:10px;color:var(--gris-m)">${subFechaA}</div>`:''}</td><td><strong>${a.producto}</strong></td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          /* Lock badge: la aplicación depende de algo no realizado y aún no se ha ejecutado. */
+          const depStAppRow=depStatusSync(a.dependeDe,tasksForDeps,apps);
+          const lockTagApp=(depStAppRow&&!depStAppRow.completado&&estA!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStAppRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
+          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td>${fmt(fechaMostrar)}${subFechaA?`<div style="font-size:10px;color:var(--gris-m)">${subFechaA}</div>`:''}</td><td><strong>${a.producto}</strong>${lockTagApp}</td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -2008,6 +2106,8 @@ async function viewApp(id){
   const bloques=getBloques(a);
   const fin=fechaFinCarencia(a);
   const activa=carenciaActiva(a);
+  const depStA=a.dependeDe?await depStatus(a.dependeDe):null;
+  const depBloqueadaA=depStA&&!depStA.completado&&estadoApp(a)!=='realizada';
   const creador=a.createdBy?userById(a.createdBy):null;
   const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
   const clima=[a.tempC!=null?a.tempC+'°C':'',a.humedad!=null?a.humedad+'% HR':'',a.viento!=null?a.viento+' km/h':''].filter(Boolean).join(' · ')||'—';
@@ -2018,8 +2118,9 @@ async function viewApp(id){
   const atrDet=aplicacionAtrasada(a);
   const estTagDet=atrDet?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estDet]||'info'}">${APP_ESTADO_LBL[estDet]||estDet}</span>`;
   openModal(`
-    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}</span><span style="display:flex;gap:6px;align-items:center">${estTagDet}${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</span></h3>
+    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}${depBloqueadaA?' <span class="tag" style="background:#fef3c7;color:#92400e;font-size:11px;margin-left:6px">🔒 Bloqueada</span>':''}</span><span style="display:flex;gap:6px;align-items:center">${estTagDet}${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</span></h3>
     ${activa?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="clock"></i><div class="ab-content"><strong>En carencia activa hasta ${fmt(fin)}</strong><br>No cosechar ni reingresar sin EPP hasta esa fecha.</div></div>`:''}
+    ${depStA?`<div class="alert-box ${depStA.completado?'ok':'warn'}" style="margin:0 0 12px"><i data-lucide="${depStA.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depStA.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depStA.label} · <strong>${depStA.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depStA.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
     <div style="margin-bottom:8px">
       ${row('Estado',APP_ESTADO_LBL[estDet]||estDet)}
       ${row('Fecha planificada',a.fechaPlanificada?fmt(a.fechaPlanificada):'—')}
@@ -2048,7 +2149,7 @@ async function viewApp(id){
 }
 
 async function editApp(id){
-  const blocks=await getAll('blocks');
+  const [blocks,allTasks,allApps]=await Promise.all([getAll('blocks'),getAll('tasks'),getAll('applications')]);
   const curName=userById(CURRENT_USER).nombre;
   /* Para nuevas aplicaciones por defecto estado='realizada' (registro de algo ya aplicado).
      fechaPlanificada se autocompleta con today() en programadas. */
@@ -2110,6 +2211,17 @@ async function editApp(id){
       <div class="form-row"><label>Viento (km/h)</label><input id="f-vto" type="number" step="0.5" value="${a.viento!=null?a.viento:''}" placeholder="ej. 8"></div>
     </div>
     <div class="form-row" style="margin-top:10px"><label>Motivo / plaga o enfermedad objetivo</label><textarea id="f-mot" rows="2">${a.motivo||''}</textarea></div>
+    <div class="form-row"><label>Depende de <small style="color:var(--gris);font-weight:normal">(opcional — esta aplicación no se podrá marcar como realizada hasta que el prereq esté realizado)</small></label>
+      <select id="f-dep">
+        <option value="">— Sin dependencia —</option>
+        <optgroup label="📋 Labores">
+          ${allTasks.map(x=>{const sel=a.dependeDe&&a.dependeDe.type==='labor'&&a.dependeDe.id===x.id?'selected':'';const ico=estadoLabor(x)==='realizada'?'✓':'⏳';return `<option value="labor::${x.id}" ${sel}>${ico} ${(x.nombre||'Labor sin nombre').replace(/"/g,'&quot;')} · ${fmt(x.fechaPlanificada||x.fecha)}</option>`;}).join('')}
+        </optgroup>
+        <optgroup label="💧 Aplicaciones">
+          ${allApps.filter(x=>x.id!==a.id).map(x=>{const sel=a.dependeDe&&a.dependeDe.type==='app'&&a.dependeDe.id===x.id?'selected':'';const ico=estadoApp(x)==='realizada'?'✓':'⏳';return `<option value="app::${x.id}" ${sel}>${ico} ${(x.producto||'Aplicación').replace(/"/g,'&quot;')} · ${fmt(x.fechaPlanificada||x.fecha)}</option>`;}).join('')}
+        </optgroup>
+      </select>
+    </div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveApp(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
   toggleAppFechaEjec();
   actualizarAptoDesde();
@@ -2136,9 +2248,19 @@ async function saveApp(id){
   /* Si está programada, fecha (ejecutada) queda en null. Si está realizada y el usuario no
      puso fecha de ejecución, asumimos hoy o la planificada. */
   const fechaEjecFinal=estadoSel==='realizada'?(fejec||fplan||today()):null;
-  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null};
+  const depRawApp=document.getElementById('f-dep')?.value||'';
+  const dependeDeApp=depDecode(depRawApp);
+  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null,dependeDe:dependeDeApp};
   if(!data.producto){toast('Producto requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
+  /* Validación de prerrequisito: si se intenta dejar en estado realizada y el prereq no está realizado, bloquear. */
+  if(data.estado==='realizada'&&dependeDeApp){
+    const depItem=await getDepItem(dependeDeApp);
+    if(!depItemCompleto(depItem,dependeDeApp.type)){
+      toast(`Bloqueada: el prereq "${depItemLabel(depItem,dependeDeApp.type)}" aún no está realizado.`,'warn');
+      return;
+    }
+  }
   const fProd=document.getElementById('f-fotoprod');
   const fApl=document.getElementById('f-fotoapl');
   const delProd=document.getElementById('f-del-fotoprod')?.checked;
