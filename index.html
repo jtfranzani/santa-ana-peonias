@@ -253,6 +253,45 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-desc-toggle{display:inline-block;margin-top:3px;color:var(--info);font-size:11px;cursor:pointer;font-weight:500;user-select:none}
 .app-desc-toggle:hover{text-decoration:underline}
 .app-desc-empty{color:var(--gris-m);font-size:11px}
+/* Vista mensual del módulo Calendario: grilla 7×N con celdas por día y items coloreados por tipo/estado. */
+.cal-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.cal-toolbar-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cal-view-switch{display:inline-flex;background:var(--gris-xl);border-radius:8px;padding:3px;gap:2px}
+.cal-view-switch button{border:none;background:transparent;padding:6px 12px;font-size:12.5px;border-radius:6px;cursor:pointer;color:var(--gris-d);font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.cal-view-switch button.active{background:#fff;color:var(--verde-d);box-shadow:var(--sombra-sm);font-weight:600}
+.cal-view-switch button:hover:not(.active){color:var(--texto)}
+.cal-legend{display:flex;align-items:center;gap:14px;font-size:11.5px;color:var(--gris-d);flex-wrap:wrap}
+.cal-leg-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.cal-leg-dot.atrasada{background:#fee2e2;border:1px solid #ef4444}
+.cal-leg-dot.labor{background:#dbeafe;border:1px solid #2563eb}
+.cal-leg-dot.aplic{background:#fce7f3;border:1px solid #be185d}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--gris-l);border:1px solid var(--gris-l);border-radius:8px;overflow:hidden}
+.cal-dow{background:var(--gris-xl);padding:8px;text-align:center;font-size:10.5px;font-weight:600;color:var(--gris-d);text-transform:uppercase;letter-spacing:.5px}
+.cal-cell{background:#fff;min-height:115px;padding:6px;display:flex;flex-direction:column;gap:3px}
+.cal-cell.empty{background:var(--gris-xl);opacity:.35}
+.cal-cell.has-items{cursor:pointer}
+.cal-cell.has-items:hover{background:var(--crema)}
+.cal-cell.today{background:linear-gradient(135deg,#fef9e7 0%,#fff 60%);box-shadow:inset 0 0 0 2px var(--warn)}
+.cal-cell.past{background:#fafafa}
+.cal-cell-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;gap:4px}
+.cal-day-num{font-size:13px;font-weight:600;color:var(--texto)}
+.cal-cell.today .cal-day-num{color:var(--verde-d)}
+.cal-count{background:var(--verde-d);color:#fff;font-size:9.5px;padding:1px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
+.cal-cell.has-atrasada .cal-count{background:var(--alerta)}
+.cal-item{font-size:11px;padding:3px 7px;border-radius:4px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;border:1px solid transparent}
+.cal-item.item-atrasada{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.cal-item.item-labor{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+.cal-item.item-app{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}
+.cal-item:hover{filter:brightness(0.94)}
+.cal-more{font-size:10.5px;color:var(--info);cursor:pointer;padding:2px 6px;margin-top:auto;font-weight:500}
+.cal-more:hover{text-decoration:underline}
+@media (max-width:900px){
+  .cal-cell{min-height:80px;padding:4px}
+  .cal-day-num{font-size:11px}
+  .cal-item{font-size:9.5px;padding:2px 4px}
+  .cal-count{font-size:8.5px;padding:1px 5px}
+  .cal-dow{padding:5px;font-size:9.5px}
+}
 .chart-container{position:relative;height:280px}
 .pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
 .search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
@@ -377,7 +416,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.10';
+const APP_VERSION='2026.05.18.12';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2701,9 +2740,66 @@ async function delAdvisorFile(id){if(!confirm('¿Eliminar archivo?'))return;awai
 
 /* ============ CALENDARIO ============
  * Vista de "recordatorio" que consolida labores (estado pendiente/en_curso) y
- * aplicaciones (estado programada). Orden ASC por fecha planificada → arriba lo
- * más próximo. Atrasadas (fecha pasada y aún no realizadas) van primero.
- * Items sin fechaPlanificada se listan en un bloque separado al final. */
+ * aplicaciones (estado programada). Dos modos: 'lista' (cards agrupadas por mes)
+ * y 'mes' (grilla mensual estilo Google Calendar). El modo se persiste en
+ * window._calendarView; el mes en window._calendarMonthOffset (delta vs hoy). */
+if(typeof window._calendarView==='undefined')window._calendarView='lista';
+if(typeof window._calendarMonthOffset==='undefined')window._calendarMonthOffset=0;
+if(typeof window._calendarFiltroTipo==='undefined')window._calendarFiltroTipo='todos';
+function setCalendarView(v){window._calendarView=v;renderCalendar();}
+function shiftCalendarMonth(delta){window._calendarMonthOffset+=delta;renderCalendar();}
+function resetCalendarToday(){window._calendarMonthOffset=0;renderCalendar();}
+function setCalendarFiltroTipo(v){window._calendarFiltroTipo=v;renderCalendar();}
+/* Modal de detalle del día: lista todos los items programados para una fecha YYYY-MM-DD. */
+async function openDayDetail(dateStr){
+  const [tasks,apps]=await Promise.all([getAll('tasks'),getAll('applications')]);
+  const itemsDia=[
+    ...tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))).map(t=>({
+      tipo:'labor',id:t.id,fecha:t.fechaPlanificada||t.fecha||'',titulo:t.nombre||'(sin nombre)',
+      categoria:t.categoria||'',bloques:getBloques(t),responsable:t.responsable||'',
+      atrasada:laborAtrasada(t),notas:t.notas||''
+    })),
+    ...apps.filter(a=>estadoApp(a)==='programada').map(a=>({
+      tipo:'aplicacion',id:a.id,fecha:a.fechaPlanificada||a.fecha||'',titulo:a.producto||'(sin producto)',
+      categoria:a.categoria||'',bloques:Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]),
+      responsable:a.responsable||'',atrasada:aplicacionAtrasada(a),notas:a.motivo||''
+    }))
+  ].filter(i=>i.fecha===dateStr);
+  const d=parseLocalDate(dateStr);
+  const titulo=d?d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):dateStr;
+  openModal(`
+    <h3 style="text-transform:capitalize;display:flex;align-items:center;gap:8px"><i data-lucide="calendar"></i> ${titulo} <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${itemsDia.length} item${itemsDia.length===1?'':'s'}</span></h3>
+    <div style="margin-top:14px">
+      ${itemsDia.length?itemsDia.map(i=>{
+        const tipoTag=i.tipo==='labor'
+          ?'<span class="tag" style="background:#dbeafe;color:#1d4ed8">📋 Labor</span>'
+          :'<span class="tag" style="background:#fce7f3;color:#be185d">💧 Aplicación</span>';
+        const atrTag=i.atrasada?'<span class="tag atrasada" style="margin-left:6px">⚠ Atrasada</span>':'';
+        const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+        const editFn=i.tipo==='labor'?`editTask('${i.id}')`:`editApp('${i.id}')`;
+        return `<div style="padding:12px;border:1px solid var(--gris-xl);border-radius:8px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+            <strong style="font-size:14px;color:var(--texto)">${i.titulo}</strong>
+            <div>${tipoTag}${atrTag}</div>
+          </div>
+          <div style="font-size:12px;color:var(--gris);margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            ${i.categoria?`<span class="tag info" style="font-size:10.5px">${i.categoria}</span>`:''}
+            <span>${i.bloques.length?i.bloques.join(', '):'General'}</span>
+            <span>·</span>
+            <span>${i.responsable||'Sin responsable'}</span>
+          </div>
+          ${i.notas?`<div style="font-size:12px;color:var(--gris-d);margin-top:8px;background:var(--gris-xl);padding:8px 10px;border-radius:6px;white-space:pre-wrap">${i.notas}</div>`:''}
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn small ghost" onclick="closeModal();${viewFn}"><i data-lucide="eye"></i>Ver</button>
+            <button class="btn small ghost" onclick="closeModal();${editFn}"><i data-lucide="pencil"></i>Editar / Marcar realizada</button>
+          </div>
+        </div>`;
+      }).join(''):'<div style="text-align:center;color:var(--gris);padding:30px 20px">Nada programado para este día.</div>'}
+    </div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>
+  `);
+  lucideInit();
+}
 async function renderCalendar(){
   const [tasks,apps]=await Promise.all([getAll('tasks'),getAll('applications')]);
   /* Labores programadas: pendiente y en_curso (todavía no realizadas/canceladas). */
@@ -2730,7 +2826,10 @@ async function renderCalendar(){
     atrasada:aplicacionAtrasada(a),
     notas:a.motivo||''
   }));
-  const todos=[...tasksProgs,...appsProgs];
+  /* Filtro por tipo: 'todos' | 'labor' | 'aplicacion'. */
+  const tipoF=window._calendarFiltroTipo||'todos';
+  const filtrarTipo=arr=>tipoF==='todos'?arr:arr.filter(i=>tipoF==='labor'?i.tipo==='labor':i.tipo==='aplicacion');
+  const todos=filtrarTipo([...tasksProgs,...appsProgs]);
   const items=todos.filter(i=>i.fecha);
   const sinFecha=todos.filter(i=>!i.fecha);
   /* Orden: atrasadas primero, luego ASC por fecha planificada. */
@@ -2776,25 +2875,100 @@ async function renderCalendar(){
   };
   const cabezaTabla=`<thead><tr><th style="width:130px">Fecha</th><th>Tipo</th><th>Item</th><th>Categoría</th><th>Cuarteles</th><th>Responsable</th><th></th></tr></thead>`;
   const cabezaTablaSinFecha=`<thead><tr><th>Tipo</th><th>Item</th><th>Categoría</th><th>Cuarteles</th><th>Responsable</th><th></th></tr></thead>`;
-  document.getElementById('main').innerHTML=`
-    <div class="page-header">
-      <div><h2>Calendario</h2><div class="sub">Resumen y recordatorios de labores y aplicaciones programadas</div></div>
-      <div class="actions">
-        <button class="btn ghost" onclick="nav('tasks')"><i data-lucide="clipboard-list"></i>Ir a bitácora</button>
-        <button class="btn" onclick="nav('applications')"><i data-lucide="droplet"></i>Ir a aplicaciones</button>
+  /* ====================== VISTA "MES" ======================
+     Grilla 7 columnas × N filas. Día actual resaltado, días con items clickeables,
+     items coloreados según tipo (📋 Labor azul, 💧 Aplicación rosa) o estado
+     (atrasada rojo). Atrasadas de meses anteriores se muestran cuando el usuario
+     navega a ese mes; si está viendo el mes actual, aparecen en su fecha original. */
+  function buildMesGrid(){
+    const baseDate=new Date();
+    baseDate.setDate(1);
+    baseDate.setMonth(baseDate.getMonth()+window._calendarMonthOffset);
+    const year=baseDate.getFullYear();
+    const month=baseDate.getMonth();
+    const mesNombre=baseDate.toLocaleDateString('es-CL',{month:'long',year:'numeric'});
+    const primerDia=new Date(year,month,1);
+    const ultimoDia=new Date(year,month+1,0);
+    /* Mon=0 ... Sun=6 (semana comienza lunes). */
+    let primerDow=primerDia.getDay()-1;if(primerDow<0)primerDow=6;
+    /* Items del mes mostrado, por día. */
+    const itemsDelMes=items.filter(i=>{const d=parseLocalDate(i.fecha);return d&&d.getFullYear()===year&&d.getMonth()===month;});
+    const porDia={};
+    itemsDelMes.forEach(i=>{const d=parseLocalDate(i.fecha);const day=d.getDate();(porDia[day]=porDia[day]||[]).push(i);});
+    /* Orden dentro de cada día: atrasadas → labores → aplicaciones, luego por título. */
+    Object.values(porDia).forEach(arr=>arr.sort((a,b)=>{
+      if(a.atrasada!==b.atrasada)return a.atrasada?-1:1;
+      if(a.tipo!==b.tipo)return a.tipo==='labor'?-1:1;
+      return (a.titulo||'').localeCompare(b.titulo||'','es');
+    }));
+    const hoyD=new Date();const esHoy=d=>d===hoyD.getDate()&&month===hoyD.getMonth()&&year===hoyD.getFullYear();
+    const esPasado=d=>{const cd=new Date(year,month,d);return cd<new Date(hoyD.getFullYear(),hoyD.getMonth(),hoyD.getDate());};
+    let cellsHtml='';
+    for(let i=0;i<primerDow;i++)cellsHtml+='<div class="cal-cell empty"></div>';
+    for(let d=1;d<=ultimoDia.getDate();d++){
+      const arr=porDia[d]||[];
+      const isToday=esHoy(d);const isPast=esPasado(d)&&!isToday;
+      const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const visible=arr.slice(0,4);const restantes=arr.length-visible.length;
+      const tieneAtr=arr.some(x=>x.atrasada);
+      const clases=['cal-cell'];if(isToday)clases.push('today');else if(isPast)clases.push('past');if(arr.length)clases.push('has-items');if(tieneAtr)clases.push('has-atrasada');
+      cellsHtml+=`<div class="${clases.join(' ')}" ${arr.length?`onclick="openDayDetail('${dateStr}')"`:''}>
+        <div class="cal-cell-head">
+          <span class="cal-day-num">${d}</span>
+          ${arr.length?`<span class="cal-count">${arr.length} ${arr.length===1?'item':'items'}</span>`:''}
+        </div>
+        ${visible.map(i=>{
+          const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
+          const ico=i.tipo==='labor'?'📋':'💧';
+          const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+          return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}">${ico} ${i.titulo}</div>`;
+        }).join('')}
+        ${restantes>0?`<div class="cal-more">+${restantes} más</div>`:''}
+      </div>`;
+    }
+    return `
+      <div class="card">
+        <div class="cal-toolbar">
+          <div class="cal-toolbar-nav">
+            <button class="btn small ghost" onclick="shiftCalendarMonth(-1)" title="Mes anterior"><i data-lucide="chevron-left"></i></button>
+            <strong style="text-transform:capitalize;font-size:17px;min-width:160px;text-align:center">${mesNombre}</strong>
+            <button class="btn small ghost" onclick="shiftCalendarMonth(1)" title="Mes siguiente"><i data-lucide="chevron-right"></i></button>
+            ${window._calendarMonthOffset!==0?'<button class="btn small" onclick="resetCalendarToday()">Hoy</button>':''}
+            <span style="color:var(--gris);font-size:12.5px;margin-left:6px">${itemsDelMes.length} ${itemsDelMes.length===1?'item este mes':'items este mes'}</span>
+          </div>
+          <div class="cal-legend">
+            <span><span class="cal-leg-dot atrasada"></span>Atrasada</span>
+            <span><span class="cal-leg-dot labor"></span>Labor</span>
+            <span><span class="cal-leg-dot aplic"></span>Aplicación</span>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
+          <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div><div class="cal-dow">Dom</div>
+          ${cellsHtml}
+        </div>
+      </div>`;
+  }
+  /* Toolbar superior: toggle de vista (Lista/Mes) + filtro por tipo. */
+  const toolbarHTML=`
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:14px 18px;margin-bottom:14px">
+      <div class="cal-view-switch">
+        <button class="${window._calendarView==='lista'?'active':''}" onclick="setCalendarView('lista')"><i data-lucide="list" style="width:14px;height:14px"></i> Lista</button>
+        <button class="${window._calendarView==='mes'?'active':''}" onclick="setCalendarView('mes')"><i data-lucide="layout-grid" style="width:14px;height:14px"></i> Mes</button>
       </div>
-    </div>
-    <div class="grid grid-4" style="margin-bottom:20px">
-      <div class="kpi"><div class="kpi-header"><span class="label">Total programados</span><div class="kpi-icon"><i data-lucide="calendar-days"></i></div></div><div class="value">${items.length+sinFecha.length}</div><div class="foot">${labN} labores · ${appN} aplicaciones</div></div>
-      <div class="kpi ${atrasadasN>0?'warn':''}"><div class="kpi-header"><span class="label">Atrasadas</span><div class="kpi-icon"><i data-lucide="alert-triangle"></i></div></div><div class="value">${atrasadasN}</div><div class="foot">${atrasadasN>0?'Revisar urgente':'Al día'}</div></div>
-      <div class="kpi info"><div class="kpi-header"><span class="label">Próximos 7 días</span><div class="kpi-icon"><i data-lucide="clock"></i></div></div><div class="value">${en7}</div><div class="foot">Esta semana</div></div>
-      <div class="kpi rosa"><div class="kpi-header"><span class="label">Próximos 30 días</span><div class="kpi-icon"><i data-lucide="calendar"></i></div></div><div class="value">${en30}</div><div class="foot">Este mes y siguiente</div></div>
-    </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-right:4px">Tipo:</span>
+        <span class="chip ${tipoF==='todos'?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0;cursor:pointer" onclick="setCalendarFiltroTipo('todos')">Todos <strong>${items.length+sinFecha.length}</strong></span>
+        <span class="chip ${tipoF==='labor'?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0;cursor:pointer" onclick="setCalendarFiltroTipo('labor')">📋 Labores</span>
+        <span class="chip ${tipoF==='aplicacion'?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0;cursor:pointer" onclick="setCalendarFiltroTipo('aplicacion')">💧 Aplicaciones</span>
+      </div>
+    </div>`;
+  const vistaListaHTML=`
     ${items.length===0&&sinFecha.length===0?`
       <div class="card" style="text-align:center;padding:40px">
         <i data-lucide="calendar-check" style="width:48px;height:48px;color:var(--ok)"></i>
         <h3 style="margin-top:12px;justify-content:center">¡Nada programado!</h3>
-        <div style="color:var(--gris);font-size:13px;margin-top:6px">No hay labores ni aplicaciones pendientes. Cuando programes alguna, aparecerá acá ordenada por fecha.</div>
+        <div style="color:var(--gris);font-size:13px;margin-top:6px">No hay labores ni aplicaciones pendientes en este filtro. Cuando programes alguna, aparecerá acá ordenada por fecha.</div>
       </div>
     `:''}
     ${atrasadasArr.length?`
@@ -2815,7 +2989,23 @@ async function renderCalendar(){
         <div style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Están en estado pendiente/programado pero no tienen fecha planificada. Edítalos para asignarles una.</div>
         <div class="table-scroll"><table>${cabezaTablaSinFecha}<tbody>${sinFecha.map(i=>filaItem(i,false)).join('')}</tbody></table></div>
       </div>
-    `:''}
+    `:''}`;
+  document.getElementById('main').innerHTML=`
+    <div class="page-header">
+      <div><h2>Calendario</h2><div class="sub">Resumen y recordatorios de labores y aplicaciones programadas</div></div>
+      <div class="actions">
+        <button class="btn ghost" onclick="nav('tasks')"><i data-lucide="clipboard-list"></i>Ir a bitácora</button>
+        <button class="btn" onclick="nav('applications')"><i data-lucide="droplet"></i>Ir a aplicaciones</button>
+      </div>
+    </div>
+    <div class="grid grid-4" style="margin-bottom:14px">
+      <div class="kpi"><div class="kpi-header"><span class="label">Total programados</span><div class="kpi-icon"><i data-lucide="calendar-days"></i></div></div><div class="value">${items.length+sinFecha.length}</div><div class="foot">${labN} labores · ${appN} aplicaciones</div></div>
+      <div class="kpi ${atrasadasN>0?'warn':''}"><div class="kpi-header"><span class="label">Atrasadas</span><div class="kpi-icon"><i data-lucide="alert-triangle"></i></div></div><div class="value">${atrasadasN}</div><div class="foot">${atrasadasN>0?'Revisar urgente':'Al día'}</div></div>
+      <div class="kpi info"><div class="kpi-header"><span class="label">Próximos 7 días</span><div class="kpi-icon"><i data-lucide="clock"></i></div></div><div class="value">${en7}</div><div class="foot">Esta semana</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><span class="label">Próximos 30 días</span><div class="kpi-icon"><i data-lucide="calendar"></i></div></div><div class="value">${en30}</div><div class="foot">Este mes y siguiente</div></div>
+    </div>
+    ${toolbarHTML}
+    ${window._calendarView==='mes'?buildMesGrid():vistaListaHTML}
   `;
   lucideInit();
 }
