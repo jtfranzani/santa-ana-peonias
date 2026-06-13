@@ -386,6 +386,21 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 /* === Modal de detalle (vista de Aplicación / Labor): layout profesional con header tipográfico,
    facts grid arriba, secciones agrupadas con icono, quote-style description, fotos en card. === */
 .dview-header{display:flex;gap:16px;align-items:flex-start;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--gris-xl)}
+/* Wrapper de foto en editApp con botón ✕ visible (tap target grande para mobile) + overlay de "marcada". */
+.appfoto-wrap{position:relative;display:inline-block;margin-bottom:8px;border-radius:8px;overflow:visible}
+.appfoto-wrap img{max-width:140px;max-height:140px;border-radius:8px;cursor:pointer;border:1px solid var(--gris-l);display:block;transition:opacity .2s}
+.appfoto-wrap.marked-for-delete img{opacity:.35;filter:grayscale(.6)}
+.appfoto-del-btn{position:absolute;top:-10px;right:-10px;background:var(--alerta);color:#fff;border:2px solid #fff;width:38px;height:38px;border-radius:50%;font-size:22px;line-height:1;cursor:pointer;font-weight:700;box-shadow:0 2px 8px rgba(220,38,38,.45);display:flex;align-items:center;justify-content:center;padding:0;transition:transform .12s,background .12s;z-index:2}
+.appfoto-del-btn:hover{background:#b91c1c;transform:scale(1.05)}
+.appfoto-del-btn:active{transform:scale(.92)}
+.appfoto-wrap.marked-for-delete .appfoto-del-btn{background:var(--gris);box-shadow:0 2px 8px rgba(100,116,139,.45)}
+.appfoto-overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(220,38,38,.85);color:#fff;font-size:11.5px;font-weight:700;border-radius:8px;align-items:center;justify-content:center;text-transform:uppercase;letter-spacing:.5px;text-align:center;padding:4px;pointer-events:none}
+/* Botón ✕ de fotos en editTask: lo agrando para tap táctil cómodo en mobile. */
+#f-labfotos-existentes button{width:32px!important;height:32px!important;font-size:18px!important;top:-8px!important;right:-8px!important;border:2px solid #fff!important;box-shadow:0 2px 6px rgba(0,0,0,.35)!important}
+@media (max-width:768px){
+  .appfoto-del-btn{width:44px;height:44px;font-size:24px;top:-12px;right:-12px}
+  #f-labfotos-existentes button{width:40px!important;height:40px!important;font-size:20px!important;top:-10px!important;right:-10px!important}
+}
 /* CRÍTICO: NO usar clase 'app' o 'labor' suelta — colisionan con el .app{display:grid;
    grid-template-columns:250px 1fr;min-height:100vh} del layout principal. Uso 'is-app'/'is-labor'. */
 .dview-icon-bubble{width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:linear-gradient(135deg,var(--rosa-l) 0%,#fff 100%);border:1px solid var(--rosa);box-shadow:0 4px 12px rgba(201,122,144,.18);min-height:auto!important}
@@ -416,6 +431,12 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .dview-section{margin-bottom:20px}
 .dview-section-head{display:flex;align-items:center;gap:8px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--verde-d);font-weight:800;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--gris-xl)}
 .dview-section-head svg{width:14px;height:14px;stroke-width:2.4;color:var(--verde-d)}
+/* Botón "+ Subir foto" en el header de la sección fotos del modal de detalle */
+.dview-add-photo-btn{display:inline-flex;align-items:center;gap:5px;background:var(--verde-l);color:var(--verde-d);border:1px solid var(--verde);padding:5px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:.3px;font-family:inherit;transition:all .12s;min-height:30px}
+.dview-add-photo-btn:hover{background:var(--verde);color:#fff;box-shadow:0 2px 6px rgba(36,72,47,.25)}
+.dview-add-photo-btn:active{transform:scale(.96)}
+.dview-add-photo-btn svg{width:13px;height:13px;stroke-width:2.4;color:inherit!important}
+@media (max-width:768px){.dview-add-photo-btn{padding:7px 13px;font-size:12px;min-height:36px}.dview-add-photo-btn svg{width:15px;height:15px}}
 .dview-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px}
 .dview-field{display:flex;flex-direction:column;gap:3px;padding:4px 0}
 .dview-field.wide{grid-column:1/-1}
@@ -794,7 +815,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.25';
+const APP_VERSION='2026.05.18.26';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2504,12 +2525,12 @@ async function viewTask(id){
       <div class="dview-quote dview-quote-labor">${esc(notasFull)}</div>
     </div>`:''}
     <!-- Fotos -->
-    ${fotosArr.length?`<div class="dview-section">
-      <div class="dview-section-head"><i data-lucide="camera"></i>Fotografías (${fotosArr.length})</div>
-      <div class="dview-photos">
+    <div class="dview-section">
+      <div class="dview-section-head" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><i data-lucide="camera"></i>Fotografías${fotosArr.length?` (${fotosArr.length})`:''}</span><button type="button" class="dview-add-photo-btn" onclick="triggerQuickPhotoFromDetail('task','${t.id}',event)" title="Subir o tomar foto"><i data-lucide="camera-plus"></i>Subir foto</button></div>
+      ${fotosArr.length?`<div class="dview-photos">
         ${fotosArr.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Foto ${i+1} de ${fotosArr.length}</div></div>`).join('')}
-      </div>
-    </div>`:''}
+      </div>`:`<div style="text-align:center;padding:24px;color:var(--gris);font-size:13px;background:var(--gris-xl);border-radius:10px;border:1px dashed var(--gris-l)">Sin fotos. Toca <strong>"Subir foto"</strong> para agregar la primera.</div>`}
+    </div>
     <!-- Registro -->
     ${creador?`<div class="dview-section">
       <div class="dview-section-head"><i data-lucide="user-check"></i>Registro de la labor</div>
@@ -2878,13 +2899,13 @@ async function viewApp(id){
       <div class="dview-quote">${esc(a.motivo)}</div>
     </div>`:''}
     <!-- Fotos -->
-    ${(a.fotoProducto||a.fotoAplicacion)?`<div class="dview-section">
-      <div class="dview-section-head"><i data-lucide="camera"></i>Fotografías</div>
-      <div class="dview-photos">
+    <div class="dview-section">
+      <div class="dview-section-head" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><i data-lucide="camera"></i>Fotografías ${(a.fotoProducto?1:0)+(a.fotoAplicacion?1:0)?`(${(a.fotoProducto?1:0)+(a.fotoAplicacion?1:0)})`:''}</span>${((!a.fotoProducto||!a.fotoAplicacion))?`<button type="button" class="dview-add-photo-btn" onclick="triggerQuickPhotoFromDetail('app','${a.id}',event)" title="Subir o tomar foto"><i data-lucide="camera-plus"></i>Subir foto</button>`:''}</div>
+      ${(a.fotoProducto||a.fotoAplicacion)?`<div class="dview-photos">
         ${a.fotoProducto?`<div class="dview-photo-card" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><img src="${a.fotoProducto}"><div class="dview-photo-card-label">Producto · Etiqueta</div></div>`:''}
         ${a.fotoAplicacion?`<div class="dview-photo-card" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><img src="${a.fotoAplicacion}"><div class="dview-photo-card-label">Aplicación en terreno</div></div>`:''}
-      </div>
-    </div>`:''}
+      </div>`:`<div style="text-align:center;padding:24px;color:var(--gris);font-size:13px;background:var(--gris-xl);border-radius:10px;border:1px dashed var(--gris-l)">Sin fotos. Toca <strong>"Subir foto"</strong> para agregar la primera.</div>`}
+    </div>
     <!-- Registro -->
     ${creador?`<div class="dview-section">
       <div class="dview-section-head"><i data-lucide="user-check"></i>Registro de la aplicación</div>
@@ -2953,11 +2974,11 @@ async function editApp(id){
     <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías (opcional pero recomendado)</h4>
     <div class="form-grid">
       <div class="form-row"><label>Foto del producto / etiqueta</label>
-        ${a.fotoProducto?`<div style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><img src="${a.fotoProducto}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><label style="font-size:12px;color:var(--rojo);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="f-del-fotoprod" style="margin:0"> Quitar foto</label></div>`:''}
+        ${a.fotoProducto?`<div class="appfoto-wrap" id="appfoto-prod-wrap"><img src="${a.fotoProducto}" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><button type="button" class="appfoto-del-btn" id="appfoto-prod-btn" onclick="toggleAppFotoDelete('prod')" aria-label="Quitar foto" title="Quitar foto">×</button><div class="appfoto-overlay" id="appfoto-prod-overlay">Marcada para eliminar</div><input type="checkbox" id="f-del-fotoprod" style="display:none"></div>`:''}
         <input id="f-fotoprod" type="file" accept="image/*" capture="environment">
         <small style="color:var(--gris);font-size:11px">Etiqueta / envase del producto aplicado</small></div>
       <div class="form-row"><label>Foto de la aplicación</label>
-        ${a.fotoAplicacion?`<div style="margin-bottom:6px;display:flex;gap:10px;align-items:center"><img src="${a.fotoAplicacion}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><label style="font-size:12px;color:var(--rojo);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="f-del-fotoapl" style="margin:0"> Quitar foto</label></div>`:''}
+        ${a.fotoAplicacion?`<div class="appfoto-wrap" id="appfoto-apl-wrap"><img src="${a.fotoAplicacion}" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><button type="button" class="appfoto-del-btn" id="appfoto-apl-btn" onclick="toggleAppFotoDelete('apl')" aria-label="Quitar foto" title="Quitar foto">×</button><div class="appfoto-overlay" id="appfoto-apl-overlay">Marcada para eliminar</div><input type="checkbox" id="f-del-fotoapl" style="display:none"></div>`:''}
         <input id="f-fotoapl" type="file" accept="image/*" capture="environment">
         <small style="color:var(--gris);font-size:11px">Equipo / operario aplicando</small></div>
     </div>
@@ -3085,25 +3106,34 @@ async function quickMarkAppRealizada(id,ev){
 let _quickPhotoTarget=null;
 function triggerQuickPhoto(type,id,ev){
   if(ev){ev.stopPropagation();ev.preventDefault();}
-  _quickPhotoTarget={type,id};
+  _quickPhotoTarget={type,id,reopenDetail:false};
+  const inp=document.getElementById('quick-photo-input');
+  if(inp){inp.value='';inp.click();}
+}
+/* Versión disparada desde el modal de detalle (viewApp/viewTask): cierra el modal,
+   sube la foto, y al terminar lo vuelve a abrir para que el usuario vea el resultado. */
+function triggerQuickPhotoFromDetail(type,id,ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  _quickPhotoTarget={type,id,reopenDetail:true};
+  closeModal();
   const inp=document.getElementById('quick-photo-input');
   if(inp){inp.value='';inp.click();}
 }
 async function onQuickPhotoSelect(input){
   if(!input.files||!input.files[0]||!_quickPhotoTarget){input.value='';return;}
   const file=input.files[0];
-  const {type,id}=_quickPhotoTarget;
+  const {type,id,reopenDetail}=_quickPhotoTarget;
   _quickPhotoTarget=null;input.value='';
   toast('📷 Procesando foto...');
   try{
-    if(type==='app')await quickAddPhotoApp(id,file);
-    else if(type==='task')await quickAddPhotoTask(id,file);
+    if(type==='app')await quickAddPhotoApp(id,file,reopenDetail);
+    else if(type==='task')await quickAddPhotoTask(id,file,reopenDetail);
   }catch(e){
     console.error('quickPhoto falló:',e);
     toast('Error procesando foto: '+(e.message||e),'warn');
   }
 }
-async function quickAddPhotoApp(id,file){
+async function quickAddPhotoApp(id,file,reopenDetail){
   const a=await get('applications',id);
   if(!a){toast('Aplicación no encontrada','warn');return}
   const dataURL=await fileToDataURL(file,1400,250);
@@ -3120,8 +3150,25 @@ async function quickAddPhotoApp(id,file){
   if(navigator.vibrate)navigator.vibrate(20);
   toast('✓ Foto '+slotTxt+' agregada');
   renderApplications();
+  /* Si la subida vino desde el modal de detalle, lo re-abrimos para que el usuario vea la foto. */
+  if(reopenDetail)setTimeout(()=>viewApp(id),120);
 }
-async function quickAddPhotoTask(id,file){
+/* Toggle de "marcar para borrar" en el form de Aplicación (sustituye al checkbox invisible viejo).
+   slot = 'prod' | 'apl'. Pinta overlay rojo y rota el ✕ a ↶ visualmente. */
+function toggleAppFotoDelete(slot){
+  const wrap=document.getElementById('appfoto-'+slot+'-wrap');
+  const cb=document.getElementById('f-del-foto'+slot);
+  const btn=document.getElementById('appfoto-'+slot+'-btn');
+  const overlay=document.getElementById('appfoto-'+slot+'-overlay');
+  if(!wrap||!cb||!btn)return;
+  cb.checked=!cb.checked;
+  const marked=cb.checked;
+  wrap.classList.toggle('marked-for-delete',marked);
+  if(overlay)overlay.style.display=marked?'flex':'none';
+  btn.textContent=marked?'↶':'×';
+  btn.title=marked?'Cancelar eliminación':'Quitar foto';
+}
+async function quickAddPhotoTask(id,file,reopenDetail){
   const t=await get('tasks',id);
   if(!t){toast('Labor no encontrada','warn');return}
   const dataURL=await fileToDataURL(file,1400,250);
@@ -3135,6 +3182,7 @@ async function quickAddPhotoTask(id,file){
   if(navigator.vibrate)navigator.vibrate(20);
   toast('✓ Foto agregada ('+t.fotos.length+' total)');
   renderTasks();
+  if(reopenDetail)setTimeout(()=>viewTask(id),120);
 }
 /* === Quick action: marcar labor como Realizada de un solo clic. === */
 async function quickMarkTaskRealizada(id,ev){
