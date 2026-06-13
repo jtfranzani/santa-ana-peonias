@@ -294,16 +294,17 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 }
 /* === Vista mobile de Aplicaciones: cards con jerarquía estilo Linear/Stripe.
    Desktop sigue viendo la tabla; mobile (≤768px) ve las cards verticales. === */
-.apps-mobile-cards{display:none}
+.apps-mobile-cards,.labores-mobile-cards{display:none}
 @media (max-width:768px){
-  #tbl-apps,.apps-mobile-cards~.table-scroll{display:none}
-  .table-scroll:has(#tbl-apps){display:none}
-  .apps-mobile-cards{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+  #tbl-apps,#tbl-tasks{display:none}
+  .table-scroll:has(#tbl-apps),.table-scroll:has(#tbl-tasks){display:none}
+  .apps-mobile-cards,.labores-mobile-cards{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
 }
 .app-card{background:#fff;border-radius:12px;box-shadow:var(--sombra-sm);border:1px solid var(--gris-l);padding:14px 14px 14px 20px;position:relative;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;overflow:hidden}
 .app-card:active{transform:scale(.985);box-shadow:var(--sombra)}
 .app-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--gris-m)}
-.app-card.estado-programada::before{background:var(--warn)}
+.app-card.estado-programada::before,.app-card.estado-pendiente::before{background:var(--warn)}
+.app-card.estado-en-curso::before{background:var(--info)}
 .app-card.estado-realizada::before{background:var(--ok)}
 .app-card.estado-cancelada::before{background:var(--gris-m)}
 .app-card.estado-atrasada::before{background:var(--alerta)}
@@ -331,6 +332,146 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-card-empty i{width:42px;height:42px;color:var(--gris-m);margin-bottom:12px}
 .app-card-empty-msg{font-size:14px;color:var(--texto-m);font-weight:500;margin-bottom:6px}
 .app-card-empty-sub{font-size:12px;color:var(--gris)}
+/* === Tiles de archivos de asesores: grid responsive con preview/download/delete === */
+.adv-files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:480px;overflow-y:auto;padding-right:4px}
+.adv-files-grid::-webkit-scrollbar{width:6px}
+.adv-files-grid::-webkit-scrollbar-thumb{background:var(--gris-l);border-radius:3px}
+.adv-file-card{background:#fff;border:1px solid var(--gris-l);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:all .15s ease;position:relative}
+.adv-file-card:hover{border-color:var(--verde);box-shadow:var(--sombra-sm);transform:translateY(-1px)}
+.adv-file-card-head{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.adv-file-icon{width:38px;height:38px;border-radius:8px;background:var(--verde-l);color:var(--verde-d);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.adv-file-icon svg{width:20px;height:20px;stroke-width:2}
+.adv-file-icon.pdf{background:#fee2e2;color:#b91c1c}
+.adv-file-icon.doc{background:#dbeafe;color:#1d4ed8}
+.adv-file-icon.xls{background:#dcfce7;color:#15803d}
+.adv-file-icon.img{background:#fce7f3;color:#9d174d}
+.adv-file-icon.vid{background:#ede9fe;color:#6d28d9}
+.adv-file-icon.zip{background:#fef3c7;color:#92400e}
+.adv-file-info{min-width:0;flex:1}
+.adv-file-name{font-size:13px;font-weight:600;color:var(--texto);line-height:1.3;word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.adv-file-meta{font-size:10.5px;color:var(--gris);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.adv-file-tipo{background:var(--verde);color:#fff;padding:1px 7px;border-radius:8px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.adv-file-desc{font-size:11.5px;color:var(--gris-d);background:var(--gris-xl);padding:6px 8px;border-radius:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.adv-file-actions{display:flex;gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid var(--gris-xl)}
+.adv-file-actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 8px;font-size:11.5px;border:1px solid var(--gris-l);background:#fff;border-radius:6px;cursor:pointer;color:var(--texto-m);font-weight:500;transition:all .15s;min-height:34px}
+.adv-file-actions button:hover{border-color:var(--verde);color:var(--verde-d);background:var(--verde-l)}
+.adv-file-actions button.danger:hover{border-color:var(--alerta);color:var(--alerta);background:#fee2e2}
+.adv-file-actions button svg{width:13px;height:13px}
+@media (max-width:768px){
+  .adv-files-grid{grid-template-columns:1fr;max-height:none}
+}
+/* ========================================================================
+   MOBILE TERRENO UX/UI — pensado para barro, lluvia, una mano, sol fuerte.
+   Bottom-nav, FAB de acción rápida, bottom sheet, touch targets grandes,
+   inputs de formulario que no hacen zoom en iOS (font 16px), contraste alto.
+   ======================================================================== */
+.mobile-bottom-nav,.mobile-fab,.fab-sheet,.fab-sheet-bg{display:none}
+@media (max-width:768px){
+  /* Bottom navigation siempre visible en zona del pulgar */
+  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gris-l);box-shadow:0 -2px 12px rgba(15,23,42,.06);z-index:90;padding-bottom:env(safe-area-inset-bottom,0px);min-height:60px}
+  .mbn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--gris);font-size:10.5px;font-weight:600;cursor:pointer;text-decoration:none;transition:color .15s ease;min-height:60px;padding:8px 4px;letter-spacing:.2px;border:none;background:transparent}
+  .mbn-item svg{width:22px;height:22px;stroke-width:2.2}
+  .mbn-item.active{color:var(--verde-d)}
+  .mbn-item.active svg{stroke-width:2.5}
+  .mbn-item:active{background:var(--gris-xl)}
+  /* Padding bottom del main para que el contenido no quede tapado por bottom-nav + FAB */
+  .main{padding-bottom:90px!important}
+  /* Floating Action Button (FAB) en zona del pulgar derecho */
+  .mobile-fab{display:flex;position:fixed;bottom:74px;right:16px;width:60px;height:60px;border-radius:30px;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);color:#fff;border:none;box-shadow:0 6px 20px rgba(36,72,47,.4),0 2px 6px rgba(0,0,0,.12);align-items:center;justify-content:center;cursor:pointer;z-index:95;transition:transform .15s ease;padding:0}
+  .mobile-fab svg{width:28px;height:28px;stroke-width:2.5;color:#fff}
+  .mobile-fab:active{transform:scale(.92)}
+  /* Bottom Sheet del FAB con acciones rápidas */
+  .fab-sheet-bg{display:block;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99;opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease;backdrop-filter:blur(2px)}
+  .fab-sheet-bg.open{opacity:1;visibility:visible}
+  .fab-sheet{display:block;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:8px 16px 24px;z-index:100;transform:translateY(105%);transition:transform .28s cubic-bezier(.32,.72,0,1);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+  .fab-sheet.open{transform:translateY(0)}
+  .fab-sheet-handle{width:42px;height:4px;background:var(--gris-l);border-radius:2px;margin:8px auto 12px}
+  .fab-sheet-title{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--gris);font-weight:700;text-align:center;margin-bottom:14px}
+  .fab-action{width:100%;display:flex;align-items:center;gap:14px;padding:12px 14px;background:#fff;border:1px solid var(--gris-l);border-radius:14px;cursor:pointer;text-align:left;margin-bottom:8px;min-height:68px;transition:background .12s,border-color .12s;font-family:inherit}
+  .fab-action:active{background:var(--gris-xl);border-color:var(--gris-m)}
+  .fab-action-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .fab-action-body{flex:1;min-width:0}
+  .fab-action-body strong{display:block;color:var(--texto);font-size:14.5px;font-weight:700;margin-bottom:2px;letter-spacing:-.01em}
+  .fab-action-body small{color:var(--gris);font-size:12px;font-weight:400}
+  .fab-cancel{width:100%;padding:14px;background:var(--gris-xl);border:none;border-radius:14px;color:var(--texto-m);font-size:14.5px;font-weight:700;cursor:pointer;margin-top:8px;min-height:52px;font-family:inherit;letter-spacing:.2px}
+  .fab-cancel:active{background:var(--gris-l)}
+  /* Inputs de formulario grandes y sin zoom en iOS (font 16px) */
+  .modal input[type=text],.modal input[type=email],.modal input[type=tel],.modal input[type=password],
+  .modal input[type=date],.modal input[type=time],.modal input[type=number],
+  .modal select,.modal textarea,
+  .form-row input,.form-row select,.form-row textarea{font-size:16px!important;min-height:48px;padding:12px 14px;border-radius:10px;line-height:1.4}
+  .modal textarea,.form-row textarea{min-height:90px}
+  .modal .btn,.modal .modal-actions .btn{min-height:48px;padding:13px 18px;font-size:14.5px;font-weight:600}
+  .search-input{font-size:16px!important;min-height:46px;padding-left:36px;padding-right:14px}
+  /* Botones de acción dentro de las cards / chips con target táctil amplio */
+  .app-card-desc-toggle{padding:8px 4px;min-height:32px;font-size:13px}
+  .chip{min-height:30px;padding:6px 12px!important;font-size:12px;display:inline-flex;align-items:center}
+  /* Hamburger más grande para target táctil cómodo */
+  .hamburger{min-width:44px;min-height:44px}
+  /* Modal grande y full-height-ish en mobile para mejor edición */
+  .modal{max-height:92vh;padding:18px 18px 24px}
+  .modal h3{font-size:17px;margin-bottom:14px}
+  /* Tipografía con más contraste para sol fuerte y pantallas con brillo */
+  body{color:#0a0f1c}
+  .kpi .value{font-weight:800}
+  .kpi .label{color:#475569;font-weight:700}
+  /* KPI grid: stack en 2x2 en mobile chico para mantener tamaño legible */
+  .grid-4{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+  .kpi{padding:14px}
+  .kpi .value{font-size:24px}
+  /* Page-header con menos margen en mobile para ganar pantalla */
+  .page-header{margin-bottom:14px}
+  .page-header h2{font-size:21px}
+  /* Toast más grande y arriba del bottom nav */
+  .toast{bottom:96px!important}
+}
+/* === Tabla profesional (desktop) para Aplicaciones y Bitácora Labores ===
+   Sticky header, hover sutil, barra lateral de estado por fila, fotos en cluster
+   overlapping, botones de acción quietos y tipografía con jerarquía clara. */
+@media (min-width:769px){
+  .table-scroll:has(#tbl-apps),.table-scroll:has(#tbl-tasks){border-radius:12px;border:1px solid var(--gris-l);background:#fff;overflow:auto}
+  #tbl-apps,#tbl-tasks{width:100%;border-collapse:separate;border-spacing:0;background:#fff}
+  #tbl-apps thead,#tbl-tasks thead{position:sticky;top:0;z-index:5}
+  #tbl-apps th,#tbl-tasks th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gris-d);padding:13px 14px;border-bottom:1px solid var(--gris-l);white-space:nowrap;background:#f9fafb}
+  #tbl-apps td,#tbl-tasks td{padding:14px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle;line-height:1.5;color:var(--texto);background:#fff;transition:background-color .12s ease}
+  #tbl-apps tbody tr:last-child td,#tbl-tasks tbody tr:last-child td{border-bottom:none}
+  #tbl-apps tbody tr:hover td,#tbl-tasks tbody tr:hover td{background:#fbfaf6}
+  #tbl-apps tbody tr.fila-carencia td,#tbl-tasks tbody tr.fila-atrasada td{background:linear-gradient(90deg,#fffbeb,#fff 45%)}
+  #tbl-apps tbody tr.fila-carencia:hover td,#tbl-tasks tbody tr.fila-atrasada:hover td{background:linear-gradient(90deg,#fef3c7,#fbfaf6 45%)}
+  /* Barra lateral coloreada por estado en la primera columna de cada fila */
+  #tbl-apps tbody tr td:first-child,#tbl-tasks tbody tr td:first-child{position:relative;padding-left:18px}
+  #tbl-apps tbody tr td:first-child::before,#tbl-tasks tbody tr td:first-child::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--gris-m)}
+  #tbl-apps tbody tr.est-programada td:first-child::before,#tbl-tasks tbody tr.est-pendiente td:first-child::before{background:var(--warn)}
+  #tbl-tasks tbody tr.est-en_curso td:first-child::before{background:var(--info)}
+  #tbl-apps tbody tr.est-realizada td:first-child::before,#tbl-tasks tbody tr.est-realizada td:first-child::before{background:var(--ok)}
+  #tbl-apps tbody tr.est-cancelada td:first-child::before,#tbl-tasks tbody tr.est-cancelada td:first-child::before{background:var(--gris-m)}
+  #tbl-apps tbody tr.est-atrasada td:first-child::before,#tbl-tasks tbody tr.est-atrasada td:first-child::before{background:var(--alerta)}
+  /* Acciones: botones quietos en gris, color solo al hover */
+  .pro-actions{display:inline-flex;gap:4px;align-items:center;justify-content:flex-end}
+  .pro-actions button{background:transparent;border:1px solid transparent;width:32px;height:32px;border-radius:7px;cursor:pointer;color:var(--gris);display:inline-flex;align-items:center;justify-content:center;transition:all .12s ease;padding:0}
+  .pro-actions button:hover{background:#fff;border-color:var(--gris-l);color:var(--verde-d);box-shadow:var(--sombra-sm)}
+  .pro-actions button.danger:hover{border-color:#fca5a5;color:var(--alerta);background:#fff5f5}
+  .pro-actions button svg{width:15px;height:15px;stroke-width:2}
+  /* Fotos en cluster overlapping (estilo Notion / Linear) */
+  .pro-fotos{display:inline-flex;align-items:center;gap:0}
+  .pro-fotos .pro-foto{width:30px;height:30px;border-radius:7px;border:2px solid #fff;object-fit:cover;cursor:pointer;box-shadow:0 0 0 1px var(--gris-l);transition:transform .12s ease;background:#fff}
+  .pro-fotos .pro-foto:hover{transform:scale(1.08);z-index:1;position:relative}
+  .pro-fotos .pro-foto:nth-child(n+2){margin-left:-8px}
+  .pro-fotos-counter{background:var(--gris-xl);color:var(--texto-m);font-size:10px;font-weight:700;padding:3px 7px;border-radius:9px;margin-left:6px}
+  /* Avatar mini para responsable con iniciales */
+  .pro-resp{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--texto-m);font-weight:500}
+  .pro-resp-avatar{width:24px;height:24px;border-radius:50%;background:var(--verde);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.3px}
+  /* Título de fila (Producto o Labor) bold con padding cómodo */
+  .pro-cell-title{font-weight:600;color:var(--texto);font-size:13.5px;letter-spacing:-.01em;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.35}
+  /* Fecha con sub-tag uppercase mini estilo "PLAN" / "EJEC" */
+  .pro-date{font-variant-numeric:tabular-nums;font-weight:600;color:var(--texto);font-size:13px;white-space:nowrap}
+  .pro-date-sub{font-size:9.5px;color:var(--gris-d);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;display:inline-block;background:var(--gris-xl);padding:2px 7px;border-radius:7px}
+  /* Empty cells consistente */
+  .pro-empty{color:var(--gris-m);font-size:11.5px}
+  /* Tags más sobrios dentro de tabla */
+  #tbl-apps .tag,#tbl-tasks .tag{font-weight:500;letter-spacing:.1px}
+  #tbl-apps .chip,#tbl-tasks .chip{font-size:11px;padding:3px 9px;border-radius:9px;background:var(--verde-l);color:var(--verde-d);font-weight:500;border:1px solid transparent}
+}
 .chart-container{position:relative;height:280px}
 .pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
 .search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
@@ -438,6 +579,39 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   <main class="main" id="main"></main>
 </div>
 <div class="modal-bg" id="modal"><div class="modal" id="modal-content"></div></div>
+<!-- === MOBILE BOTTOM NAVIGATION (solo visible ≤768px) ===
+     Tabs en zona del pulgar: Inicio · Agenda · Labores · Aplicac. · Menú. -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Navegación principal">
+  <a class="mbn-item" data-page="dashboard" onclick="nav('dashboard')"><i data-lucide="layout-dashboard"></i><span>Inicio</span></a>
+  <a class="mbn-item" data-page="calendar" onclick="nav('calendar')"><i data-lucide="calendar-days"></i><span>Agenda</span></a>
+  <a class="mbn-item" data-page="tasks" onclick="nav('tasks')"><i data-lucide="clipboard-list"></i><span>Labores</span></a>
+  <a class="mbn-item" data-page="applications" onclick="nav('applications')"><i data-lucide="droplet"></i><span>Aplicac.</span></a>
+  <a class="mbn-item" onclick="toggleSidebar()" aria-label="Más opciones"><i data-lucide="menu"></i><span>Menú</span></a>
+</nav>
+<!-- === FAB de acción rápida (mobile) + Bottom Sheet === -->
+<button class="mobile-fab" id="mobile-fab" onclick="toggleFabSheet()" aria-label="Acción rápida"><i data-lucide="plus"></i></button>
+<div class="fab-sheet-bg" id="fab-sheet-bg" onclick="closeFabSheet()"></div>
+<div class="fab-sheet" id="fab-sheet" role="dialog" aria-label="Registro rápido">
+  <div class="fab-sheet-handle"></div>
+  <div class="fab-sheet-title">Registro rápido</div>
+  <button class="fab-action" onclick="closeFabSheet();editApp()">
+    <span class="fab-action-icon" style="background:#fce7f3;color:#9d174d">💧</span>
+    <div class="fab-action-body"><strong>Nueva aplicación</strong><small>Producto + dosis + foto</small></div>
+  </button>
+  <button class="fab-action" onclick="closeFabSheet();editTask()">
+    <span class="fab-action-icon" style="background:#dbeafe;color:#1d4ed8">📋</span>
+    <div class="fab-action-body"><strong>Nueva labor</strong><small>Tarea de bitácora</small></div>
+  </button>
+  <button class="fab-action" onclick="closeFabSheet();openHitoModal()">
+    <span class="fab-action-icon" style="background:#fef3c7;color:#92400e">🚩</span>
+    <div class="fab-action-body"><strong>Registrar hito</strong><small>Brotación, floración, podas</small></div>
+  </button>
+  <button class="fab-action" onclick="closeFabSheet();nav('photos')">
+    <span class="fab-action-icon" style="background:#dcfce7;color:#15803d">📷</span>
+    <div class="fab-action-body"><strong>Galería de fotos</strong><small>Subir o ver fotos del huerto</small></div>
+  </button>
+  <button class="fab-cancel" onclick="closeFabSheet()">Cancelar</button>
+</div>
 
 <script>
 /* ============ CONFIGURACIÓN FIREBASE ============
@@ -455,7 +629,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.13';
+const APP_VERSION='2026.05.18.17';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1029,9 +1203,26 @@ async function nav(page){
   currentPage=page;
   document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
   const el=document.getElementById('nav-'+page);if(el)el.classList.add('active');
+  /* Bottom nav mobile: marcar tab activa */
+  document.querySelectorAll('.mbn-item').forEach(a=>a.classList.remove('active'));
+  const mbn=document.querySelector('.mbn-item[data-page="'+page+'"]');if(mbn)mbn.classList.add('active');
   closeSidebar(); // auto-cerrar sidebar en mobile al navegar
+  /* Cerrar el bottom sheet del FAB si quedó abierto */
+  if(typeof closeFabSheet==='function')closeFabSheet();
   await PAGES[page]();
   lucideInit();
+}
+/* === Mobile FAB y bottom sheet de acciones rápidas === */
+function toggleFabSheet(){
+  const sheet=document.getElementById('fab-sheet');const bg=document.getElementById('fab-sheet-bg');
+  if(!sheet||!bg)return;
+  if(sheet.classList.contains('open'))closeFabSheet();
+  else{sheet.classList.add('open');bg.classList.add('open');if(navigator.vibrate)navigator.vibrate(30);}
+}
+function closeFabSheet(){
+  const sheet=document.getElementById('fab-sheet');const bg=document.getElementById('fab-sheet-bg');
+  if(sheet)sheet.classList.remove('open');
+  if(bg)bg.classList.remove('open');
 }
 /* Helper: multi-cuartel backward-compatible */
 function getBloques(a){if(Array.isArray(a.bloques)&&a.bloques.length)return a.bloques;if(a.bloque&&a.bloque!=='')return[a.bloque];return[]}
@@ -1721,6 +1912,57 @@ async function renderTasks(){
         <input class="search-input" id="lab-search" placeholder="Buscar en labor, notas, responsable..." value="${(_tasksFiltroSearch||'').replace(/"/g,'&quot;')}" oninput="setTasksFiltroSearch(this.value)">
       </div>
       <div style="font-size:12px;color:var(--gris);margin-bottom:8px">${filtered.length} de ${tasks.length} labores</div>
+      <div class="labores-mobile-cards" id="labores-mobile-cards">${filtered.length?filtered.map(t=>{
+        const est=estadoLabor(t);
+        const atr=laborAtrasada(t);
+        const fechaMostrar=est==='pendiente'?(t.fechaPlanificada||t.fecha):(t.fecha||t.fechaPlanificada);
+        const subFecha=(est==='pendiente'&&t.fechaPlanificada)?'plan.':(est==='realizada'?'ejec.':'');
+        const depStCard=depStatusSync(t.dependeDe,tasks,appsForDeps);
+        const isBloqueada=depStCard&&!depStCard.completado&&est!=='realizada';
+        /* Barra lateral: atrasada > estado actual. en_curso lleva guion para CSS. */
+        let estClass='estado-'+(atr?'atrasada':est.replace('_','-'));
+        /* Tag de estado + badge de tiempo. */
+        const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
+        const dDif=fechaMostrar?daysBetween(today(),fechaMostrar):null;
+        let timeBadge='';
+        if(atr&&dDif!=null)timeBadge=`<span class="tag atrasada" style="font-size:10px">${Math.abs(dDif)}d</span>`;
+        else if((est==='pendiente'||est==='en_curso')&&dDif!=null){
+          if(dDif===0)timeBadge='<span class="tag warn" style="font-size:10px">📌 Hoy</span>';
+          else if(dDif>0&&dDif<=7)timeBadge=`<span class="tag warn" style="font-size:10px">En ${dDif}d</span>`;
+          else if(dDif>0)timeBadge=`<span class="tag info" style="font-size:10px">En ${dDif}d</span>`;
+        }
+        const lockBadge=isBloqueada?'<span class="app-card-lock">🔒 Bloqueada</span>':'';
+        /* Categoría + cuarteles chips. */
+        const catTag=t.categoria?`<span class="tag info">${t.categoria}</span>`:'';
+        const bsArr=getBloques(t);
+        const bloquesHTML=bsArr.length?bsArr.map(b=>`<span class="chip">${b}</span>`).join(''):'<span class="chip" style="background:var(--gris-xl);color:var(--gris)">General</span>';
+        /* Fotos (hasta 3 thumbnails + contador si hay más). */
+        const fotosFull=getTaskFotos(t);
+        const fotosArr=fotosFull.slice(0,3);
+        const fotosHTML=fotosArr.length?fotosArr.map(f=>`<img src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')">`).join('')+(fotosFull.length>3?`<span style="font-size:10.5px;color:var(--gris);font-weight:600;align-self:center;margin-left:4px">+${fotosFull.length-3}</span>`:''):'';
+        /* Avatar de responsable. */
+        const respLetters=((t.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
+        const respHTML=t.responsable?`<div class="app-card-resp"><div class="app-card-resp-avatar">${respLetters}</div><span>${t.responsable}</span></div>`:'<span style="color:var(--gris-m);font-size:12px">Sin responsable</span>';
+        /* Notas (HTML-escapadas, con clamp 3 líneas). */
+        const notasFull=(t.notas||'').toString();
+        const notasLargo=notasFull.length>110||notasFull.includes('\n');
+        const notasEsc=notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const notasHTML=notasFull?`<div id="laborcarddesc-${t.id}" class="app-card-desc">${notasEsc}</div>${notasLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleLaborCardDesc('${t.id}')">ver más</span>`:''}`:'';
+        /* Tiempo trabajado. */
+        const tiempoTxt=formatTiempoLabor(t);
+        const fechaTxt=fechaMostrar?fmt(fechaMostrar):'Sin fecha';
+        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')){viewTask('${t.id}')}">
+          <div class="app-card-head">
+            <div class="app-card-status">${estTag}${timeBadge}${lockBadge}</div>
+          </div>
+          <div class="app-card-title">${t.nombre||'(sin nombre)'}</div>
+          <div class="app-card-date">${fechaTxt}${subFecha?`<span class="sub-tag">${subFecha}</span>`:''}</div>
+          <div class="app-card-chips">${catTag}${bloquesHTML}</div>
+          ${tiempoTxt&&tiempoTxt!=='-'?`<div class="app-card-row"><span class="app-card-row-label">Tiempo</span><span class="app-card-row-val">${tiempoTxt}</span></div>`:''}
+          <div class="app-card-foot">${respHTML}${fotosHTML?`<div class="app-card-fotos">${fotosHTML}</div>`:''}</div>
+          ${notasHTML}
+        </article>`;
+      }).join(''):`<div class="app-card-empty"><i data-lucide="inbox"></i><div class="app-card-empty-msg">Sin labores</div><div class="app-card-empty-sub">No hay labores que coincidan con este filtro.</div></div>`}</div>
       <div class="table-scroll"><table id="tbl-tasks">
         <thead><tr><th>Estado</th><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Tiempo</th><th>Responsable</th><th>Registrado por</th><th>📷</th><th>Notas</th><th></th></tr></thead>
         <tbody>${filtered.length?filtered.map(t=>{
@@ -1729,8 +1971,13 @@ async function renderTasks(){
           const fechaMostrar=est==='pendiente'?(t.fechaPlanificada||t.fecha):(t.fecha||t.fechaPlanificada);
           const subFecha=(est==='pendiente'&&t.fechaPlanificada)?'plan.':(est==='realizada'?'ejec.':'');
           const estHTML=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
+          /* Fotos rediseñadas: cluster overlapping con primeras 3 + contador "+N". */
           const fotosTbl=getTaskFotos(t);
-          const fotoTxt=fotosTbl.length?`<div style="position:relative;display:inline-block"><img src="${fotosTbl[0]}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();viewImage('${fotosTbl[0].replace(/'/g,"\\'")}')" title="Ver foto${fotosTbl.length>1?'s ('+fotosTbl.length+')':''}">${fotosTbl.length>1?`<span style="position:absolute;top:-4px;right:-4px;background:var(--verde-d);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-weight:bold">${fotosTbl.length}</span>`:''}</div>`:'<span style="color:var(--gris);font-size:11px">-</span>';
+          const fotosVis=fotosTbl.slice(0,3);
+          const fotoTxt=fotosTbl.length?`<div class="pro-fotos">${fotosVis.map(f=>`<img class="pro-foto" src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')">`).join('')}${fotosTbl.length>3?`<span class="pro-fotos-counter">+${fotosTbl.length-3}</span>`:''}</div>`:'<span class="pro-empty">—</span>';
+          /* Responsable con avatar de iniciales. */
+          const respIniT=((t.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase();
+          const respHTMLT=t.responsable?`<div class="pro-resp"><div class="pro-resp-avatar">${respIniT||'?'}</div><span>${t.responsable}</span></div>`:'<span class="pro-empty">—</span>';
           const tiempoTxt=formatTiempoLabor(t);
           const notasFull=(t.notas||'').toString();
           const notasEsc=notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1739,7 +1986,9 @@ async function renderTasks(){
           /* Lock badge: si la labor depende de algo que no está realizado y aún no está realizada ella misma. */
           const depStRow=depStatusSync(t.dependeDe,tasks,appsForDeps);
           const lockTag=(depStRow&&!depStRow.completado&&est!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
-          return `<tr class="${atr?'fila-atrasada':''} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td>${fmt(fechaMostrar)}${subFecha?`<br><span style="font-size:10px;color:var(--gris)">${subFecha}</span>`:''}</td><td><strong>${t.nombre}</strong>${lockTag}</td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td>${tiempoTxt}</td><td>${t.responsable||'-'}</td><td>${userBadgeFull(t.createdBy)||'<span style="font-size:11px;color:var(--gris)">-</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button class="btn small ghost" onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          /* Clase de estado en <tr> para barra lateral. atrasada gana sobre estado normal. */
+          const trEstT='est-'+(atr?'atrasada':est);
+          return `<tr class="${atr?'fila-atrasada':''} ${trEstT} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFecha?`<div class="pro-date-sub">${subFecha}</div>`:''}</td><td><span class="pro-cell-title">${t.nombre}${lockTag}</span></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td style="font-variant-numeric:tabular-nums;font-weight:500;color:var(--texto-m)">${tiempoTxt||'<span class="pro-empty">—</span>'}</td><td>${respHTMLT}</td><td>${userBadgeFull(t.createdBy)||'<span class="pro-empty">—</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><div class="pro-actions"><button onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -1747,7 +1996,22 @@ async function renderTasks(){
   if(_tasksFiltroSearch)filterTasks(_tasksFiltroSearch);
 }
 function setTasksFiltro(k){_tasksFiltroEstado=k;renderTasks()}
-function filterTasks(v){_tasksFiltroSearch=v||'';const rows=document.querySelectorAll('#tbl-tasks tbody tr');rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes((v||'').toLowerCase())?'':'none'})}
+function filterTasks(v){
+  _tasksFiltroSearch=v||'';
+  const q=(v||'').toLowerCase();
+  /* Tabla (desktop). */
+  document.querySelectorAll('#tbl-tasks tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+  /* Cards (mobile). */
+  document.querySelectorAll('#labores-mobile-cards .app-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'':'none'});
+}
+/* Toggle expand/collapse de las notas en card de Labor (mobile). */
+function toggleLaborCardDesc(id){
+  const el=document.getElementById('laborcarddesc-'+id);
+  if(!el)return;
+  const exp=el.classList.toggle('expanded');
+  const tog=el.parentElement.querySelector('.app-card-desc-toggle');
+  if(tog)tog.textContent=exp?'ver menos':'ver más';
+}
 function quickTask(template){editTask(null,template)}
 
 /* Helper retro-compatible: devuelve el array de fotos de una labor.
@@ -2210,7 +2474,14 @@ async function renderApplications(){
           const fotos=[];
           if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
           if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
-          const fotosTxt=fotos.length?fotos.join(''):'<span style="color:var(--gris-m);font-size:11px">—</span>';
+          /* Fotos rediseñadas: cluster overlapping si hay >1, single si hay 1, em-dash si vacío. */
+          const fotosPro=[];
+          if(a.fotoProducto)fotosPro.push(`<img class="pro-foto" src="${a.fotoProducto}" onclick="event.stopPropagation();viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
+          if(a.fotoAplicacion)fotosPro.push(`<img class="pro-foto" src="${a.fotoAplicacion}" onclick="event.stopPropagation();viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
+          const fotosTxt=fotosPro.length?`<div class="pro-fotos">${fotosPro.join('')}</div>`:'<span class="pro-empty">—</span>';
+          /* Responsable: avatar circular con iniciales + nombre */
+          const respIni=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase();
+          const respHTML=a.responsable?`<div class="pro-resp"><div class="pro-resp-avatar">${respIni||'?'}</div><span>${a.responsable}</span></div>`:'<span class="pro-empty">—</span>';
           /* Descripción manual (campo motivo). Clamp a 2 líneas y toggle "ver más" si es larga (>80 chars o tiene saltos). */
           const motivoVal=(a.motivo||'').toString();
           const motivoLargo=motivoVal.length>80||motivoVal.includes('\n');
@@ -2220,7 +2491,9 @@ async function renderApplications(){
           /* Lock badge: la aplicación depende de algo no realizado y aún no se ha ejecutado. */
           const depStAppRow=depStatusSync(a.dependeDe,tasksForDeps,apps);
           const lockTagApp=(depStAppRow&&!depStAppRow.completado&&estA!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStAppRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
-          return `<tr class="${activa?'fila-carencia':''} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td>${fmt(fechaMostrar)}${subFechaA?`<div style="font-size:10px;color:var(--gris-m)">${subFechaA}</div>`:''}</td><td><strong>${a.producto}</strong>${lockTagApp}</td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-size:12px">${a.dosis||'—'}${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:2px">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:11px">${metodoTxt}</td><td>${fotosTxt}</td><td>${a.responsable||'—'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          /* Clase de estado en <tr> para la barra lateral coloreada (CSS la pinta vía ::before). */
+          const trEst='est-'+(atrA?'atrasada':estA);
+          return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFechaA?`<div class="pro-date-sub">${subFechaA}</div>`:''}</td><td><span class="pro-cell-title">${a.producto}${lockTagApp}</span></td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-variant-numeric:tabular-nums"><strong style="color:var(--texto)">${a.dosis||'<span class=\\'pro-empty\\'>—</span>'}</strong>${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:3px;font-weight:500">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:12px;color:var(--texto-m)">${metodoTxt}</td><td>${fotosTxt}</td><td>${respHTML}</td><td><div class="pro-actions"><button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -2587,10 +2860,31 @@ async function renderAdvisors(){
               <strong style="font-size:12.5px;color:var(--texto)"><i data-lucide="folder" style="width:14px;height:14px;vertical-align:-2px;color:var(--verde)"></i> Archivos (${advFiles.length})</strong>
               <button class="btn small" onclick="uploadAdvisorFile('${adv.id}')"><i data-lucide="upload"></i>Subir</button>
             </div>
-            ${advFiles.length?`<div style="display:grid;gap:6px;max-height:240px;overflow-y:auto">${advFiles.slice(0,8).map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--gris-xl);border-radius:6px;gap:8px">
-              <div style="display:flex;gap:8px;align-items:center;min-width:0;flex:1"><i data-lucide="${fileIcon(f.nombre)}" style="width:16px;height:16px;color:var(--verde);flex-shrink:0"></i><div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:500;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nombre}</div><div style="font-size:10.5px;color:var(--gris);display:flex;gap:4px;align-items:center;flex-wrap:wrap">${f.tipoDocLabel?`<span style="background:var(--verde);color:#fff;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500">${f.tipoDocLabel}</span>`:''}<span>${fmt(f.fecha)} · ${((f.data||'').length*0.75/1024).toFixed(0)} KB${f.descripcion?` · ${f.descripcion.slice(0,60)}${f.descripcion.length>60?'...':''}`:''}</span></div></div></div>
-              <div style="display:flex;gap:3px;flex-shrink:0"><button class="btn small ghost" onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i></button><button class="btn small danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar"><i data-lucide="x"></i></button></div>
-            </div>`).join('')}${advFiles.length>8?`<div style="text-align:center;font-size:11px;color:var(--gris);padding:6px">+ ${advFiles.length-8} archivos más</div>`:''}</div>`:`<div style="padding:20px;text-align:center;color:var(--gris-m);font-size:12.5px;background:var(--gris-xl);border-radius:6px">Sin archivos subidos aún</div>`}
+            ${advFiles.length?`<div class="adv-files-grid">${advFiles.map(f=>{
+              const cat=fileIconCategoria(f.nombre);
+              const sizeKB=((f.data||'').length*0.75/1024);
+              const sizeStr=sizeKB>=1024?(sizeKB/1024).toFixed(1)+' MB':sizeKB.toFixed(0)+' KB';
+              return `<div class="adv-file-card">
+                <div class="adv-file-card-head">
+                  <div class="adv-file-icon ${cat}"><i data-lucide="${fileIcon(f.nombre)}"></i></div>
+                  <div class="adv-file-info">
+                    <div class="adv-file-name" title="${(f.nombre||'').replace(/"/g,'&quot;')}">${f.nombre||'(sin nombre)'}</div>
+                    <div class="adv-file-meta">
+                      ${f.tipoDocLabel?`<span class="adv-file-tipo">${f.tipoDocLabel}</span>`:''}
+                      <span>${fmt(f.fecha)}</span>
+                      <span>·</span>
+                      <span>${sizeStr}</span>
+                    </div>
+                  </div>
+                </div>
+                ${f.descripcion?`<div class="adv-file-desc">${f.descripcion}</div>`:''}
+                <div class="adv-file-actions">
+                  <button onclick="viewAdvisorFile('${f.id}')" title="Visualizar"><i data-lucide="eye"></i>Ver</button>
+                  <button onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i>Descargar</button>
+                  <button class="danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar" style="flex:0 0 auto;padding:7px 10px"><i data-lucide="trash-2"></i></button>
+                </div>
+              </div>`;
+            }).join('')}</div>`:`<div style="padding:20px;text-align:center;color:var(--gris-m);font-size:12.5px;background:var(--gris-xl);border-radius:6px">Sin archivos subidos aún</div>`}
           </div>
         </div>`}).join('')}
     </div>`:`<div class="card"><div class="empty"><i data-lucide="users"></i><div style="margin-top:10px">Sin asesores registrados</div><button class="btn" style="margin-top:15px" onclick="editAdvisor()"><i data-lucide="user-plus"></i>Agregar primer asesor</button></div></div>`}
@@ -2843,6 +3137,37 @@ async function downloadAdvisorFile(id){
   const f=await get('advisorfiles',id);
   if(!f||!f.data){toast('Archivo no disponible','warn');return}
   await descargarArchivo(f.data,f.nombre);
+}
+/* Visualiza el archivo en una pestaña nueva. Para PDFs, imágenes, video, audio,
+   texto plano y HTML el browser lo renderiza nativo. Para Word/Excel/PPT no se
+   puede previsualizar en el browser → caemos a descarga directa con un toast. */
+async function viewAdvisorFile(id){
+  const f=await get('advisorfiles',id);
+  if(!f||!f.data){toast('Archivo no disponible','warn');return}
+  const ext=(f.nombre||'').split('.').pop().toLowerCase();
+  const previsibles=['pdf','jpg','jpeg','png','gif','webp','svg','mp4','mov','webm','mp3','wav','ogg','txt','html','json','csv'];
+  if(!previsibles.includes(ext)){
+    toast('Este tipo de archivo no se puede previsualizar — descargando','warn');
+    return descargarArchivo(f.data,f.nombre);
+  }
+  const blob=dataURLToBlob(f.data);
+  if(!blob){toast('No se pudo preparar el archivo','warn');return}
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank','noopener');
+  if(!w)toast('Toca "Permitir ventanas" si el archivo no se abrió','warn');
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+/* Categoría de ícono para colorear el tile según tipo de archivo. */
+function fileIconCategoria(name){
+  const ext=(name||'').split('.').pop().toLowerCase();
+  if(['pdf'].includes(ext))return 'pdf';
+  if(['doc','docx'].includes(ext))return 'doc';
+  if(['xls','xlsx','csv'].includes(ext))return 'xls';
+  if(['ppt','pptx'].includes(ext))return 'doc';
+  if(['jpg','jpeg','png','gif','webp','svg'].includes(ext))return 'img';
+  if(['mp4','mov','avi','webm'].includes(ext))return 'vid';
+  if(['zip','rar','7z'].includes(ext))return 'zip';
+  return '';
 }
 async function delAdvisorFile(id){if(!confirm('¿Eliminar archivo?'))return;await del('advisorfiles',id);toast('Archivo eliminado');renderAdvisors();}
 
