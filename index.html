@@ -383,6 +383,74 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 }
 .modal-quick-realizada{background:linear-gradient(135deg,var(--ok) 0%,#047857 100%)!important;color:#fff!important;border:none!important;box-shadow:0 4px 14px rgba(5,150,105,.35)!important;font-weight:700!important}
 .modal-quick-realizada:hover{box-shadow:0 6px 20px rgba(5,150,105,.5)!important}
+/* === Modal de detalle (vista de Aplicación / Labor): layout profesional con header tipográfico,
+   facts grid arriba, secciones agrupadas con icono, quote-style description, fotos en card. === */
+.dview-header{display:flex;gap:16px;align-items:flex-start;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--gris-xl)}
+/* CRÍTICO: NO usar clase 'app' o 'labor' suelta — colisionan con el .app{display:grid;
+   grid-template-columns:250px 1fr;min-height:100vh} del layout principal. Uso 'is-app'/'is-labor'. */
+.dview-icon-bubble{width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:linear-gradient(135deg,var(--rosa-l) 0%,#fff 100%);border:1px solid var(--rosa);box-shadow:0 4px 12px rgba(201,122,144,.18);min-height:auto!important}
+.dview-icon-bubble.is-labor{background:linear-gradient(135deg,var(--verde-l) 0%,#fff 100%);border-color:var(--verde);box-shadow:0 4px 12px rgba(63,122,82,.15)}
+.dview-icon-bubble svg{width:28px;height:28px;stroke-width:2;color:var(--rosa-d)}
+.dview-icon-bubble.is-labor svg{color:var(--verde-d)}
+.dview-title-block{flex:1;min-width:0}
+.dview-title{font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700;color:var(--texto);letter-spacing:-.02em;line-height:1.2;margin-bottom:8px;word-break:break-word;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.dview-meta-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dview-meta-row .tag{font-size:11.5px;font-weight:600;letter-spacing:.2px}
+.dview-meta-row .dview-date{font-size:13px;color:var(--gris-d);font-weight:600;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px}
+.dview-meta-row .dview-date::before{content:'•';color:var(--gris-m);font-size:14px}
+.dview-lock-badge{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;border:1px solid #fcd34d}
+/* Quick facts arriba: mini-KPIs */
+.dview-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.dview-fact{background:linear-gradient(135deg,var(--crema) 0%,#fff 100%);border:1px solid var(--gris-xl);border-radius:11px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;position:relative}
+.dview-fact::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--verde);border-radius:2px}
+.dview-fact.warn{background:linear-gradient(135deg,#fffbeb 0%,#fff 100%);border-color:#fcd34d}
+.dview-fact.warn::before{background:var(--warn)}
+.dview-fact.ok{background:linear-gradient(135deg,#f0fdf4 0%,#fff 100%);border-color:#86efac}
+.dview-fact.ok::before{background:var(--ok)}
+.dview-fact.rosa{background:linear-gradient(135deg,#fdf2f8 0%,#fff 100%);border-color:#fbcfe8}
+.dview-fact.rosa::before{background:var(--rosa-d)}
+.dview-fact-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);font-weight:700}
+.dview-fact-value{font-size:15px;font-weight:700;color:var(--texto);letter-spacing:-.01em;word-break:break-word;font-variant-numeric:tabular-nums;line-height:1.25}
+.dview-fact-sub{font-size:11px;color:var(--gris-d);font-weight:500;line-height:1.3}
+/* Sección agrupada con header + grid de campos */
+.dview-section{margin-bottom:20px}
+.dview-section-head{display:flex;align-items:center;gap:8px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--verde-d);font-weight:800;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--gris-xl)}
+.dview-section-head svg{width:14px;height:14px;stroke-width:2.4;color:var(--verde-d)}
+.dview-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px}
+.dview-field{display:flex;flex-direction:column;gap:3px;padding:4px 0}
+.dview-field.wide{grid-column:1/-1}
+.dview-field-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700}
+.dview-field-value{font-size:13.5px;color:var(--texto);font-weight:500;word-break:break-word;line-height:1.45}
+.dview-field-value strong{font-weight:700}
+.dview-field-value.is-empty{color:var(--gris-m);font-style:italic;font-weight:400;padding:0!important;text-align:left!important}
+/* Quote-style block para motivo / notas */
+.dview-quote{background:linear-gradient(90deg,var(--gris-xl) 0%,#fff 50%);border-left:4px solid var(--verde);border-radius:0 10px 10px 0;padding:14px 18px;font-size:13.5px;line-height:1.6;color:var(--texto-m);font-style:italic;letter-spacing:.1px;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto}
+.dview-quote-labor{border-left-color:var(--info)}
+/* Fotos en cards */
+.dview-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.dview-photo-card{background:#fff;border:1px solid var(--gris-l);border-radius:11px;overflow:hidden;transition:transform .15s ease,box-shadow .15s ease;cursor:pointer}
+.dview-photo-card:hover{transform:translateY(-2px);box-shadow:var(--sombra-md);border-color:var(--verde)}
+.dview-photo-card img{width:100%;height:170px;object-fit:cover;display:block}
+.dview-photo-card-label{font-size:10.5px;color:var(--gris-d);padding:8px 11px;background:#fafafa;border-top:1px solid var(--gris-xl);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+/* Avatar de responsable inline */
+.dview-resp{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.dview-resp-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;letter-spacing:.3px}
+/* Actions bar al final con spacer y botón primario destacado */
+.dview-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:18px;margin-top:20px;border-top:1px solid var(--gris-xl);align-items:center}
+.dview-actions .spacer{flex:1;min-width:8px}
+@media (max-width:768px){
+  .dview-icon-bubble{width:50px;height:50px;border-radius:13px}
+  .dview-icon-bubble svg{width:24px;height:24px}
+  .dview-title{font-size:21px}
+  .dview-facts{grid-template-columns:repeat(2,1fr);gap:8px}
+  .dview-fact{padding:10px 12px}
+  .dview-fields{grid-template-columns:1fr}
+  .dview-photos{grid-template-columns:1fr}
+  .dview-photo-card img{height:200px}
+  .dview-actions{flex-direction:column;align-items:stretch}
+  .dview-actions .spacer{display:none}
+  .dview-actions .btn{width:100%;justify-content:center}
+}
 @media (max-width:768px){
   .card-quick-realizada{padding:8px 14px;font-size:12.5px;min-height:38px}
 }
@@ -525,6 +593,40 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   /* Tags más sobrios dentro de tabla */
   #tbl-apps .tag,#tbl-tasks .tag{font-weight:500;letter-spacing:.1px}
   #tbl-apps .chip,#tbl-tasks .chip{font-size:11px;padding:3px 9px;border-radius:9px;background:var(--verde-l);color:var(--verde-d);font-weight:500;border:1px solid transparent}
+  /* ===== Celdas reestructuradas — 6 columnas con jerarquía interna (Aplicaciones + Labores) ===== */
+  #tbl-apps,#tbl-tasks{table-layout:fixed}
+  #tbl-apps td,#tbl-tasks td{vertical-align:top;padding:18px 14px}
+  /* Col 1: Estado · Fecha apilados */
+  .apx-status-cell{display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+  .apx-date-wrap{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .apx-date-wrap .pro-date{font-size:13px;font-weight:600;color:var(--texto-m)}
+  .apx-date-wrap .pro-date-sub{margin-top:0;font-size:9px;padding:2px 6px}
+  /* Col 2: Producto / Labor con título grande + categoría + descripción tipo quote */
+  .apx-product-cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .apx-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+  .apx-prod-icon{width:18px;height:18px;color:var(--rosa-d);flex-shrink:0;stroke-width:2.2;opacity:.85}
+  .apx-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--texto);letter-spacing:-.015em;line-height:1.25;word-break:break-word}
+  .apx-cat-tag{display:inline-flex;align-items:center;align-self:flex-start;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);color:#1e40af;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:.4px;text-transform:uppercase;border:1px solid #bfdbfe}
+  .apx-desc-wrap{border-left:3px solid var(--gris-l);padding:4px 0 4px 12px;margin-top:4px}
+  .apx-desc-wrap .app-desc{font-size:12.5px;font-style:italic;color:var(--gris-d);line-height:1.55;font-weight:400;letter-spacing:.1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+  .apx-desc-wrap .app-desc.expanded{-webkit-line-clamp:unset;display:block}
+  .apx-desc-wrap .app-desc-toggle{margin-top:4px;font-style:normal}
+  .apx-desc-wrap .app-desc-empty{font-style:italic;color:var(--gris-m)}
+  /* Col 3: Cuarteles wrap clean */
+  .apx-bloques-cell{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;padding-top:2px}
+  /* Col 4: Dosis o Tiempo bold + secondary lines */
+  .apx-dosis-cell{display:flex;flex-direction:column;gap:3px}
+  .apx-dosis{font-size:14px;font-variant-numeric:tabular-nums;color:var(--texto);font-weight:600;letter-spacing:-.01em;line-height:1.35}
+  .apx-volumen{font-size:11.5px;color:var(--gris);font-weight:500;font-variant-numeric:tabular-nums}
+  .apx-metodo{font-size:11.5px;color:var(--texto-m);margin-top:5px;line-height:1.4;padding-top:5px;border-top:1px dashed var(--gris-xl)}
+  /* Col 5: Responsable con avatar + fotos */
+  .apx-resp-cell{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .apx-resp-row{font-size:12.5px}
+  .apx-fotos-row{display:flex;align-items:center}
+  /* Acciones: wrap horizontal limpio */
+  #tbl-apps .pro-actions,#tbl-tasks .pro-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  /* Hover de fila: producto cambia ligeramente */
+  #tbl-apps tbody tr:hover .apx-title,#tbl-tasks tbody tr:hover .apx-title{color:var(--verde-d)}
 }
 .chart-container{position:relative;height:280px}
 .pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
@@ -692,7 +794,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.22';
+const APP_VERSION='2026.05.18.25';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2032,7 +2134,7 @@ async function renderTasks(){
         </article>`;
       }).join(''):`<div class="app-card-empty"><i data-lucide="inbox"></i><div class="app-card-empty-msg">Sin labores</div><div class="app-card-empty-sub">No hay labores que coincidan con este filtro.</div></div>`}</div>
       <div class="table-scroll"><table id="tbl-tasks">
-        <thead><tr><th>Estado</th><th>Fecha</th><th>Labor</th><th>Categoría</th><th>Cuartel</th><th>Tiempo</th><th>Responsable</th><th>Registrado por</th><th>📷</th><th>Notas</th><th></th></tr></thead>
+        <thead><tr><th style="width:130px">Estado · Fecha</th><th>Labor</th><th style="width:180px">Cuarteles</th><th style="width:170px">Tiempo · Responsable</th><th style="width:170px">Fotos · Registro</th><th style="width:170px"></th></tr></thead>
         <tbody>${filtered.length?filtered.map(t=>{
           const est=estadoLabor(t);
           const atr=laborAtrasada(t);
@@ -2060,8 +2162,23 @@ async function renderTasks(){
           const quickBtnTask=(est!=='realizada'&&est!=='cancelada')?`<button class="quick-realizada" onclick="quickMarkTaskRealizada('${t.id}',event)" title="Marcar como realizada"><i data-lucide="check"></i></button>`:'';
           /* Quick photo: botón cámara siempre disponible — fotos es array sin límite estricto. */
           const quickPhotoTask=`<button class="quick-photo" onclick="triggerQuickPhoto('task','${t.id}',event)" title="Subir/tomar foto"><i data-lucide="camera"></i></button>`;
-          return `<tr class="${atr?'fila-atrasada':''} ${trEstT} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFecha?`<div class="pro-date-sub">${subFecha}</div>`:''}</td><td><span class="pro-cell-title">${t.nombre}${lockTag}</span></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td style="font-variant-numeric:tabular-nums;font-weight:500;color:var(--texto-m)">${tiempoTxt||'<span class="pro-empty">—</span>'}</td><td>${respHTMLT}</td><td>${userBadgeFull(t.createdBy)||'<span class="pro-empty">—</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><div class="pro-actions">${quickPhotoTask}${quickBtnTask}<button onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
-        }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
+          /* === FILA REESTRUCTURADA: 6 columnas con jerarquía interna === */
+          const fechaFmtT=fmt(fechaMostrar);
+          const notasFullT=(t.notas||'').toString();
+          /* Columna 1: estado + fecha */
+          const col1T=`<div class="apx-status-cell"><div>${estHTML}</div><div class="apx-date-wrap">${fechaFmtT?`<span class="pro-date">${fechaFmtT}</span>`:''}${subFecha?`<span class="pro-date-sub">${subFecha}</span>`:''}</div></div>`;
+          /* Columna 2: labor bold + categoría chip + notas quote */
+          const col2T=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="clipboard-list" class="apx-prod-icon" style="color:var(--verde-d)"></i><span class="apx-title">${t.nombre||'(sin nombre)'}</span>${lockTag}</div>${t.categoria?`<span class="apx-cat-tag">${t.categoria}</span>`:''}${notasFullT?`<div class="apx-desc-wrap"><div class="app-desc">${notasFullT.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`:''}</div>`;
+          /* Columna 3: cuarteles */
+          const col3T=`<div class="apx-bloques-cell">${bloquesCelda}</div>`;
+          /* Columna 4: tiempo bold + responsable con avatar */
+          const col4T=`<div class="apx-dosis-cell">${tiempoTxt&&tiempoTxt!=='-'?`<div class="apx-dosis"><strong>${tiempoTxt}</strong></div>`:'<div class="pro-empty">— Sin tiempo</div>'}<div class="apx-metodo" style="margin-top:8px">${respHTMLT}</div></div>`;
+          /* Columna 5: fotos + registrado por (usuario que creó la labor) */
+          const col5T=`<div class="apx-resp-cell"><div class="apx-fotos-row">${fotoTxt}</div><div class="apx-resp-row" style="margin-top:6px">${userBadgeFull(t.createdBy)||'<span class="pro-empty">— Sin registro</span>'}</div></div>`;
+          /* Columna 6: acciones */
+          const col6T=`<div class="pro-actions">${quickPhotoTask}${quickBtnTask}<button onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div>`;
+          return `<tr class="${atr?'fila-atrasada':''} ${trEstT} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${col1T}</td><td>${col2T}</td><td>${col3T}</td><td>${col4T}</td><td>${col5T}</td><td>${col6T}</td></tr>`;
+        }).join(''):'<tr><td colspan="6" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table></div>
     </div>`;
   if(typeof lucideInit==='function')lucideInit();
@@ -2323,36 +2440,90 @@ async function viewTask(id){
   const depSt=t.dependeDe?await depStatus(t.dependeDe):null;
   const depBloqueada=depSt&&!depSt.completado&&est!=='realizada';
   const creador=t.createdBy?userById(t.createdBy):null;
-  const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
   const estTag=atr?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${ESTADO_CLS[est]}">${ESTADO_LBL[est]}</span>`;
   const fotosArr=getTaskFotos(t);
-  const fotoBlock=fotosArr.length?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotos de la labor (${fotosArr.length})</h4><div style="display:flex;flex-wrap:wrap;gap:8px">${fotosArr.map(src=>`<img src="${src}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;cursor:zoom-in;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')">`).join('')}</div>`:'';
   const tiempoFmt=formatTiempoLabor(t);
   const horasEquiv=tiempoAHoras(t.horas,t.unidadTiempo);
-  const tiempoExtra=(t.unidadTiempo&&t.unidadTiempo!=='horas'&&horasEquiv!=null)?` <small style="color:var(--gris);font-weight:normal">(≈ ${horasEquiv} h)</small>`:'';
-  /* Bloque de notas separado: full text con saltos de línea preservados,
-     scroll vertical si es muy largo, sin truncado. */
+  const tiempoSub=(t.unidadTiempo&&t.unidadTiempo!=='horas'&&horasEquiv!=null)?`≈ ${horasEquiv} h`:'';
   const notasFull=(t.notas||'').toString();
-  const notasBlock=notasFull?`<h4 style="color:var(--verde-d);margin:14px 0 8px;font-size:13px"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:-2px"></i> Notas / observaciones</h4><div style="background:var(--fondo-suave,#f7f7f5);border:1px solid var(--gris-xl);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto">${notasFull.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
+  const bloquesT=getBloques(t);
+  const fechaPrincipal=est==='realizada'||est==='en_curso'?(t.fecha||t.fechaPlanificada):(t.fechaPlanificada||t.fecha);
+  const fechaPrincipalLbl=est==='realizada'?'Ejecutada el':est==='en_curso'?'Iniciada el':'Planificada para';
+  const respIni=((t.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   openModal(`
-    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px;color:var(--verde-d)"></i> ${t.nombre||'Labor sin nombre'}${depBloqueada?' <span class="tag" style="background:#fef3c7;color:#92400e;font-size:11px;margin-left:6px">🔒 Bloqueada</span>':''}</span>${estTag}</h3>
-    ${atr?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
-    ${depSt?`<div class="alert-box ${depSt.completado?'ok':'warn'}" style="margin:0 0 12px"><i data-lucide="${depSt.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depSt.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depSt.label} · <strong>${depSt.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depSt.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
-    <div style="margin-bottom:8px">
-      ${row('Categoría',t.categoria)}
-      ${row('Cuarteles',(()=>{const bs=getBloques(t);return bs.length?bs.join(', '):'General / Todos';})())}
-      ${row('Fecha planificada',t.fechaPlanificada?fmt(t.fechaPlanificada):'—')}
-      ${row('Fecha ejecutada',(est==='realizada'||est==='en_curso')&&t.fecha?fmt(t.fecha):'—')}
-      ${row('Tiempo trabajado',tiempoFmt!=='-'?tiempoFmt+tiempoExtra:'')}
-      ${row('Responsable',t.responsable)}
-      ${creador?row('Registrado por',creador.nombre+(t.createdAt?' · '+new Date(t.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'}):'')):''}
+    <div class="dview-header">
+      <div class="dview-icon-bubble is-labor"><i data-lucide="clipboard-list"></i></div>
+      <div class="dview-title-block">
+        <div class="dview-title"><span>${t.nombre||'Labor sin nombre'}</span>${depBloqueada?'<span class="dview-lock-badge">🔒 Bloqueada</span>':''}</div>
+        <div class="dview-meta-row">
+          ${estTag}
+          ${t.categoria?`<span class="tag info">${t.categoria}</span>`:''}
+          ${fechaPrincipal?`<span class="dview-date">${fechaPrincipalLbl} ${fmt(fechaPrincipal)}</span>`:''}
+        </div>
+      </div>
     </div>
-    ${notasBlock}
-    ${fotoBlock}
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="closeModal()">Cerrar</button>
-      <button class="btn small danger" onclick="closeModal();delTask('${t.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+    ${atr?`<div class="alert-box warn" style="margin:0 0 16px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Labor atrasada</strong><br>La fecha planificada ya pasó y la labor sigue pendiente.</div></div>`:''}
+    ${depSt?`<div class="alert-box ${depSt.completado?'ok':'warn'}" style="margin:0 0 16px"><i data-lucide="${depSt.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depSt.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depSt.label} · <strong>${depSt.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depSt.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
+    <!-- Quick facts -->
+    <div class="dview-facts">
+      <div class="dview-fact">
+        <div class="dview-fact-label">Cuarteles</div>
+        <div class="dview-fact-value">${bloquesT.length||'Todos'}</div>
+        <div class="dview-fact-sub">${bloquesT.length?bloquesT.join(', '):'General / Todos'}</div>
+      </div>
+      ${tiempoFmt&&tiempoFmt!=='-'?`<div class="dview-fact ok">
+        <div class="dview-fact-label">Tiempo trabajado</div>
+        <div class="dview-fact-value">${tiempoFmt}</div>
+        ${tiempoSub?`<div class="dview-fact-sub">${tiempoSub}</div>`:''}
+      </div>`:''}
+      ${t.responsable?`<div class="dview-fact">
+        <div class="dview-fact-label">Responsable</div>
+        <div class="dview-fact-value" style="font-size:13.5px"><span class="dview-resp"><span class="dview-resp-avatar">${respIni}</span>${t.responsable}</span></div>
+      </div>`:''}
+      ${fotosArr.length?`<div class="dview-fact rosa">
+        <div class="dview-fact-label">Fotografías</div>
+        <div class="dview-fact-value">${fotosArr.length}</div>
+        <div class="dview-fact-sub">capturadas en terreno</div>
+      </div>`:''}
+    </div>
+    <!-- Cuándo y dónde -->
+    <div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="map-pin"></i>Cuándo y dónde</div>
+      <div class="dview-fields">
+        <div class="dview-field"><div class="dview-field-label">Fecha planificada</div><div class="dview-field-value${!t.fechaPlanificada?' is-empty':''}">${t.fechaPlanificada?fmt(t.fechaPlanificada):'sin fecha'}</div></div>
+        <div class="dview-field"><div class="dview-field-label">Fecha ejecutada</div><div class="dview-field-value${!((est==='realizada'||est==='en_curso')&&t.fecha)?' is-empty':''}">${(est==='realizada'||est==='en_curso')&&t.fecha?fmt(t.fecha):'—'}</div></div>
+        <div class="dview-field wide"><div class="dview-field-label">Cuarteles</div><div class="dview-field-value">${bloquesT.length?bloquesT.join(' · '):'General / Todos'}</div></div>
+        ${t.categoria?`<div class="dview-field"><div class="dview-field-label">Categoría</div><div class="dview-field-value">${t.categoria}</div></div>`:''}
+        ${tiempoFmt&&tiempoFmt!=='-'?`<div class="dview-field"><div class="dview-field-label">Tiempo trabajado</div><div class="dview-field-value"><strong>${tiempoFmt}</strong>${tiempoSub?` <small style="color:var(--gris)">${tiempoSub}</small>`:''}</div></div>`:''}
+      </div>
+    </div>
+    <!-- Notas -->
+    ${notasFull?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="file-text"></i>Notas / observaciones</div>
+      <div class="dview-quote dview-quote-labor">${esc(notasFull)}</div>
+    </div>`:''}
+    <!-- Fotos -->
+    ${fotosArr.length?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="camera"></i>Fotografías (${fotosArr.length})</div>
+      <div class="dview-photos">
+        ${fotosArr.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Foto ${i+1} de ${fotosArr.length}</div></div>`).join('')}
+      </div>
+    </div>`:''}
+    <!-- Registro -->
+    ${creador?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="user-check"></i>Registro de la labor</div>
+      <div class="dview-fields">
+        <div class="dview-field"><div class="dview-field-label">Registrado por</div><div class="dview-field-value">${creador.nombre}</div></div>
+        ${t.createdAt?`<div class="dview-field"><div class="dview-field-label">Fecha de registro</div><div class="dview-field-value">${new Date(t.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})}</div></div>`:''}
+      </div>
+    </div>`:''}
+    <!-- Actions -->
+    <div class="dview-actions">
+      <button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button>
       <button class="btn small ghost" onclick="convertTaskToApp('${t.id}')" title="Convertir esta labor a una aplicación"><i data-lucide="arrow-right-left"></i>Convertir a aplicación</button>
+      <button class="btn small danger" onclick="closeModal();delTask('${t.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <div class="spacer"></div>
       <button class="btn" onclick="closeModal();editTask('${t.id}')"><i data-lucide="pencil"></i>Editar</button>
       ${(est!=='realizada'&&est!=='cancelada')?`<button class="btn modal-quick-realizada" onclick="closeModal();quickMarkTaskRealizada('${t.id}')"><i data-lucide="check-circle"></i>Marcar realizada</button>`:''}
     </div>`);
@@ -2533,7 +2704,7 @@ async function renderApplications(){
         </article>`;
       }).join(''):`<div class="app-card-empty"><i data-lucide="inbox"></i><div class="app-card-empty-msg">Sin aplicaciones</div><div class="app-card-empty-sub">No hay aplicaciones que coincidan con este filtro.</div></div>`}</div>
       <div class="table-scroll"><table id="tbl-apps">
-        <thead><tr><th>Estado</th><th>Fecha</th><th>Producto</th><th>Descripción</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Método / Prestador</th><th>Fotos</th><th>Responsable</th><th></th></tr></thead>
+        <thead><tr><th style="width:130px">Estado · Fecha</th><th>Producto</th><th style="width:180px">Cuarteles</th><th style="width:180px">Dosis · Método</th><th style="width:170px">Responsable · Fotos</th><th style="width:170px"></th></tr></thead>
         <tbody>${sorted.length?sorted.map(a=>{
           const estA=estadoApp(a);
           const atrA=aplicacionAtrasada(a);
@@ -2577,8 +2748,22 @@ async function renderApplications(){
           /* Quick photo: botón cámara visible si hay al menos un slot libre. */
           const slotsLibres=(!a.fotoProducto)+(!a.fotoAplicacion);
           const quickPhotoApp=slotsLibres>0?`<button class="quick-photo" onclick="triggerQuickPhoto('app','${a.id}',event)" title="Subir/tomar foto (${slotsLibres} slot${slotsLibres===1?'':'s'} libre${slotsLibres===1?'':'s'})"><i data-lucide="camera"></i></button>`:'';
-          return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFechaA?`<div class="pro-date-sub">${subFechaA}</div>`:''}</td><td><span class="pro-cell-title">${a.producto}${lockTagApp}</span></td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-variant-numeric:tabular-nums"><strong style="color:var(--texto)">${a.dosis||'<span class="pro-empty">—</span>'}</strong>${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:3px;font-weight:500">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:12px;color:var(--texto-m)">${metodoTxt}</td><td>${fotosTxt}</td><td>${respHTML}</td><td><div class="pro-actions">${quickPhotoApp}${quickBtnApp}<button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
-        }).join(''):'<tr><td colspan="11" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
+          /* === FILA REESTRUCTURADA: 6 columnas con jerarquía interna === */
+          const fechaFmtA=fmt(fechaMostrar);
+          /* Columna 1: estado + fecha apilados verticalmente */
+          const col1=`<div class="apx-status-cell"><div>${estHTMLA}</div><div class="apx-date-wrap">${fechaFmtA?`<span class="pro-date">${fechaFmtA}</span>`:''}${subFechaA?`<span class="pro-date-sub">${subFechaA}</span>`:''}</div></div>`;
+          /* Columna 2: producto bold grande + categoría chip + descripción quote */
+          const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${a.categoria?`<span class="apx-cat-tag">${a.categoria}</span>`:''}${a.motivo?`<div class="apx-desc-wrap">${descTxt}</div>`:''}</div>`;
+          /* Columna 3: cuarteles chips */
+          const col3=`<div class="apx-bloques-cell">${bloquesTags(a)}</div>`;
+          /* Columna 4: dosis bold + volumen sub + método */
+          const col4=`<div class="apx-dosis-cell">${a.dosis?`<div class="apx-dosis"><strong>${a.dosis}</strong></div>`:'<div class="pro-empty">— Sin dosis</div>'}${a.volumen?`<div class="apx-volumen">Vol: ${a.volumen}</div>`:''}${metodoTxt?`<div class="apx-metodo">${metodoTxt}</div>`:''}</div>`;
+          /* Columna 5: responsable con avatar + fotos thumbnails */
+          const col5=`<div class="apx-resp-cell"><div class="apx-resp-row">${respHTML}</div><div class="apx-fotos-row">${fotosTxt}</div></div>`;
+          /* Columna 6: acciones agrupadas */
+          const col6=`<div class="pro-actions">${quickPhotoApp}${quickBtnApp}<button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div>`;
+          return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${col1}</td><td>${col2}</td><td>${col3}</td><td>${col4}</td><td>${col5}</td><td>${col6}</td></tr>`;
+        }).join(''):'<tr><td colspan="6" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
     </div>`;
   lucideInit();
@@ -2613,40 +2798,107 @@ async function viewApp(id){
   const depStA=a.dependeDe?await depStatus(a.dependeDe):null;
   const depBloqueadaA=depStA&&!depStA.completado&&estadoApp(a)!=='realizada';
   const creador=a.createdBy?userById(a.createdBy):null;
-  const row=(label,val)=>val?`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="color:var(--gris);font-size:12.5px;font-weight:500">${label}</span><span style="color:var(--texto);font-size:13px;text-align:right;max-width:60%;word-break:break-word">${val}</span></div>`:'';
-  const clima=[a.tempC!=null?a.tempC+'°C':'',a.humedad!=null?a.humedad+'% HR':'',a.viento!=null?a.viento+' km/h':''].filter(Boolean).join(' · ')||'—';
-  const fotos=[];
-  if(a.fotoProducto)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto producto/etiqueta</div><img src="${a.fotoProducto}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"></div>`);
-  if(a.fotoAplicacion)fotos.push(`<div><div style="font-size:11px;color:var(--gris);margin-bottom:4px">Foto aplicación</div><img src="${a.fotoAplicacion}" style="width:100%;max-width:280px;border-radius:8px;cursor:zoom-in" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"></div>`);
+  const clima=[a.tempC!=null&&a.tempC!==''?a.tempC+'°C':'',a.humedad!=null&&a.humedad!==''?a.humedad+'% HR':'',a.viento!=null&&a.viento!==''?a.viento+' km/h':''].filter(Boolean).join(' · ');
   const estDet=estadoApp(a);
   const atrDet=aplicacionAtrasada(a);
   const estTagDet=atrDet?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estDet]||'info'}">${APP_ESTADO_LBL[estDet]||estDet}</span>`;
+  const fechaPrincipal=estDet==='realizada'?(a.fecha||a.fechaPlanificada):(a.fechaPlanificada||a.fecha);
+  const fechaPrincipalLbl=estDet==='realizada'?'Aplicada':'Planificada para';
+  const respIni=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
+  /* HTML-escape helper para textos largos */
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   openModal(`
-    <h3 style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap"><span><i data-lucide="droplet" style="width:18px;height:18px;vertical-align:-3px;color:var(--rosa-d)"></i> ${a.producto}${depBloqueadaA?' <span class="tag" style="background:#fef3c7;color:#92400e;font-size:11px;margin-left:6px">🔒 Bloqueada</span>':''}</span><span style="display:flex;gap:6px;align-items:center">${estTagDet}${a.categoria?`<span class="tag info" style="font-size:11px;font-weight:normal">${a.categoria}</span>`:''}</span></h3>
-    ${activa?`<div class="alert-box warn" style="margin:0 0 12px"><i data-lucide="clock"></i><div class="ab-content"><strong>En carencia activa hasta ${fmt(fin)}</strong><br>No cosechar ni reingresar sin EPP hasta esa fecha.</div></div>`:''}
-    ${depStA?`<div class="alert-box ${depStA.completado?'ok':'warn'}" style="margin:0 0 12px"><i data-lucide="${depStA.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depStA.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depStA.label} · <strong>${depStA.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depStA.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
-    <div style="margin-bottom:8px">
-      ${row('Estado',APP_ESTADO_LBL[estDet]||estDet)}
-      ${row('Fecha planificada',a.fechaPlanificada?fmt(a.fechaPlanificada):'—')}
-      ${estDet==='realizada'?row('Fecha aplicación',a.fecha?fmt(a.fecha)+(a.horaApp?' '+a.horaApp:''):'—'):''}
-      ${row('Cuarteles',bloques.length?bloques.join(', '):'General')}
-      ${row('Ingrediente activo',a.ingrediente)}
-      ${row('Dosis',a.dosis)}
-      ${row('Volumen aplicado',a.volumen)}
-      ${row('Motivo / Plaga objetivo',a.motivo)}
-      ${row('Carencia',(a.carencia||'')+(a.carenciaDias?' ('+a.carenciaDias+' días)':''))}
-      ${row('Apto cosecha desde',fin?fmt(fin):'—')}
-      ${row('Responsable',a.responsable)}
-      ${row('Prestador del servicio',a.prestador)}
-      ${row('Método aplicación',a.metodoAplicacion)}
-      ${row('Condiciones climáticas',clima)}
-      ${creador?row('Registrado por',creador.nombre+' · '+new Date(a.createdAt||Date.now()).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})):''}
+    <div class="dview-header">
+      <div class="dview-icon-bubble"><i data-lucide="droplet"></i></div>
+      <div class="dview-title-block">
+        <div class="dview-title"><span>${a.producto||'(sin producto)'}</span>${depBloqueadaA?'<span class="dview-lock-badge">🔒 Bloqueada</span>':''}</div>
+        <div class="dview-meta-row">
+          ${estTagDet}
+          ${a.categoria?`<span class="tag info">${a.categoria}</span>`:''}
+          ${fechaPrincipal?`<span class="dview-date">${fechaPrincipalLbl} ${fmt(fechaPrincipal)}${a.horaApp?' · '+a.horaApp:''}</span>`:''}
+        </div>
+      </div>
     </div>
-    ${fotos.length?`<h4 style="color:var(--verde-d);margin:14px 0 10px;font-size:13px"><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías</h4><div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${fotos.join('')}</div>`:''}
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="closeModal()">Cerrar</button>
-      <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+    ${activa?`<div class="alert-box warn" style="margin:0 0 16px"><i data-lucide="clock"></i><div class="ab-content"><strong>En carencia activa hasta ${fmt(fin)}</strong><br>No cosechar ni reingresar sin EPP hasta esa fecha.</div></div>`:''}
+    ${depStA?`<div class="alert-box ${depStA.completado?'ok':'warn'}" style="margin:0 0 16px"><i data-lucide="${depStA.completado?'check-circle':'lock'}"></i><div class="ab-content"><strong>Depende de:</strong> <span style="text-transform:capitalize">${depStA.type==='labor'?'📋 Labor':'💧 Aplicación'}</span> · ${depStA.label} · <strong>${depStA.completado?'✅ Realizado':'⏳ Pendiente'}</strong>${!depStA.completado?'<br><small>No se podrá marcar como Realizada hasta que el prereq esté realizado.</small>':''}</div></div>`:''}
+    <!-- Quick facts -->
+    <div class="dview-facts">
+      <div class="dview-fact rosa">
+        <div class="dview-fact-label">Cuarteles</div>
+        <div class="dview-fact-value">${bloques.length||'Todos'}</div>
+        <div class="dview-fact-sub">${bloques.length?bloques.join(', '):'General'}</div>
+      </div>
+      ${a.dosis?`<div class="dview-fact">
+        <div class="dview-fact-label">Dosis</div>
+        <div class="dview-fact-value">${a.dosis}</div>
+        ${a.volumen?`<div class="dview-fact-sub">Vol: ${a.volumen}</div>`:''}
+      </div>`:''}
+      ${(a.carenciaDias||a.carencia)?`<div class="dview-fact ${activa?'warn':'ok'}">
+        <div class="dview-fact-label">Carencia</div>
+        <div class="dview-fact-value">${a.carenciaDias?a.carenciaDias+' días':a.carencia}</div>
+        <div class="dview-fact-sub">${fin?(activa?'🚫 Hasta '+fmt(fin):'✓ Apto desde '+fmt(fin)):'—'}</div>
+      </div>`:''}
+      ${a.metodoAplicacion?`<div class="dview-fact">
+        <div class="dview-fact-label">Método</div>
+        <div class="dview-fact-value" style="font-size:13px">${a.metodoAplicacion}</div>
+        ${a.prestador?`<div class="dview-fact-sub">por ${a.prestador}</div>`:''}
+      </div>`:''}
+    </div>
+    <!-- Producto e ingrediente -->
+    ${(a.ingrediente||a.volumen)?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="flask-conical"></i>Producto e ingrediente</div>
+      <div class="dview-fields">
+        ${a.ingrediente?`<div class="dview-field wide"><div class="dview-field-label">Ingrediente activo / Tipo</div><div class="dview-field-value">${a.ingrediente}</div></div>`:''}
+        ${a.dosis?`<div class="dview-field"><div class="dview-field-label">Dosis aplicada</div><div class="dview-field-value"><strong>${a.dosis}</strong></div></div>`:''}
+        ${a.volumen?`<div class="dview-field"><div class="dview-field-label">Volumen total</div><div class="dview-field-value">${a.volumen}</div></div>`:''}
+      </div>
+    </div>`:''}
+    <!-- Cuándo y dónde -->
+    <div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="map-pin"></i>Cuándo y dónde</div>
+      <div class="dview-fields">
+        <div class="dview-field"><div class="dview-field-label">Fecha planificada</div><div class="dview-field-value${!a.fechaPlanificada?' is-empty':''}">${a.fechaPlanificada?fmt(a.fechaPlanificada):'sin fecha'}</div></div>
+        ${estDet==='realizada'?`<div class="dview-field"><div class="dview-field-label">Fecha de aplicación</div><div class="dview-field-value">${a.fecha?fmt(a.fecha)+(a.horaApp?' a las '+a.horaApp:''):'—'}</div></div>`:''}
+        <div class="dview-field wide"><div class="dview-field-label">Cuarteles aplicados</div><div class="dview-field-value">${bloques.length?bloques.join(' · '):'General / Todos'}</div></div>
+        ${a.metodoAplicacion?`<div class="dview-field"><div class="dview-field-label">Método</div><div class="dview-field-value">${a.metodoAplicacion}</div></div>`:''}
+        ${a.prestador?`<div class="dview-field"><div class="dview-field-label">Prestador del servicio</div><div class="dview-field-value">${a.prestador}</div></div>`:''}
+      </div>
+    </div>
+    <!-- Responsable y clima -->
+    ${(a.responsable||clima)?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="cloud-sun"></i>Responsable y condiciones</div>
+      <div class="dview-fields">
+        ${a.responsable?`<div class="dview-field"><div class="dview-field-label">Responsable</div><div class="dview-field-value"><span class="dview-resp"><span class="dview-resp-avatar">${respIni}</span>${a.responsable}</span></div></div>`:''}
+        ${clima?`<div class="dview-field"><div class="dview-field-label">Clima al aplicar</div><div class="dview-field-value">${clima}</div></div>`:''}
+      </div>
+    </div>`:''}
+    <!-- Motivo / descripción -->
+    ${a.motivo?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="file-text"></i>Motivo / Descripción</div>
+      <div class="dview-quote">${esc(a.motivo)}</div>
+    </div>`:''}
+    <!-- Fotos -->
+    ${(a.fotoProducto||a.fotoAplicacion)?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="camera"></i>Fotografías</div>
+      <div class="dview-photos">
+        ${a.fotoProducto?`<div class="dview-photo-card" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><img src="${a.fotoProducto}"><div class="dview-photo-card-label">Producto · Etiqueta</div></div>`:''}
+        ${a.fotoAplicacion?`<div class="dview-photo-card" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><img src="${a.fotoAplicacion}"><div class="dview-photo-card-label">Aplicación en terreno</div></div>`:''}
+      </div>
+    </div>`:''}
+    <!-- Registro -->
+    ${creador?`<div class="dview-section">
+      <div class="dview-section-head"><i data-lucide="user-check"></i>Registro de la aplicación</div>
+      <div class="dview-fields">
+        <div class="dview-field"><div class="dview-field-label">Registrado por</div><div class="dview-field-value">${creador.nombre}</div></div>
+        <div class="dview-field"><div class="dview-field-label">Fecha de registro</div><div class="dview-field-value">${new Date(a.createdAt||Date.now()).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})}</div></div>
+      </div>
+    </div>`:''}
+    <!-- Actions -->
+    <div class="dview-actions">
+      <button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button>
       <button class="btn small ghost" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
+      <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
+      <div class="spacer"></div>
       <button class="btn" onclick="closeModal();editApp('${a.id}')"><i data-lucide="pencil"></i>Editar</button>
       ${(estDet!=='realizada'&&estDet!=='cancelada')?`<button class="btn modal-quick-realizada" onclick="closeModal();quickMarkAppRealizada('${a.id}')"><i data-lucide="check-circle"></i>Marcar realizada</button>`:''}
     </div>`);
