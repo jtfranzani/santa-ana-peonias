@@ -292,6 +292,45 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .cal-count{font-size:8.5px;padding:1px 5px}
   .cal-dow{padding:5px;font-size:9.5px}
 }
+/* === Vista mobile de Aplicaciones: cards con jerarquía estilo Linear/Stripe.
+   Desktop sigue viendo la tabla; mobile (≤768px) ve las cards verticales. === */
+.apps-mobile-cards{display:none}
+@media (max-width:768px){
+  #tbl-apps,.apps-mobile-cards~.table-scroll{display:none}
+  .table-scroll:has(#tbl-apps){display:none}
+  .apps-mobile-cards{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+}
+.app-card{background:#fff;border-radius:12px;box-shadow:var(--sombra-sm);border:1px solid var(--gris-l);padding:14px 14px 14px 20px;position:relative;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;overflow:hidden}
+.app-card:active{transform:scale(.985);box-shadow:var(--sombra)}
+.app-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--gris-m)}
+.app-card.estado-programada::before{background:var(--warn)}
+.app-card.estado-realizada::before{background:var(--ok)}
+.app-card.estado-cancelada::before{background:var(--gris-m)}
+.app-card.estado-atrasada::before{background:var(--alerta)}
+.app-card.carencia-activa{background:linear-gradient(90deg,#fffbeb,#fff 50%)}
+.app-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.app-card-status{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.app-card-title{font-size:16px;font-weight:700;color:var(--texto);margin-bottom:3px;line-height:1.3;letter-spacing:-.01em;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.app-card-lock{display:inline-flex;align-items:center;background:#fef3c7;color:#92400e;font-size:10.5px;padding:2px 7px;border-radius:8px;font-weight:600}
+.app-card-date{font-size:12.5px;color:var(--gris);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.app-card-date .sub-tag{font-size:9.5px;color:var(--gris-d);text-transform:uppercase;letter-spacing:.5px;background:var(--gris-xl);padding:1px 7px;border-radius:8px;font-weight:600}
+.app-card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.app-card-chips .tag,.app-card-chips .chip{font-size:11px;padding:3px 9px;border-radius:10px;margin:0}
+.app-card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--texto-m);padding:7px 0;border-top:1px solid var(--gris-xl)}
+.app-card-row-label{color:var(--gris);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;flex-shrink:0;padding-top:1px}
+.app-card-row-val{text-align:right;font-weight:500;font-variant-numeric:tabular-nums;color:var(--texto);min-width:0;word-break:break-word}
+.app-card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--gris-xl);font-size:12px;color:var(--gris)}
+.app-card-resp{display:flex;align-items:center;gap:7px;color:var(--texto-m);font-size:12.5px;font-weight:500}
+.app-card-resp-avatar{width:24px;height:24px;border-radius:50%;background:var(--verde);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.app-card-fotos{display:flex;gap:5px;align-items:center}
+.app-card-fotos img{width:36px;height:36px;object-fit:cover;border-radius:7px;border:1px solid var(--gris-l);cursor:zoom-in}
+.app-card-desc{margin-top:10px;padding:9px 11px;background:var(--gris-xl);border-radius:8px;font-size:12.5px;color:var(--texto-m);line-height:1.5;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.app-card-desc.expanded{-webkit-line-clamp:unset;display:block}
+.app-card-desc-toggle{font-size:11.5px;color:var(--info);margin-top:5px;font-weight:600;cursor:pointer;display:inline-block;padding:4px 0;user-select:none}
+.app-card-empty{background:#fff;border-radius:12px;padding:48px 24px;text-align:center;color:var(--gris);border:1px dashed var(--gris-l)}
+.app-card-empty i{width:42px;height:42px;color:var(--gris-m);margin-bottom:12px}
+.app-card-empty-msg{font-size:14px;color:var(--texto-m);font-weight:500;margin-bottom:6px}
+.app-card-empty-sub{font-size:12px;color:var(--gris)}
 .chart-container{position:relative;height:280px}
 .pill{display:inline-block;background:var(--crema);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--gris);margin-right:4px}
 .search-input{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z'/></svg>") no-repeat 10px center;background-size:14px;padding-left:32px}
@@ -416,7 +455,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.12';
+const APP_VERSION='2026.05.18.13';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2096,6 +2135,60 @@ async function renderApplications(){
         <input class="search-input" placeholder="Buscar producto, motivo, prestador..." value="${(_appsFiltroSearch||'').replace(/"/g,'&quot;')}" oninput="setAppsFiltroSearch(this.value)">
       </div>
       <div style="font-size:12px;color:var(--gris);margin-bottom:8px">${sorted.length} de ${apps.length} aplicaciones</div>
+      <div class="apps-mobile-cards" id="apps-mobile-cards">${sorted.length?sorted.map(a=>{
+        const estA=estadoApp(a);
+        const atrA=aplicacionAtrasada(a);
+        const fechaMostrar=estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada);
+        const subFechaA=(estA==='programada'&&a.fechaPlanificada)?'plan.':(estA==='realizada'?'ejec.':'');
+        const fin=fechaFinCarencia(a);
+        const activa=carenciaActiva(a);
+        const depStCard=depStatusSync(a.dependeDe,tasksForDeps,apps);
+        const isBloqueada=depStCard&&!depStCard.completado&&estA!=='realizada';
+        /* Clase de estado para la barra de color izquierda */
+        let estClass='estado-'+(atrA?'atrasada':estA);
+        if(activa)estClass+=' carencia-activa';
+        /* Tags de estado + tiempo */
+        const estTag=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>`;
+        const dDif=fechaMostrar?daysBetween(today(),fechaMostrar):null;
+        let timeBadge='';
+        if(atrA&&dDif!=null)timeBadge=`<span class="tag atrasada" style="font-size:10px">${Math.abs(dDif)}d</span>`;
+        else if(estA==='programada'&&dDif!=null){
+          if(dDif===0)timeBadge='<span class="tag warn" style="font-size:10px">📌 Hoy</span>';
+          else if(dDif>0&&dDif<=7)timeBadge=`<span class="tag warn" style="font-size:10px">En ${dDif}d</span>`;
+          else if(dDif>0)timeBadge=`<span class="tag info" style="font-size:10px">En ${dDif}d</span>`;
+        }
+        const lockBadge=isBloqueada?'<span class="app-card-lock">🔒 Bloqueada</span>':'';
+        /* Chips de categoría + cuarteles */
+        const catTag=a.categoria?`<span class="tag info">${a.categoria}</span>`:'';
+        const bsArr=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
+        const bloquesHTML=bsArr.length?bsArr.map(b=>`<span class="chip">${b}</span>`).join(''):'';
+        /* Fotos thumbnails */
+        const fotosArr=[];
+        if(a.fotoProducto)fotosArr.push(a.fotoProducto);
+        if(a.fotoAplicacion)fotosArr.push(a.fotoAplicacion);
+        const fotosHTML=fotosArr.map(f=>`<img src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')">`).join('');
+        /* Avatar del responsable (iniciales) */
+        const respLetters=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
+        const respHTML=a.responsable?`<div class="app-card-resp"><div class="app-card-resp-avatar">${respLetters}</div><span>${a.responsable}</span></div>`:'<span style="color:var(--gris-m);font-size:12px">Sin responsable</span>';
+        /* Descripción (motivo) con clamp */
+        const motivoVal=(a.motivo||'').toString();
+        const motivoLargo=motivoVal.length>110||motivoVal.includes('\n');
+        const descHTML=motivoVal?`<div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
+        /* Método/Prestador */
+        const metodoTxt=[a.metodoAplicacion,a.prestador].filter(Boolean).join(' · ');
+        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')){viewApp('${a.id}')}">
+          <div class="app-card-head">
+            <div class="app-card-status">${estTag}${timeBadge}${lockBadge}</div>
+          </div>
+          <div class="app-card-title">${a.producto}</div>
+          <div class="app-card-date">${fmt(fechaMostrar)}${subFechaA?`<span class="sub-tag">${subFechaA}</span>`:''}</div>
+          ${(catTag||bloquesHTML)?`<div class="app-card-chips">${catTag}${bloquesHTML}</div>`:''}
+          ${a.dosis?`<div class="app-card-row"><span class="app-card-row-label">Dosis</span><span class="app-card-row-val">${a.dosis}${a.volumen?` <span style="color:var(--gris);font-weight:400">· Vol: ${a.volumen}</span>`:''}</span></div>`:''}
+          ${metodoTxt?`<div class="app-card-row"><span class="app-card-row-label">Método</span><span class="app-card-row-val" style="font-size:12px">${metodoTxt}</span></div>`:''}
+          <div class="app-card-foot">${respHTML}${fotosHTML?`<div class="app-card-fotos">${fotosHTML}</div>`:''}</div>
+          ${descHTML}
+        </article>`;
+      }).join(''):`<div class="app-card-empty"><i data-lucide="inbox"></i><div class="app-card-empty-msg">Sin aplicaciones</div><div class="app-card-empty-sub">No hay aplicaciones que coincidan con este filtro.</div></div>`}</div>
       <div class="table-scroll"><table id="tbl-apps">
         <thead><tr><th>Estado</th><th>Fecha</th><th>Producto</th><th>Descripción</th><th>Categoría</th><th>Cuarteles</th><th>Dosis / Volumen</th><th>Método / Prestador</th><th>Fotos</th><th>Responsable</th><th></th></tr></thead>
         <tbody>${sorted.length?sorted.map(a=>{
@@ -2134,7 +2227,22 @@ async function renderApplications(){
   lucideInit();
   if(_appsFiltroSearch)filterApps(_appsFiltroSearch);
 }
-function filterApps(v){_appsFiltroSearch=v||'';document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes((v||'').toLowerCase())?'':'none')}
+function filterApps(v){
+  _appsFiltroSearch=v||'';
+  const q=(v||'').toLowerCase();
+  /* Tabla (desktop) */
+  document.querySelectorAll('#tbl-apps tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');
+  /* Cards (mobile) */
+  document.querySelectorAll('#apps-mobile-cards .app-card').forEach(c=>c.style.display=c.textContent.toLowerCase().includes(q)?'':'none');
+}
+/* Toggle expand/collapse de la descripción en card de Aplicaciones (mobile). */
+function toggleAppCardDesc(id){
+  const el=document.getElementById('appcarddesc-'+id);
+  if(!el)return;
+  const exp=el.classList.toggle('expanded');
+  const tog=el.parentElement.querySelector('.app-card-desc-toggle');
+  if(tog)tog.textContent=exp?'ver menos':'ver más';
+}
 /* Toggle expand/collapse de la descripción larga en la grilla de Aplicaciones (no debe propagar al click de la fila). */
 function toggleAppDesc(ev,id){if(ev){ev.stopPropagation();ev.preventDefault();}const el=document.getElementById('appdesc-'+id);const tog=document.getElementById('appdesctog-'+id);if(!el)return;const exp=el.classList.toggle('expanded');if(tog)tog.textContent=exp?'ver menos':'ver más';}
 
