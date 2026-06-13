@@ -285,12 +285,42 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .cal-item:hover{filter:brightness(0.94)}
 .cal-more{font-size:10.5px;color:var(--info);cursor:pointer;padding:2px 6px;margin-top:auto;font-weight:500}
 .cal-more:hover{text-decoration:underline}
+/* Wrapper de items dentro de cada celda — flex column en desktop, dots wrap en mobile. */
+.cal-cell-items{display:flex;flex-direction:column;gap:3px;width:100%}
+.cal-item .cal-item-text{display:inline}
 @media (max-width:900px){
   .cal-cell{min-height:80px;padding:4px}
   .cal-day-num{font-size:11px}
   .cal-item{font-size:9.5px;padding:2px 4px}
   .cal-count{font-size:8.5px;padding:1px 5px}
   .cal-dow{padding:5px;font-size:9.5px}
+}
+/* === Mobile (≤640px): items se vuelven puntos de color para que TODO el mes quepa ===
+   Cantidad visible vía dots + badge numérico. Tap en la celda → modal con detalle. */
+@media (max-width:640px){
+  /* Toolbar reorganizada: nav arriba, leyenda abajo a la izquierda */
+  .cal-toolbar{flex-direction:column;align-items:stretch;gap:10px}
+  .cal-toolbar-nav{justify-content:center;gap:6px}
+  .cal-toolbar-nav strong{min-width:auto!important;font-size:15px}
+  .cal-legend{font-size:11px;gap:10px;justify-content:center}
+  /* Day-of-week: solo iniciales (L M M J V S D) */
+  .cal-dow{padding:7px 0;font-size:10px;font-weight:700;letter-spacing:0}
+  /* Celdas: altura razonable + padding cómodo para tap */
+  .cal-cell{min-height:66px;padding:5px 3px;gap:4px}
+  .cal-day-num{font-size:12px;font-weight:700}
+  /* Badge count: número compacto sin texto */
+  .cal-count{font-size:9px;padding:1px 5px;min-width:18px;text-align:center}
+  /* Items se convierten en puntos: ocultamos el texto, mostramos un círculo */
+  .cal-cell-items{flex-direction:row;flex-wrap:wrap;gap:3px;align-items:center}
+  .cal-item{width:8px;height:8px;border-radius:50%;padding:0!important;border:none!important;overflow:hidden;flex-shrink:0}
+  .cal-item.item-atrasada{background:#ef4444}
+  .cal-item.item-labor{background:#2563eb}
+  .cal-item.item-app{background:#be185d}
+  .cal-item-text{display:none!important}
+  /* "+N" más compacto */
+  .cal-more{font-size:10px;padding:0;margin-top:2px;font-weight:700}
+  /* Card del calendar mes: sin padding lateral fuerte (gana ancho) */
+  #main .card:has(.cal-grid){padding:14px 8px}
 }
 /* === Vista mobile de Aplicaciones: cards con jerarquía estilo Linear/Stripe.
    Desktop sigue viendo la tabla; mobile (≤768px) ve las cards verticales. === */
@@ -332,6 +362,18 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-card-empty i{width:42px;height:42px;color:var(--gris-m);margin-bottom:12px}
 .app-card-empty-msg{font-size:14px;color:var(--texto-m);font-weight:500;margin-bottom:6px}
 .app-card-empty-sub{font-size:12px;color:var(--gris)}
+/* === Botón quick-action "Marcar realizada" — visible en tabla desktop, card mobile y modal de detalle. === */
+.pro-actions button.quick-realizada{background:#dcfce7;color:#15803d;border-color:#86efac}
+.pro-actions button.quick-realizada:hover{background:var(--ok);color:#fff;border-color:var(--ok);box-shadow:0 2px 8px rgba(5,150,105,.3)}
+.card-quick-realizada{background:var(--ok);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;min-height:32px;transition:all .15s;letter-spacing:.2px;white-space:nowrap;flex-shrink:0;font-family:inherit;box-shadow:0 1px 3px rgba(5,150,105,.25)}
+.card-quick-realizada:hover{background:#047857;box-shadow:0 2px 8px rgba(5,150,105,.4)}
+.card-quick-realizada:active{transform:scale(.95)}
+.card-quick-realizada svg{width:13px;height:13px;stroke-width:3}
+.modal-quick-realizada{background:linear-gradient(135deg,var(--ok) 0%,#047857 100%)!important;color:#fff!important;border:none!important;box-shadow:0 4px 14px rgba(5,150,105,.35)!important;font-weight:700!important}
+.modal-quick-realizada:hover{box-shadow:0 6px 20px rgba(5,150,105,.5)!important}
+@media (max-width:768px){
+  .card-quick-realizada{padding:8px 14px;font-size:12.5px;min-height:38px}
+}
 /* === Tiles de archivos de asesores: grid responsive con preview/download/delete === */
 .adv-files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;max-height:480px;overflow-y:auto;padding-right:4px}
 .adv-files-grid::-webkit-scrollbar{width:6px}
@@ -629,7 +671,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.18';
+const APP_VERSION='2026.05.18.20';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1951,9 +1993,12 @@ async function renderTasks(){
         /* Tiempo trabajado. */
         const tiempoTxt=formatTiempoLabor(t);
         const fechaTxt=fechaMostrar?fmt(fechaMostrar):'Sin fecha';
-        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')){viewTask('${t.id}')}">
+        /* Quick action: botón "Realizada" en el header de la card de Labor. */
+        const quickBtnTaskCard=(est!=='realizada'&&est!=='cancelada')?`<button class="card-quick-realizada" onclick="quickMarkTaskRealizada('${t.id}',event)"><i data-lucide="check"></i>Realizada</button>`:'';
+        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')&&!event.target.closest('button')){viewTask('${t.id}')}">
           <div class="app-card-head">
             <div class="app-card-status">${estTag}${timeBadge}${lockBadge}</div>
+            ${quickBtnTaskCard}
           </div>
           <div class="app-card-title">${t.nombre||'(sin nombre)'}</div>
           <div class="app-card-date">${fechaTxt}${subFecha?`<span class="sub-tag">${subFecha}</span>`:''}</div>
@@ -1988,7 +2033,9 @@ async function renderTasks(){
           const lockTag=(depStRow&&!depStRow.completado&&est!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
           /* Clase de estado en <tr> para barra lateral. atrasada gana sobre estado normal. */
           const trEstT='est-'+(atr?'atrasada':est);
-          return `<tr class="${atr?'fila-atrasada':''} ${trEstT} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFecha?`<div class="pro-date-sub">${subFecha}</div>`:''}</td><td><span class="pro-cell-title">${t.nombre}${lockTag}</span></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td style="font-variant-numeric:tabular-nums;font-weight:500;color:var(--texto-m)">${tiempoTxt||'<span class="pro-empty">—</span>'}</td><td>${respHTMLT}</td><td>${userBadgeFull(t.createdBy)||'<span class="pro-empty">—</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><div class="pro-actions"><button onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
+          /* Quick action: mostrar "Marcar realizada" si NO está realizada ni cancelada. */
+          const quickBtnTask=(est!=='realizada'&&est!=='cancelada')?`<button class="quick-realizada" onclick="quickMarkTaskRealizada('${t.id}',event)" title="Marcar como realizada"><i data-lucide="check"></i></button>`:'';
+          return `<tr class="${atr?'fila-atrasada':''} ${trEstT} clickable-row" onclick="if(!event.target.closest('button')){viewTask('${t.id}')}" style="cursor:pointer"><td>${estHTML}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFecha?`<div class="pro-date-sub">${subFecha}</div>`:''}</td><td><span class="pro-cell-title">${t.nombre}${lockTag}</span></td><td><span class="tag info">${t.categoria||'General'}</span></td><td style="max-width:180px">${bloquesCelda}</td><td style="font-variant-numeric:tabular-nums;font-weight:500;color:var(--texto-m)">${tiempoTxt||'<span class="pro-empty">—</span>'}</td><td>${respHTMLT}</td><td>${userBadgeFull(t.createdBy)||'<span class="pro-empty">—</span>'}</td><td>${fotoTxt}</td><td>${notasCelda}</td><td class="col-acciones"><div class="pro-actions">${quickBtnTask}<button onclick="event.stopPropagation();viewTask('${t.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editTask('${t.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delTask('${t.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty">Sin labores en este filtro</td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -2282,6 +2329,7 @@ async function viewTask(id){
       <button class="btn small danger" onclick="closeModal();delTask('${t.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
       <button class="btn small ghost" onclick="convertTaskToApp('${t.id}')" title="Convertir esta labor a una aplicación"><i data-lucide="arrow-right-left"></i>Convertir a aplicación</button>
       <button class="btn" onclick="closeModal();editTask('${t.id}')"><i data-lucide="pencil"></i>Editar</button>
+      ${(est!=='realizada'&&est!=='cancelada')?`<button class="btn modal-quick-realizada" onclick="closeModal();quickMarkTaskRealizada('${t.id}')"><i data-lucide="check-circle"></i>Marcar realizada</button>`:''}
     </div>`);
   lucideInit();
 }
@@ -2440,9 +2488,12 @@ async function renderApplications(){
         const descHTML=motivoVal?`<div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
         /* Método/Prestador */
         const metodoTxt=[a.metodoAplicacion,a.prestador].filter(Boolean).join(' · ');
-        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')){viewApp('${a.id}')}">
+        /* Quick action: botón "Realizada" en el header de la card si está programada y no cancelada. */
+        const quickBtnAppCard=(estA!=='realizada'&&estA!=='cancelada')?`<button class="card-quick-realizada" onclick="quickMarkAppRealizada('${a.id}',event)"><i data-lucide="check"></i>Realizada</button>`:'';
+        return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')&&!event.target.closest('button')){viewApp('${a.id}')}">
           <div class="app-card-head">
             <div class="app-card-status">${estTag}${timeBadge}${lockBadge}</div>
+            ${quickBtnAppCard}
           </div>
           <div class="app-card-title">${a.producto}</div>
           <div class="app-card-date">${fmt(fechaMostrar)}${subFechaA?`<span class="sub-tag">${subFechaA}</span>`:''}</div>
@@ -2493,7 +2544,9 @@ async function renderApplications(){
           const lockTagApp=(depStAppRow&&!depStAppRow.completado&&estA!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStAppRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
           /* Clase de estado en <tr> para la barra lateral coloreada (CSS la pinta vía ::before). */
           const trEst='est-'+(atrA?'atrasada':estA);
-          return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFechaA?`<div class="pro-date-sub">${subFechaA}</div>`:''}</td><td><span class="pro-cell-title">${a.producto}${lockTagApp}</span></td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-variant-numeric:tabular-nums"><strong style="color:var(--texto)">${a.dosis||'<span class="pro-empty">—</span>'}</strong>${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:3px;font-weight:500">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:12px;color:var(--texto-m)">${metodoTxt}</td><td>${fotosTxt}</td><td>${respHTML}</td><td><div class="pro-actions"><button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
+          /* Quick action: mostrar botón "Marcar realizada" si NO está realizada ni cancelada. */
+          const quickBtnApp=(estA!=='realizada'&&estA!=='cancelada')?`<button class="quick-realizada" onclick="quickMarkAppRealizada('${a.id}',event)" title="Marcar como realizada"><i data-lucide="check"></i></button>`:'';
+          return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${estHTMLA}</td><td><span class="pro-date">${fmt(fechaMostrar)}</span>${subFechaA?`<div class="pro-date-sub">${subFechaA}</div>`:''}</td><td><span class="pro-cell-title">${a.producto}${lockTagApp}</span></td><td>${descTxt}</td><td><span class="tag info">${a.categoria||'-'}</span></td><td style="max-width:180px">${bloquesTags(a)}</td><td style="font-variant-numeric:tabular-nums"><strong style="color:var(--texto)">${a.dosis||'<span class="pro-empty">—</span>'}</strong>${a.volumen?`<div style="color:var(--gris);font-size:11px;margin-top:3px;font-weight:500">Vol: ${a.volumen}</div>`:''}</td><td style="font-size:12px;color:var(--texto-m)">${metodoTxt}</td><td>${fotosTxt}</td><td>${respHTML}</td><td><div class="pro-actions">${quickBtnApp}<button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div></td></tr>`;
         }).join(''):'<tr><td colspan="11" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
     </div>`;
@@ -2564,6 +2617,7 @@ async function viewApp(id){
       <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
       <button class="btn small ghost" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
       <button class="btn" onclick="closeModal();editApp('${a.id}')"><i data-lucide="pencil"></i>Editar</button>
+      ${(estDet!=='realizada'&&estDet!=='cancelada')?`<button class="btn modal-quick-realizada" onclick="closeModal();quickMarkAppRealizada('${a.id}')"><i data-lucide="check-circle"></i>Marcar realizada</button>`:''}
     </div>`);
   lucideInit();
 }
@@ -2719,6 +2773,52 @@ async function saveApp(id){
   renderApplications();
 }
 async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+/* === Quick action: marcar aplicación como Realizada de un solo clic, sin abrir el modal.
+   Valida prereq y carga la fecha planificada como fecha de ejecución si no se cargó otra. */
+async function quickMarkAppRealizada(id,ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  const a=await get('applications',id);
+  if(!a){toast('Aplicación no encontrada','warn');return}
+  if(estadoApp(a)==='realizada'){toast('Ya está realizada','warn');return}
+  /* Check de prereq: si depende de algo no completado, bloquear. */
+  if(a.dependeDe){
+    const depItem=await getDepItem(a.dependeDe);
+    if(!depItemCompleto(depItem,a.dependeDe.type)){
+      toast(`🔒 Bloqueada: el prereq "${depItemLabel(depItem,a.dependeDe.type)}" aún no está realizado.`,'warn');
+      return;
+    }
+  }
+  a.estado='realizada';
+  if(!a.fecha)a.fecha=a.fechaPlanificada||today();
+  a.id=id;
+  try{await put('applications',a);}
+  catch(e){toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  if(navigator.vibrate)navigator.vibrate(25);
+  toast('✓ Aplicación marcada como realizada');
+  renderApplications();
+}
+/* === Quick action: marcar labor como Realizada de un solo clic. === */
+async function quickMarkTaskRealizada(id,ev){
+  if(ev){ev.stopPropagation();ev.preventDefault();}
+  const t=await get('tasks',id);
+  if(!t){toast('Labor no encontrada','warn');return}
+  if(estadoLabor(t)==='realizada'){toast('Ya está realizada','warn');return}
+  if(t.dependeDe){
+    const depItem=await getDepItem(t.dependeDe);
+    if(!depItemCompleto(depItem,t.dependeDe.type)){
+      toast(`🔒 Bloqueada: el prereq "${depItemLabel(depItem,t.dependeDe.type)}" aún no está realizado.`,'warn');
+      return;
+    }
+  }
+  t.estado='realizada';
+  if(!t.fecha)t.fecha=t.fechaPlanificada||today();
+  t.id=id;
+  try{await put('tasks',t);}
+  catch(e){toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  if(navigator.vibrate)navigator.vibrate(25);
+  toast('✓ Labor marcada como realizada');
+  renderTasks();
+}
 
 /* ============ CONVERSIÓN LABOR ↔ APLICACIÓN ============
    Permite mover un registro entre las colecciones 'tasks' y 'applications' cuando
@@ -3345,18 +3445,23 @@ async function renderCalendar(){
       const visible=arr.slice(0,4);const restantes=arr.length-visible.length;
       const tieneAtr=arr.some(x=>x.atrasada);
       const clases=['cal-cell'];if(isToday)clases.push('today');else if(isPast)clases.push('past');if(arr.length)clases.push('has-items');if(tieneAtr)clases.push('has-atrasada');
+      /* En mobile, los items se renderizan como puntos de color (.cal-dot) — solo info
+         visual de cantidad/tipo. El texto se ve en el modal del día. En desktop, los
+         items mantienen su título visible (.cal-item con texto). */
       cellsHtml+=`<div class="${clases.join(' ')}" ${arr.length?`onclick="openDayDetail('${dateStr}')"`:''}>
         <div class="cal-cell-head">
           <span class="cal-day-num">${d}</span>
-          ${arr.length?`<span class="cal-count">${arr.length} ${arr.length===1?'item':'items'}</span>`:''}
+          ${arr.length?`<span class="cal-count">${arr.length}</span>`:''}
         </div>
-        ${visible.map(i=>{
-          const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
-          const ico=i.tipo==='labor'?'📋':'💧';
-          const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
-          return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}">${ico} ${i.titulo}</div>`;
-        }).join('')}
-        ${restantes>0?`<div class="cal-more">+${restantes} más</div>`:''}
+        <div class="cal-cell-items">
+          ${visible.map(i=>{
+            const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
+            const ico=i.tipo==='labor'?'📋':'💧';
+            const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+            return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
+          }).join('')}
+        </div>
+        ${restantes>0?`<div class="cal-more">+${restantes}</div>`:''}
       </div>`;
     }
     return `
