@@ -355,7 +355,8 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-card-resp-avatar{width:24px;height:24px;border-radius:50%;background:var(--verde);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
 .app-card-fotos{display:flex;gap:5px;align-items:center}
 .app-card-fotos img{width:36px;height:36px;object-fit:cover;border-radius:7px;border:1px solid var(--gris-l);cursor:zoom-in}
-.app-card-desc{margin-top:10px;padding:9px 11px;background:var(--gris-xl);border-radius:8px;font-size:12.5px;color:var(--texto-m);line-height:1.5;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.app-card-desc{margin-top:0;padding:9px 11px;background:var(--gris-xl);border-radius:8px;font-size:12.5px;color:var(--texto-m);line-height:1.5;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;border-left:3px solid var(--verde)}
+.app-card-desc.app-card-com{background:linear-gradient(90deg,#fdf2f8 0%,var(--gris-xl) 100%);border-left-color:var(--rosa-d)}
 .app-card-desc.expanded{-webkit-line-clamp:unset;display:block}
 .app-card-desc-toggle{font-size:11.5px;color:var(--info);margin-top:5px;font-weight:600;cursor:pointer;display:inline-block;padding:4px 0;user-select:none}
 .app-card-empty{background:#fff;border-radius:12px;padding:48px 24px;text-align:center;color:var(--gris);border:1px dashed var(--gris-l)}
@@ -689,11 +690,14 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .apx-prod-icon{width:18px;height:18px;color:var(--rosa-d);flex-shrink:0;stroke-width:2.2;opacity:.85}
   .apx-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--texto);letter-spacing:-.015em;line-height:1.25;word-break:break-word}
   .apx-cat-tag{display:inline-flex;align-items:center;align-self:flex-start;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);color:#1e40af;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:.4px;text-transform:uppercase;border:1px solid #bfdbfe}
-  .apx-desc-wrap{border-left:3px solid var(--gris-l);padding:4px 0 4px 12px;margin-top:4px}
+  .apx-desc-wrap{border-left:3px solid var(--verde);padding:4px 0 4px 12px;margin-top:6px}
+  .apx-desc-wrap.apx-com-wrap{border-left-color:var(--rosa-d);margin-top:8px}
   .apx-desc-wrap .app-desc{font-size:12.5px;font-style:italic;color:var(--gris-d);line-height:1.55;font-weight:400;letter-spacing:.1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
   .apx-desc-wrap .app-desc.expanded{-webkit-line-clamp:unset;display:block}
   .apx-desc-wrap .app-desc-toggle{margin-top:4px;font-style:normal}
   .apx-desc-wrap .app-desc-empty{font-style:italic;color:var(--gris-m)}
+  .apx-desc-mini-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--verde-d);font-weight:800;margin-bottom:3px;display:block}
+  .apx-desc-mini-label.apx-com-label{color:var(--rosa-d)}
   /* Col 3: Cuarteles wrap clean */
   .apx-bloques-cell{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;padding-top:2px}
   /* Col 4: Dosis o Tiempo bold + secondary lines */
@@ -877,7 +881,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.31';
+const APP_VERSION='2026.05.18.32';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2886,7 +2890,11 @@ async function renderApplications(){
         /* Descripción (motivo) con clamp */
         const motivoVal=(a.motivo||'').toString();
         const motivoLargo=motivoVal.length>110||motivoVal.includes('\n');
-        const descHTML=motivoVal?`<div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
+        const descHTML=motivoVal?`<div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--verde-d);font-weight:800;margin-top:10px;margin-bottom:4px">Motivo</div><div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
+        /* Comentarios del día (opcional) con clamp separado */
+        const comValM=(a.comentarios||'').toString();
+        const comLargoM=comValM.length>110||comValM.includes('\n');
+        const comHTML=comValM?`<div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--rosa-d);font-weight:800;margin-top:10px;margin-bottom:4px">Comentarios</div><div id="appcardcom-${a.id}" class="app-card-desc app-card-com">${comValM}</div>${comLargoM?`<span class="app-card-desc-toggle app-card-com-toggle" onclick="event.stopPropagation();toggleAppCardCom('${a.id}')">ver más</span>`:''}`:'';
         /* Método/Prestador */
         const metodoTxt=[a.metodoAplicacion,a.prestador].filter(Boolean).join(' · ');
         /* Quick action: botón "Realizada" en el header de la card si está programada y no cancelada. */
@@ -2905,6 +2913,7 @@ async function renderApplications(){
           ${metodoTxt?`<div class="app-card-row"><span class="app-card-row-label">Método</span><span class="app-card-row-val" style="font-size:12px">${metodoTxt}</span></div>`:''}
           <div class="app-card-foot">${respHTML}${fotosHTML?`<div class="app-card-fotos">${fotosHTML}</div>`:''}</div>
           ${descHTML}
+          ${comHTML}
         </article>`;
       }).join(''):`<div class="app-card-empty"><i data-lucide="inbox"></i><div class="app-card-empty-msg">Sin aplicaciones</div><div class="app-card-empty-sub">No hay aplicaciones que coincidan con este filtro.</div></div>`}</div>
       <div class="table-scroll"><table id="tbl-apps">
@@ -2943,6 +2952,12 @@ async function renderApplications(){
           const descTxt=motivoVal
             ?`<div class="app-desc-wrap"><div id="appdesc-${a.id}" class="app-desc">${motivoVal}</div>${motivoLargo?`<span id="appdesctog-${a.id}" class="app-desc-toggle" onclick="toggleAppDesc(event,'${a.id}')">ver más</span>`:''}</div>`
             :'<span class="app-desc-empty">—</span>';
+          /* Comentarios (nota libre del día, distinto del motivo técnico). Mismo patrón visual con border-left magenta. */
+          const comVal=(a.comentarios||'').toString();
+          const comLargo=comVal.length>80||comVal.includes('\n');
+          const comTxt=comVal
+            ?`<div class="app-com-wrap"><div id="appcom-${a.id}" class="app-desc">${comVal}</div>${comLargo?`<span id="appcomtog-${a.id}" class="app-desc-toggle" onclick="toggleAppCom(event,'${a.id}')">ver más</span>`:''}</div>`
+            :'';
           /* Lock badge: la aplicación depende de algo no realizado y aún no se ha ejecutado. */
           const depStAppRow=depStatusSync(a.dependeDe,tasksForDeps,apps);
           const lockTagApp=(depStAppRow&&!depStAppRow.completado&&estA!=='realizada')?` <span class="tag" style="background:#fef3c7;color:#92400e;font-size:10px;padding:1px 6px;margin-left:4px" title="Depende de: ${depStAppRow.label.replace(/"/g,'&quot;')}">🔒</span>`:'';
@@ -2956,8 +2971,8 @@ async function renderApplications(){
           const fechaFmtA=fmt(fechaMostrar);
           /* Columna 1: estado + fecha apilados verticalmente */
           const col1=`<div class="apx-status-cell"><div>${estHTMLA}</div><div class="apx-date-wrap">${fechaFmtA?`<span class="pro-date">${fechaFmtA}</span>`:''}${subFechaA?`<span class="pro-date-sub">${subFechaA}</span>`:''}</div></div>`;
-          /* Columna 2: producto bold grande + categoría chip + descripción quote */
-          const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${a.categoria?`<span class="apx-cat-tag">${a.categoria}</span>`:''}${a.motivo?`<div class="apx-desc-wrap">${descTxt}</div>`:''}</div>`;
+          /* Columna 2: producto bold grande + categoría chip + descripción (motivo) quote + comentarios quote (rosa) */
+          const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${a.categoria?`<span class="apx-cat-tag">${a.categoria}</span>`:''}${a.motivo?`<div class="apx-desc-wrap"><div class="apx-desc-mini-label">Motivo</div>${descTxt}</div>`:''}${a.comentarios?`<div class="apx-desc-wrap apx-com-wrap"><div class="apx-desc-mini-label apx-com-label">Comentarios</div>${comTxt}</div>`:''}</div>`;
           /* Columna 3: cuarteles chips */
           const col3=`<div class="apx-bloques-cell">${bloquesTags(a)}</div>`;
           /* Columna 4: dosis bold + volumen sub + método */
@@ -2991,6 +3006,10 @@ function toggleAppCardDesc(id){
 }
 /* Toggle expand/collapse de la descripción larga en la grilla de Aplicaciones (no debe propagar al click de la fila). */
 function toggleAppDesc(ev,id){if(ev){ev.stopPropagation();ev.preventDefault();}const el=document.getElementById('appdesc-'+id);const tog=document.getElementById('appdesctog-'+id);if(!el)return;const exp=el.classList.toggle('expanded');if(tog)tog.textContent=exp?'ver menos':'ver más';}
+/* Toggle expand/collapse de comentarios en la grilla de Aplicaciones. */
+function toggleAppCom(ev,id){if(ev){ev.stopPropagation();ev.preventDefault();}const el=document.getElementById('appcom-'+id);const tog=document.getElementById('appcomtog-'+id);if(!el)return;const exp=el.classList.toggle('expanded');if(tog)tog.textContent=exp?'ver menos':'ver más';}
+/* Toggle para la card mobile de comentarios. */
+function toggleAppCardCom(id){const el=document.getElementById('appcardcom-'+id);if(!el)return;const exp=el.classList.toggle('expanded');const tog=el.parentElement.querySelector('.app-card-com-toggle');if(tog)tog.textContent=exp?'ver menos':'ver más';}
 
 /* Ver detalle completo de aplicación (ideal para móvil donde la tabla se corta). */
 async function viewApp(id){
@@ -3076,10 +3095,15 @@ async function viewApp(id){
         ${clima?`<div class="dview-field"><div class="dview-field-label">Clima al aplicar</div><div class="dview-field-value">${clima}</div></div>`:''}
       </div>
     </div>`:''}
-    <!-- Motivo / descripción -->
+    <!-- Motivo / descripción técnica -->
     ${a.motivo?`<div class="dview-section">
-      <div class="dview-section-head"><i data-lucide="file-text"></i>Motivo / Descripción</div>
+      <div class="dview-section-head"><i data-lucide="target"></i>Motivo · Objetivo técnico</div>
       <div class="dview-quote">${esc(a.motivo)}</div>
+    </div>`:''}
+    <!-- Comentarios del día (observaciones libres) -->
+    ${a.comentarios?`<div class="dview-section">
+      <div class="dview-section-head" style="color:var(--rosa-d)"><i data-lucide="message-square"></i>Comentarios</div>
+      <div class="dview-quote" style="border-left-color:var(--rosa-d);background:linear-gradient(90deg,#fdf2f8 0%,#fff 50%)">${esc(a.comentarios)}</div>
     </div>`:''}
     <!-- Fotos multi-categoría (multi-imagen por categoría) -->
     ${(()=>{
@@ -3193,7 +3217,8 @@ async function editApp(id){
       <div class="form-row"><label>Humedad (%)</label><input id="f-hum" type="number" min="0" max="100" value="${a.humedad!=null?a.humedad:''}" placeholder="ej. 60"></div>
       <div class="form-row"><label>Viento (km/h)</label><input id="f-vto" type="number" step="0.5" value="${a.viento!=null?a.viento:''}" placeholder="ej. 8"></div>
     </div>
-    <div class="form-row" style="margin-top:10px"><label>Motivo / plaga o enfermedad objetivo</label><textarea id="f-mot" rows="2">${a.motivo||''}</textarea></div>
+    <div class="form-row" style="margin-top:10px"><label>Motivo / plaga o enfermedad objetivo <small style="color:var(--gris);font-weight:normal">(por qué se aplica — objetivo técnico)</small></label><textarea id="f-mot" rows="2" placeholder="Ej: Prevención de Botrytis · Control de Cladosporium · Malezas post-emergentes...">${a.motivo||''}</textarea></div>
+    <div class="form-row"><label>Comentarios <small style="color:var(--gris);font-weight:normal">(observaciones libres del día — cómo salió, contexto, aprendizajes)</small></label><textarea id="f-com" rows="2" placeholder="Ej: Aplicado antes de la lluvia. Viento leve del sur. Se demoró 2 horas más de lo estimado.">${a.comentarios||''}</textarea></div>
     <div class="form-row"><label>Depende de <small style="color:var(--gris);font-weight:normal">(opcional — esta aplicación no se podrá marcar como realizada hasta que el prereq esté realizado)</small></label>
       <select id="f-dep">
         <option value="">— Sin dependencia —</option>
@@ -3233,7 +3258,7 @@ async function saveApp(id){
   const fechaEjecFinal=estadoSel==='realizada'?(fejec||fplan||today()):null;
   const depRawApp=document.getElementById('f-dep')?.value||'';
   const dependeDeApp=depDecode(depRawApp);
-  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null,dependeDe:dependeDeApp};
+  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,comentarios:document.getElementById('f-com')?.value||'',tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null,dependeDe:dependeDeApp};
   if(!data.producto){toast('Producto requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
   /* Validación de prerrequisito: si se intenta dejar en estado realizada y el prereq no está realizado, bloquear. */
