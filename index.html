@@ -512,7 +512,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .dview-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .dview-photo-card{background:#fff;border:1px solid var(--gris-l);border-radius:11px;overflow:hidden;transition:transform .15s ease,box-shadow .15s ease;cursor:pointer}
 .dview-photo-card:hover{transform:translateY(-2px);box-shadow:var(--sombra-md);border-color:var(--verde)}
-.dview-photo-card img{width:100%;height:170px;object-fit:cover;display:block}
+.dview-photo-card img{width:100%;height:240px;object-fit:contain;object-position:center;display:block;background:#f4f4f2}
 .dview-photo-card-label{font-size:10.5px;color:var(--gris-d);padding:8px 11px;background:#fafafa;border-top:1px solid var(--gris-xl);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 /* Avatar de responsable inline */
 .dview-resp{display:inline-flex;align-items:center;gap:8px;font-weight:600}
@@ -528,7 +528,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .dview-fact{padding:10px 12px}
   .dview-fields{grid-template-columns:1fr}
   .dview-photos{grid-template-columns:1fr}
-  .dview-photo-card img{height:200px}
+  .dview-photo-card img{height:280px}
   .dview-actions{flex-direction:column;align-items:stretch}
   .dview-actions .spacer{display:none}
   .dview-actions .btn{width:100%;justify-content:center}
@@ -877,7 +877,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.30';
+const APP_VERSION='2026.05.18.31';
 
 /* ============ USUARIOS ============ */
 const USERS=[
