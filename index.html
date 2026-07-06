@@ -437,6 +437,67 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .dview-add-photo-btn:active{transform:scale(.96)}
 .dview-add-photo-btn svg{width:13px;height:13px;stroke-width:2.4;color:inherit!important}
 @media (max-width:768px){.dview-add-photo-btn{padding:7px 13px;font-size:12px;min-height:36px}.dview-add-photo-btn svg{width:15px;height:15px}}
+/* === Dashboard rediseñado: hero "HOY" + secciones operativas compactas === */
+.dash-hoy{background:linear-gradient(135deg,#fff 0%,var(--crema) 100%);border:1px solid var(--gris-l);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:var(--sombra-sm);position:relative;overflow:hidden}
+.dash-hoy::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--verde) 0%,var(--verde-d) 100%)}
+.dash-hoy.has-atrasada::before{background:linear-gradient(180deg,var(--alerta) 0%,#b91c1c 100%)}
+.dash-hoy-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.dash-hoy-title{display:flex;align-items:flex-start;gap:14px;flex:1;min-width:0}
+.dash-hoy-icon-ok,.dash-hoy-icon-atr{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--verde-l)}
+.dash-hoy-icon-ok svg{color:var(--verde-d);width:24px;height:24px;stroke-width:2.2}
+.dash-hoy-icon-atr{background:#fee2e2}
+.dash-hoy-icon-atr svg{color:var(--alerta);width:24px;height:24px;stroke-width:2.2}
+.dash-hoy-title>div{flex:1;min-width:0}
+.dash-hoy-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gris-d);font-weight:700;display:block;margin-bottom:3px}
+.dash-hoy-title h3{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:var(--texto);letter-spacing:-.02em;line-height:1.2;margin:0}
+.dash-hoy-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--gris-xl)}
+.dash-hoy-section:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.dash-hoy-section-head{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dash-hoy-section.atrasada .dash-hoy-section-head{color:var(--alerta)}
+.dash-hoy-item{display:flex;align-items:center;gap:12px;padding:11px 13px;background:#fff;border:1px solid var(--gris-xl);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:all .12s ease}
+.dash-hoy-item:hover{border-color:var(--verde);box-shadow:var(--sombra-sm);transform:translateX(2px)}
+.dash-hoy-item.atrasada{border-left:3px solid var(--alerta)}
+.dash-hoy-item.hoy{border-left:3px solid var(--warn)}
+.dash-hoy-item.futuro{border-left:3px solid var(--info)}
+.dash-hoy-item-tipo{font-size:20px;line-height:1;flex-shrink:0}
+.dash-hoy-item-body{flex:1;min-width:0}
+.dash-hoy-item-body strong{font-size:14px;color:var(--texto);font-weight:600;display:block;line-height:1.3;letter-spacing:-.01em}
+.dash-hoy-item-meta{font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
+.dash-hoy-item-actions{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.dash-hoy-item-actions button{width:34px;height:34px;border-radius:8px;border:1px solid var(--gris-l);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:var(--gris-d);font-weight:700;transition:all .12s;padding:0}
+.dash-hoy-item-actions button.dash-hoy-realizada{background:#dcfce7;color:#15803d;border-color:#86efac}
+.dash-hoy-item-actions button.dash-hoy-realizada:hover{background:var(--ok);color:#fff;border-color:var(--ok)}
+.dash-hoy-item-actions button.dash-hoy-photo:hover{background:var(--warn);color:#fff;border-color:var(--warn)}
+.dash-hoy-item-actions button svg{width:15px;height:15px;stroke-width:2.2}
+.dash-hoy-more{font-size:11.5px;color:var(--gris);text-align:center;margin-top:6px;font-style:italic}
+/* Últimas actividades compactas */
+.dash-ult-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;cursor:pointer;transition:background .12s;border:1px solid transparent}
+.dash-ult-item:hover{background:var(--crema);border-color:var(--gris-l)}
+.dash-ult-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dash-ult-icon svg{width:18px;height:18px;stroke-width:2}
+.dash-ult-body{flex:1;min-width:0}
+.dash-ult-body strong{font-size:13.5px;color:var(--texto);font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
+.dash-ult-meta{font-size:11.5px;color:var(--gris);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Estado de temporada compact (3 mini cards en línea) */
+.dash-temporada{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px}
+.dash-temp-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--gris-l);border-radius:11px;padding:14px}
+.dash-temp-card>svg{width:24px;height:24px;color:var(--verde);flex-shrink:0;stroke-width:2}
+.dash-temp-card>div{flex:1;min-width:0}
+.dash-temp-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);font-weight:700;margin-bottom:3px}
+.dash-temp-card strong{font-size:15px;color:var(--texto);font-weight:700;letter-spacing:-.01em;display:block}
+.dash-temp-card strong small{font-size:11px;font-weight:500;color:var(--gris)}
+.dash-temp-sub{font-size:10.5px;color:var(--gris);margin-top:2px;font-weight:500}
+.dash-temp-bar{height:5px;background:var(--gris-xl);border-radius:3px;margin-top:6px;overflow:hidden}
+.dash-temp-bar>div{height:100%;background:linear-gradient(90deg,var(--info) 0%,var(--verde) 100%);border-radius:3px;transition:width .3s}
+@media (max-width:768px){
+  .dash-hoy{padding:16px}
+  .dash-hoy-title h3{font-size:18px}
+  .dash-hoy-icon-ok,.dash-hoy-icon-atr{width:38px;height:38px}
+  .dash-hoy-item{padding:10px 11px;gap:10px}
+  .dash-hoy-item-body strong{font-size:13px}
+  .dash-hoy-item-actions button{width:40px;height:40px}
+  .dash-temporada{grid-template-columns:1fr}
+}
 .dview-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px}
 .dview-field{display:flex;flex-direction:column;gap:3px;padding:4px 0}
 .dview-field.wide{grid-column:1/-1}
@@ -734,12 +795,13 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
     <div class="nav">
       <div class="nav-section">General</div>
       <a onclick="nav('dashboard')" id="nav-dashboard" class="active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
-      <a onclick="nav('weather')" id="nav-weather"><i data-lucide="cloud-rain"></i><span>Clima y lluvias</span></a>
       <a onclick="nav('calendar')" id="nav-calendar"><i data-lucide="calendar-days"></i><span>Calendario</span></a>
       <div class="nav-section">Manejo</div>
       <a onclick="nav('tasks')" id="nav-tasks"><i data-lucide="clipboard-list"></i><span>Bitácora labores</span></a>
       <a onclick="nav('applications')" id="nav-applications"><i data-lucide="droplet"></i><span>Aplicaciones</span></a>
+      <div class="nav-section">Huerto</div>
+      <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
+      <a onclick="nav('weather')" id="nav-weather"><i data-lucide="cloud-rain"></i><span>Clima y lluvias</span></a>
       <a onclick="nav('inventory')" id="nav-inventory"><i data-lucide="package"></i><span>Inventario</span></a>
       <a onclick="nav('studies')" id="nav-studies"><i data-lucide="flask-conical"></i><span>Estudios</span></a>
       <a onclick="nav('advisors')" id="nav-advisors"><i data-lucide="user-check"></i><span>Asesores</span></a>
@@ -815,7 +877,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.26';
+const APP_VERSION='2026.05.18.30';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1030,6 +1092,12 @@ const APP_ESTADO_CLS={programada:'pendiente',realizada:'realizada',cancelada:'ca
 function aplicacionAtrasada(a){if(estadoApp(a)!=='programada')return false;const fp=a.fechaPlanificada||a.fecha;if(!fp)return false;return parseLocalDate(fp)<parseLocalDate(today())}
 function fechaFinCarencia(app){if(estadoApp(app)!=='realizada')return null;const d=parseCarenciaDias(app.carenciaDias!=null?app.carenciaDias:app.carencia);return d&&app.fecha?addDays(app.fecha,d):null}
 function carenciaActiva(app){const f=fechaFinCarencia(app);return f?parseLocalDate(f)>=parseLocalDate(today()):false}
+/* Helpers de fotos de Aplicación multi-imagen. Backward-compat: si aún existen los campos
+   legacy fotoProducto/fotoAplicacion (single dataURL), los cuentan. Al guardar se migran a
+   arrays fotosProducto/fotosAplicacion. */
+function getFotosProducto(a){if(!a)return[];if(Array.isArray(a.fotosProducto))return a.fotosProducto.slice();if(a.fotoProducto)return[a.fotoProducto];return[]}
+function getFotosAplicacion(a){if(!a)return[];if(Array.isArray(a.fotosAplicacion))return a.fotosAplicacion.slice();if(a.fotoAplicacion)return[a.fotoAplicacion];return[]}
+function getFotosApp(a){return[...getFotosProducto(a),...getFotosAplicacion(a)]}
 /* ============ DEPENDENCIAS (PRERREQUISITOS) ============
    Una labor o aplicación puede declarar `dependeDe: {type:'labor'|'app', id:'xxx'}`.
    Cuando se intenta pasar el item a estado realizada, validamos que el prereq
@@ -1516,19 +1584,101 @@ async function renderDashboard(){
         <button class="btn small" onclick="nav('calendar')" style="margin:0;white-space:nowrap"><i data-lucide="calendar-days"></i>Ver calendario</button>
       </div>
     </div>`:'';
+  /* === Nuevo cómputo operativo: items HOY, atrasadas, próximos 7d, próximos 30d, próximo item === */
+  const hoyStr=today();
+  const _tasksOpHoy=tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&(t.fechaPlanificada||t.fecha)===hoyStr).map(t=>({
+    tipo:'labor',id:t.id,titulo:t.nombre||'(sin nombre)',bloques:getBloques(t),responsable:t.responsable||'',fecha:t.fechaPlanificada||t.fecha,categoria:t.categoria||''
+  }));
+  const _appsOpHoy=apps.filter(a=>estadoApp(a)==='programada'&&(a.fechaPlanificada||a.fecha)===hoyStr).map(a=>({
+    tipo:'aplicacion',id:a.id,titulo:a.producto||'(sin producto)',bloques:getBloques(a),responsable:a.responsable||'',fecha:a.fechaPlanificada||a.fecha,categoria:a.categoria||'',dosis:a.dosis||''
+  }));
+  const itemsHoyOp=[..._tasksOpHoy,..._appsOpHoy];
+  const _atrTasks=tasks.filter(t=>laborAtrasada(t)).map(t=>({tipo:'labor',id:t.id,titulo:t.nombre||'(sin nombre)',fecha:t.fechaPlanificada||t.fecha,bloques:getBloques(t),responsable:t.responsable||'',categoria:t.categoria||''}));
+  const _atrApps=apps.filter(a=>aplicacionAtrasada(a)).map(a=>({tipo:'aplicacion',id:a.id,titulo:a.producto||'(sin producto)',fecha:a.fechaPlanificada||a.fecha,bloques:getBloques(a),responsable:a.responsable||'',categoria:a.categoria||'',dosis:a.dosis||''}));
+  const atrasadasOp=[..._atrTasks,..._atrApps].sort((a,b)=>parseLocalDate(a.fecha)-parseLocalDate(b.fecha));
+  const en7TasksOp=tasks.filter(t=>{if(!['pendiente','en_curso'].includes(estadoLabor(t)))return false;if(laborAtrasada(t))return false;const f=t.fechaPlanificada||t.fecha;if(!f||f===hoyStr)return false;const d=daysBetween(hoyStr,f);return d>0&&d<=7;});
+  const en7AppsOp=apps.filter(a=>{if(estadoApp(a)!=='programada')return false;if(aplicacionAtrasada(a))return false;const f=a.fechaPlanificada||a.fecha;if(!f||f===hoyStr)return false;const d=daysBetween(hoyStr,f);return d>0&&d<=7;});
+  const en30TasksOp=tasks.filter(t=>{if(!['pendiente','en_curso'].includes(estadoLabor(t)))return false;if(laborAtrasada(t))return false;const f=t.fechaPlanificada||t.fecha;if(!f)return false;const d=daysBetween(hoyStr,f);return d>=0&&d<=30;});
+  const en30AppsOp=apps.filter(a=>{if(estadoApp(a)!=='programada')return false;if(aplicacionAtrasada(a))return false;const f=a.fechaPlanificada||a.fecha;if(!f)return false;const d=daysBetween(hoyStr,f);return d>=0&&d<=30;});
+  /* Próximo item si no hay nada hoy ni atrasadas */
+  let _proxOp=null;
+  if(!itemsHoyOp.length&&!atrasadasOp.length){
+    const _allFut=[
+      ...tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&!laborAtrasada(t)).map(t=>({tipo:'labor',id:t.id,titulo:t.nombre||'(sin nombre)',fecha:t.fechaPlanificada||t.fecha,bloques:getBloques(t),responsable:t.responsable||'',categoria:t.categoria||''})),
+      ...apps.filter(a=>estadoApp(a)==='programada'&&!aplicacionAtrasada(a)).map(a=>({tipo:'aplicacion',id:a.id,titulo:a.producto||'(sin producto)',fecha:a.fechaPlanificada||a.fecha,bloques:getBloques(a),responsable:a.responsable||'',categoria:a.categoria||'',dosis:a.dosis||''}))
+    ].filter(i=>i.fecha&&i.fecha!==hoyStr).sort((a,b)=>parseLocalDate(a.fecha)-parseLocalDate(b.fecha));
+    _proxOp=_allFut[0]||null;
+  }
+  /* Últimas 4 realizadas (labores + aplicaciones) — compactas */
+  const ultLab4=tasks.filter(t=>estadoLabor(t)==='realizada'&&t.fecha).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,4);
+  const ultApp4=apps.filter(a=>estadoApp(a)==='realizada'&&a.fecha).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,4);
+  /* Render compacto de un item operativo */
+  const renderHoyItem=(i,kind)=>{
+    const tipoIcon=i.tipo==='labor'?'📋':'💧';
+    const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+    const quickRealFn=i.tipo==='labor'?`quickMarkTaskRealizada('${i.id}',event)`:`quickMarkAppRealizada('${i.id}',event)`;
+    const quickPhotoFn=i.tipo==='labor'?`triggerQuickPhoto('task','${i.id}',event)`:`triggerQuickPhoto('app','${i.id}',event)`;
+    const atrasoTxt=kind==='atrasada'?` · <span style="color:var(--alerta);font-weight:700">atrasada ${Math.abs(daysBetween(hoyStr,i.fecha))}d</span>`:'';
+    const fechaTxt=kind==='futuro'?` · ${fmt(i.fecha)}`:'';
+    return `<div class="dash-hoy-item ${kind}" onclick="if(!event.target.closest('button')){${viewFn}}">
+      <div class="dash-hoy-item-tipo">${tipoIcon}</div>
+      <div class="dash-hoy-item-body">
+        <strong>${i.titulo}</strong>
+        <div class="dash-hoy-item-meta">${i.bloques.length?i.bloques.join(', '):'General'}${i.responsable?' · '+i.responsable:''}${i.dosis?' · '+i.dosis:''}${atrasoTxt}${fechaTxt}</div>
+      </div>
+      <div class="dash-hoy-item-actions">
+        <button onclick="${quickRealFn}" title="Marcar realizada" class="dash-hoy-realizada">✓</button>
+        <button onclick="${quickPhotoFn}" title="Subir foto" class="dash-hoy-photo"><i data-lucide="camera"></i></button>
+      </div>
+    </div>`;
+  };
   document.getElementById('main').innerHTML=`
     ${_bannerHTML}
     <div class="page-header">
       <div><h2>Dashboard</h2><div class="sub">${fmtLong(hoy)} · <strong style="color:var(--verde-d)">${fen.fase}</strong></div></div>
-      <div class="actions"><button class="btn" onclick="openHitoModal()"><i data-lucide="megaphone"></i>Registrar hito</button><button class="btn secondary" onclick="nav('photos')"><i data-lucide="camera"></i>Foto</button><button class="btn ghost" onclick="nav('tasks')"><i data-lucide="plus"></i>Labor</button></div>
+      <div class="actions">
+        <button class="btn" onclick="editApp()"><i data-lucide="droplet"></i>Nueva aplicación</button>
+        <button class="btn ghost" onclick="editTask()"><i data-lucide="clipboard-list"></i>Nueva labor</button>
+      </div>
     </div>
-    <div class="grid grid-4">
-      <div class="kpi"><div class="kpi-header"><div class="label">Total rizomas</div><div class="kpi-icon"><i data-lucide="sprout"></i></div></div><div class="value">${totalRiz.toLocaleString('es-CL')}</div><div class="foot">${blocks.length} cuarteles activos</div></div>
-      <div class="kpi info" title="Período de dormancia ${tempLabel}: desde ${inicioHFFmt}. Sarah Bernhardt requiere ≥500 horas <7°C para floración pareja."><div class="kpi-header"><div class="label">Horas-frío acum.</div><div class="kpi-icon"><i data-lucide="snowflake"></i></div></div><div class="value">${Math.round(hfAcum)}</div><div class="foot" style="font-size:10.5px">${hfFootTxt}</div></div>
-      <div class="kpi rosa"><div class="kpi-header"><div class="label">Lluvia 7 días</div><div class="kpi-icon"><i data-lucide="cloud-rain"></i></div></div><div class="value">${lluvia7d.toFixed(1)}<small style="font-size:14px;color:var(--gris)"> mm</small></div><div class="foot">${lluviaProxTotal>0?'Pronóstico: '+lluviaProxTotal.toFixed(0)+' mm prox. 7d':'Sin pronóstico cargado'}</div></div>
-      <div class="kpi warn"><div class="kpi-header"><div class="label">Aplicaciones</div><div class="kpi-icon"><i data-lucide="droplet"></i></div></div><div class="value">${apps.length}</div><div class="foot">${apps.filter(a=>daysBetween(a.fecha,hoy)<=30).length} últimos 30 días</div></div>
+    <!-- BLOQUE HOY (hero operativo) -->
+    <div class="dash-hoy ${atrasadasOp.length>0?'has-atrasada':''}">
+      <div class="dash-hoy-head">
+        <div class="dash-hoy-title">
+          ${atrasadasOp.length>0?
+            `<div class="dash-hoy-icon-atr"><i data-lucide="alert-triangle"></i></div><div><span class="dash-hoy-label">Operación del día</span><h3>${atrasadasOp.length+itemsHoyOp.length} ${(atrasadasOp.length+itemsHoyOp.length)===1?'item requiere':'items requieren'} atención</h3></div>`
+            :itemsHoyOp.length>0?
+              `<div class="dash-hoy-icon-ok"><i data-lucide="calendar-check"></i></div><div><span class="dash-hoy-label">Operación de hoy</span><h3>${itemsHoyOp.length} ${itemsHoyOp.length===1?'item programado':'items programados'}</h3></div>`
+            :
+              `<div class="dash-hoy-icon-ok"><i data-lucide="leaf"></i></div><div><span class="dash-hoy-label">Operación del día</span><h3>Día libre · sin pendientes</h3></div>`
+          }
+        </div>
+        <button class="btn small ghost" onclick="nav('calendar')" style="margin:0;white-space:nowrap"><i data-lucide="calendar-days"></i>Calendario</button>
+      </div>
+      ${atrasadasOp.length>0?`
+        <div class="dash-hoy-section atrasada">
+          <div class="dash-hoy-section-head"><i data-lucide="alert-triangle" style="width:13px;height:13px"></i>${atrasadasOp.length} ${atrasadasOp.length===1?'item atrasado':'items atrasados'} · acción inmediata</div>
+          ${atrasadasOp.slice(0,5).map(i=>renderHoyItem(i,'atrasada')).join('')}
+          ${atrasadasOp.length>5?`<div class="dash-hoy-more">+ ${atrasadasOp.length-5} más atrasadas</div>`:''}
+        </div>`:''}
+      ${itemsHoyOp.length>0?`
+        <div class="dash-hoy-section">
+          <div class="dash-hoy-section-head">📌 Para hoy</div>
+          ${itemsHoyOp.map(i=>renderHoyItem(i,'hoy')).join('')}
+        </div>`:''}
+      ${!atrasadasOp.length&&!itemsHoyOp.length&&_proxOp?`
+        <div class="dash-hoy-section">
+          <div class="dash-hoy-section-head">Próxima programada</div>
+          ${renderHoyItem(_proxOp,'futuro')}
+        </div>`:''}
     </div>
-    ${alertas.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Alertas y recomendaciones</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}"><div class="ab-content">${a.txt}</div></div>`).join('')}</div>`:''}
+    <!-- KPIs operativos compactos -->
+    <div class="grid grid-3" style="margin-bottom:20px">
+      <div class="kpi ${atrasadasOp.length>0?'warn':''}"><div class="kpi-header"><div class="label">Atrasadas</div><div class="kpi-icon"><i data-lucide="alert-triangle"></i></div></div><div class="value">${atrasadasOp.length}</div><div class="foot">${atrasadasOp.length>0?'Revisar urgente':'Al día'}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Esta semana</div><div class="kpi-icon"><i data-lucide="clock"></i></div></div><div class="value">${en7TasksOp.length+en7AppsOp.length}</div><div class="foot">${en7TasksOp.length} labores · ${en7AppsOp.length} aplicaciones</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Próximos 30 días</div><div class="kpi-icon"><i data-lucide="calendar"></i></div></div><div class="value">${en30TasksOp.length+en30AppsOp.length}</div><div class="foot">${en30TasksOp.length} labores · ${en30AppsOp.length} aplicaciones</div></div>
+    </div>
+    <!-- Calendario mes -->
     ${(()=>{
       /* Widget de calendario del mes actual: resumen de labores y aplicaciones programadas en el mes en curso.
          Atrasadas también caen aquí si su fecha está dentro del mes. Click en cualquier fila abre el detalle.
@@ -1570,44 +1720,34 @@ async function renderDashboard(){
         </table></div>
       </div>`;
     })()}
-    <div class="grid grid-2" style="margin-top:0">
+    <!-- Últimas actividades operativas compactas -->
+    <div class="grid grid-2">
       <div class="card">
-        <h3><i data-lucide="calendar"></i>Fase fenológica actual</h3>
-        <div class="alert-box info"><i data-lucide="leaf"></i><div class="ab-content"><strong>${fen.fase}</strong><br>${fen.desc}</div></div>
-        <div style="margin-top:14px"><strong style="font-size:12px;color:var(--texto-m);letter-spacing:.4px;text-transform:uppercase">Calendario anual</strong>
-          <div class="phase" style="margin-top:10px">${Array.from({length:12},(_,i)=>`<div class="phase-bar ${i+1===mesActual?'active':''}" title="${fenologia(i+1).fase}"></div>`).join('')}</div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gris);margin-top:4px;font-weight:600"><span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span></div>
-        </div>
+        <h3 style="display:flex;justify-content:space-between;align-items:center"><span><i data-lucide="clipboard-check"></i>Últimas labores realizadas</span><button class="btn small ghost" onclick="nav('tasks')" style="margin:0">Ver todas →</button></h3>
+        ${ultLab4.length?ultLab4.map(t=>`<div class="dash-ult-item" onclick="viewTask('${t.id}')"><div class="dash-ult-icon" style="background:#dbeafe;color:#1d4ed8"><i data-lucide="clipboard-list"></i></div><div class="dash-ult-body"><strong>${t.nombre||'(sin nombre)'}</strong><div class="dash-ult-meta">${fmt(t.fecha)} · ${getBloques(t).join(', ')||'General'} · ${t.responsable||'sin responsable'}</div></div></div>`).join(''):`<div style="text-align:center;padding:24px;color:var(--gris);font-size:12.5px">Aún no hay labores realizadas</div>`}
       </div>
       <div class="card">
-        <h3><i data-lucide="grid-3x3"></i>Cuarteles del huerto</h3>
-        ${blocks.map(b=>{const c=b.nombre.includes('Sarah')?'sarah':b.nombre.includes('Bowl')?'bowl':'festiva';return `<div style="padding:12px 14px;border:1px solid var(--gris-xl);border-radius:var(--radio-sm);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:var(--gris-xl);transition:all .15s" onmouseover="this.style.borderColor='var(--verde)';this.style.background='#fff'" onmouseout="this.style.borderColor='var(--gris-xl)';this.style.background='var(--gris-xl)'"><div><strong style="font-size:14px;color:var(--texto)">${b.nombre}</strong><div style="font-size:11.5px;color:var(--gris);margin-top:2px">Plantado ${fmt(b.plantacion)} · Temporada ${Math.floor(daysBetween(b.plantacion,hoy)/365)+1}</div></div><span class="tag ${c}">${b.cantidad.toLocaleString('es-CL')} rizomas</span></div>`}).join('')}
+        <h3 style="display:flex;justify-content:space-between;align-items:center"><span><i data-lucide="droplet"></i>Últimas aplicaciones</span><button class="btn small ghost" onclick="nav('applications')" style="margin:0">Ver todas →</button></h3>
+        ${ultApp4.length?ultApp4.map(a=>`<div class="dash-ult-item" onclick="viewApp('${a.id}')"><div class="dash-ult-icon" style="background:#fce7f3;color:#be185d"><i data-lucide="droplet"></i></div><div class="dash-ult-body"><strong>${a.producto||'(sin producto)'}</strong><div class="dash-ult-meta">${fmt(a.fecha)} · ${bloquesTxt(a)}${a.dosis?' · '+a.dosis:''}</div></div></div>`).join(''):`<div style="text-align:center;padding:24px;color:var(--gris);font-size:12.5px">Aún no hay aplicaciones realizadas</div>`}
       </div>
     </div>
-    <div class="grid grid-2">
-      <div class="card"><h3><i data-lucide="bar-chart-3"></i>Actividad últimos 6 meses</h3><div class="chart-container"><canvas id="chart1"></canvas></div></div>
-      <div class="card"><h3><i data-lucide="pie-chart"></i>Aplicaciones por categoría</h3><div class="chart-container"><canvas id="chart2"></canvas></div></div>
+    <!-- Estado de temporada compact (3 mini-cards en línea) -->
+    <div class="dash-temporada">
+      <div class="dash-temp-card"><i data-lucide="leaf"></i><div><div class="dash-temp-label">Fase fenológica</div><strong>${fen.fase}</strong><div class="dash-temp-sub">${fen.desc.slice(0,55)}${fen.desc.length>55?'…':''}</div></div></div>
+      <div class="dash-temp-card"><i data-lucide="snowflake"></i><div><div class="dash-temp-label">Horas-frío ${tempLabel}</div><strong>${Math.round(hfAcum)} <small>/ 500h meta</small></strong><div class="dash-temp-bar"><div style="width:${Math.min(100,hfAcum/5)}%"></div></div></div></div>
+      <div class="dash-temp-card"><i data-lucide="cloud-rain"></i><div><div class="dash-temp-label">Lluvia 7 días</div><strong>${lluvia7d.toFixed(1)} <small>mm</small></strong><div class="dash-temp-sub">${lluviaProxTotal>0?'Pronóstico: +'+lluviaProxTotal.toFixed(0)+' mm próx. 7d':'Sin pronóstico'}</div></div></div>
     </div>
-    <div class="card">
-      <h3><i data-lucide="users"></i>Actividad del equipo <span style="font-size:11px;color:var(--gris);font-weight:400;margin-left:auto">Últimos 30 días</span></h3>
-      <div class="grid grid-4">
-      ${USERS.map(u=>{const nTareas=tasks.filter(t=>t.createdBy===u.id&&daysBetween(t.fecha,hoy)<=30).length;const nApps=apps.filter(a=>a.createdBy===u.id&&daysBetween(a.fecha,hoy)<=30).length;const nFotos=photos.filter(p=>p.createdBy===u.id&&daysBetween(p.fecha,hoy)<=30).length;const total=nTareas+nApps+nFotos;return `<div style="padding:16px;border:1px solid var(--gris-xl);border-radius:var(--radio);text-align:center;background:#fff;transition:all .2s" onmouseover="this.style.borderColor='var(--verde)';this.style.transform='translateY(-2px)';this.style.boxShadow='var(--sombra-md)'" onmouseout="this.style.borderColor='var(--gris-xl)';this.style.transform='none';this.style.boxShadow='none'"><div class="user-avatar" style="background:${u.color};margin:0 auto 10px;width:48px;height:48px;font-size:15px">${u.avatar}</div><strong style="font-size:13px;color:var(--texto)">${u.nombre}</strong><div style="font-size:20px;font-weight:700;color:var(--verde-d);margin-top:8px;font-variant-numeric:tabular-nums">${total}</div><div style="font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:600">acciones</div><div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gris-xl);font-size:11px;color:var(--gris-m);display:flex;justify-content:space-around"><span title="Labores"><i data-lucide="clipboard-list" style="width:11px;height:11px;vertical-align:-2px"></i> ${nTareas}</span><span title="Aplicaciones"><i data-lucide="droplet" style="width:11px;height:11px;vertical-align:-2px"></i> ${nApps}</span><span title="Fotos"><i data-lucide="image" style="width:11px;height:11px;vertical-align:-2px"></i> ${nFotos}</span></div></div>`}).join('')}
-      </div>
-    </div>
-    <div class="grid grid-2">
-      <div class="card"><h3><i data-lucide="clipboard-list"></i>Últimas labores</h3>${ultimasTareas.length?ultimasTareas.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="font-size:13px;color:var(--texto)">${t.nombre}</strong>${userBadgeHTML(t.createdBy)}</div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(t.fecha)} · ${getBloques(t).join(', ')||'General'} · ${t.responsable||'-'}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay labores registradas</div></div>`}</div>
-      <div class="card"><h3><i data-lucide="droplet"></i>Últimas aplicaciones</h3>${ultimasApp.length?ultimasApp.map(a=>`<div style="padding:10px 0;border-bottom:1px solid var(--gris-xl)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:13px;color:var(--texto)">${a.producto}</strong><div style="display:flex;gap:4px;align-items:center"><span class="tag info">${a.categoria}</span>${userBadgeHTML(a.createdBy)}</div></div><div style="font-size:11.5px;color:var(--gris);margin-top:3px">${fmt(a.fecha)} · ${a.dosis} · ${bloquesTxt(a)}</div></div>`).join(''):`<div class="empty"><i data-lucide="inbox"></i><div>Aún no hay aplicaciones registradas</div></div>`}</div>
-    </div>`;
-  /* CHARTS */
+    <!-- Alertas (prioridad baja, al final) -->
+    ${alertas.length?`<div class="card"><h3><i data-lucide="alert-triangle"></i>Alertas y recomendaciones</h3>${alertas.map(a=>`<div class="alert-box ${a.tipo}"><div class="ab-content">${a.txt}</div></div>`).join('')}</div>`:''}
+    <!-- 1 chart consolidado de actividad operativa -->
+    <div class="card"><h3><i data-lucide="bar-chart-3"></i>Actividad operativa · últimos 6 meses</h3><div class="chart-container"><canvas id="chart1"></canvas></div></div>`;
+  /* CHARTS (1 chart consolidado, no 2) */
   const now=new Date();
   const meses=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);return d});
   const mesLabels=meses.map(d=>d.toLocaleDateString('es-CL',{month:'short'}));
   const tareasMes=meses.map(d=>tasks.filter(t=>new Date(t.fecha).getMonth()===d.getMonth()&&new Date(t.fecha).getFullYear()===d.getFullYear()).length);
   const appMes=meses.map(d=>apps.filter(a=>new Date(a.fecha).getMonth()===d.getMonth()&&new Date(a.fecha).getFullYear()===d.getFullYear()).length);
-  const fotosMesArr=meses.map(d=>photos.filter(p=>new Date(p.fecha).getMonth()===d.getMonth()&&new Date(p.fecha).getFullYear()===d.getFullYear()).length);
-  new Chart(document.getElementById('chart1'),{type:'bar',data:{labels:mesLabels,datasets:[{label:'Labores',data:tareasMes,backgroundColor:'#4a7c59'},{label:'Aplicaciones',data:appMes,backgroundColor:'#c97a90'},{label:'Fotos',data:fotosMesArr,backgroundColor:'#f59e0b'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
-  const cats={};apps.forEach(a=>{cats[a.categoria]=(cats[a.categoria]||0)+1});
-  new Chart(document.getElementById('chart2'),{type:'doughnut',data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:['#4a7c59','#c97a90','#f59e0b','#2563eb','#8b5cf6','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  new Chart(document.getElementById('chart1'),{type:'bar',data:{labels:mesLabels,datasets:[{label:'Labores',data:tareasMes,backgroundColor:'#2563eb'},{label:'Aplicaciones',data:appMes,backgroundColor:'#be185d'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:false},y:{stacked:false}}}});
 }
 
 /* ============ BLOQUES ============ */
@@ -2276,6 +2416,51 @@ function tiempoAHoras(num,unidad){
    el usuario puede tocar "Agregar fotos" tantas veces como quiera y siempre se
    acumulan. Después de guardar, esta lista se persiste en `data.fotos`. */
 let _editTaskFotosExistentes=[];
+/* State de fotos de Aplicación en el modal de edición (dos galerías multi-foto). */
+let _editAppFotosProducto=[];
+let _editAppFotosAplicacion=[];
+function renderEditAppFotosGallery(slot){
+  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  if(!arr.length)return'<small style="color:var(--gris);font-size:11px">Aún no hay fotos. Toca "Tomar foto" o "Elegir de galería" — puedes agregar varias.</small>';
+  return arr.map((src,i)=>`<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img src="${src}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><button type="button" onclick="removeEditAppFoto('${slot}',${i})" title="Quitar esta foto" style="position:absolute;top:-8px;right:-8px;background:#c0392b;color:#fff;border:2px solid #fff;width:32px;height:32px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.35)">×</button></div>`).join('');
+}
+async function addEditAppFotos(input,slot){
+  if(!input||!input.files||!input.files.length)return;
+  const files=Array.from(input.files);
+  const contId=slot==='prod'?'f-appfotos-prod':'f-appfotos-apl';
+  const cont=document.getElementById(contId);
+  if(cont)cont.innerHTML='<small style="color:var(--verde-d);font-size:11px">Procesando '+files.length+' foto'+(files.length>1?'s':'')+'…</small>';
+  /* targetKB dinámico: cuantas más fotos totales, más bajo el target. */
+  const total=_editAppFotosProducto.length+_editAppFotosAplicacion.length+files.length;
+  let perPhotoKB=280;
+  if(total>=3)perPhotoKB=220;
+  if(total>=5)perPhotoKB=170;
+  if(total>=7)perPhotoKB=130;
+  if(total>=10)perPhotoKB=100;
+  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  let okCount=0,failCount=0;
+  for(const f of files){
+    try{
+      const dataURL=await fileToDataURL(f,1400,perPhotoKB);
+      arr.push(dataURL);okCount++;
+    }catch(e){failCount++}
+  }
+  try{input.value='';}catch(e){}
+  if(cont)cont.innerHTML=renderEditAppFotosGallery(slot);
+  /* Contador visible */
+  const cnt=document.getElementById(slot==='prod'?'f-appfotos-prod-count':'f-appfotos-apl-count');
+  if(cnt)cnt.textContent=arr.length;
+  if(okCount)toast('✓ '+okCount+' foto'+(okCount>1?'s':'')+' agregada'+(okCount>1?'s':''));
+  if(failCount)toast(failCount+' foto no se pudo procesar','warn');
+}
+function removeEditAppFoto(slot,idx){
+  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  arr.splice(idx,1);
+  const cont=document.getElementById(slot==='prod'?'f-appfotos-prod':'f-appfotos-apl');
+  if(cont)cont.innerHTML=renderEditAppFotosGallery(slot);
+  const cnt=document.getElementById(slot==='prod'?'f-appfotos-prod-count':'f-appfotos-apl-count');
+  if(cnt)cnt.textContent=arr.length;
+}
 function removeEditTaskFoto(idx){
   _editTaskFotosExistentes.splice(idx,1);
   const cont=document.getElementById('f-labfotos-existentes');
@@ -2691,11 +2876,10 @@ async function renderApplications(){
         const catTag=a.categoria?`<span class="tag info">${a.categoria}</span>`:'';
         const bsArr=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
         const bloquesHTML=bsArr.length?bsArr.map(b=>`<span class="chip">${b}</span>`).join(''):'';
-        /* Fotos thumbnails */
-        const fotosArr=[];
-        if(a.fotoProducto)fotosArr.push(a.fotoProducto);
-        if(a.fotoAplicacion)fotosArr.push(a.fotoAplicacion);
-        const fotosHTML=fotosArr.map(f=>`<img src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')">`).join('');
+        /* Fotos thumbnails: multi-imagen desde ambas categorías. Muestro las 3 primeras + contador. */
+        const fotosArrFull=getFotosApp(a);
+        const fotosArr=fotosArrFull.slice(0,3);
+        const fotosHTML=fotosArr.map(f=>`<img src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')">`).join('')+(fotosArrFull.length>3?`<span style="font-size:10.5px;color:var(--gris);font-weight:600;align-self:center;margin-left:4px">+${fotosArrFull.length-3}</span>`:'');
         /* Avatar del responsable (iniciales) */
         const respLetters=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
         const respHTML=a.responsable?`<div class="app-card-resp"><div class="app-card-resp-avatar">${respLetters}</div><span>${a.responsable}</span></div>`:'<span style="color:var(--gris-m);font-size:12px">Sin responsable</span>';
@@ -2708,8 +2892,7 @@ async function renderApplications(){
         /* Quick action: botón "Realizada" en el header de la card si está programada y no cancelada. */
         const quickBtnAppCard=(estA!=='realizada'&&estA!=='cancelada')?`<button class="card-quick-realizada" onclick="quickMarkAppRealizada('${a.id}',event)"><i data-lucide="check"></i>Realizada</button>`:'';
         /* Quick photo: botón cámara si hay slot libre. */
-        const slotsLibresApp=(!a.fotoProducto)+(!a.fotoAplicacion);
-        const quickPhotoAppCard=slotsLibresApp>0?`<button class="card-quick-photo" onclick="triggerQuickPhoto('app','${a.id}',event)" title="Subir/tomar foto"><i data-lucide="camera"></i></button>`:'';
+        const quickPhotoAppCard=`<button class="card-quick-photo" onclick="triggerQuickPhoto('app','${a.id}',event)" title="Subir/tomar foto"><i data-lucide="camera"></i></button>`;
         return `<article class="app-card ${estClass}" onclick="if(!event.target.closest('img')&&!event.target.closest('.app-card-desc-toggle')&&!event.target.closest('button')){viewApp('${a.id}')}">
           <div class="app-card-head">
             <div class="app-card-status">${estTag}${timeBadge}${lockBadge}</div>
@@ -2745,11 +2928,12 @@ async function renderApplications(){
           const fotos=[];
           if(a.fotoProducto)fotos.push(`<img src="${a.fotoProducto}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;margin-right:3px;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
           if(a.fotoAplicacion)fotos.push(`<img src="${a.fotoAplicacion}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
-          /* Fotos rediseñadas: cluster overlapping si hay >1, single si hay 1, em-dash si vacío. */
-          const fotosPro=[];
-          if(a.fotoProducto)fotosPro.push(`<img class="pro-foto" src="${a.fotoProducto}" onclick="event.stopPropagation();viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')" title="Producto">`);
-          if(a.fotoAplicacion)fotosPro.push(`<img class="pro-foto" src="${a.fotoAplicacion}" onclick="event.stopPropagation();viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')" title="Aplicación">`);
-          const fotosTxt=fotosPro.length?`<div class="pro-fotos">${fotosPro.join('')}</div>`:'<span class="pro-empty">—</span>';
+          /* Fotos: cluster overlapping con TODAS las fotos (producto + aplicación multi-imagen). */
+          const _fotosAll=getFotosApp(a);
+          const _fotosVis=_fotosAll.slice(0,3);
+          const _fotosExtra=_fotosAll.length-_fotosVis.length;
+          const fotosPro=_fotosVis.map(f=>`<img class="pro-foto" src="${f}" onclick="event.stopPropagation();viewImage('${f.replace(/'/g,"\\'")}')" title="Foto">`);
+          const fotosTxt=fotosPro.length?`<div class="pro-fotos">${fotosPro.join('')}${_fotosExtra>0?`<span class="pro-fotos-counter">+${_fotosExtra}</span>`:''}</div>`:'<span class="pro-empty">—</span>';
           /* Responsable: avatar circular con iniciales + nombre */
           const respIni=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase();
           const respHTML=a.responsable?`<div class="pro-resp"><div class="pro-resp-avatar">${respIni||'?'}</div><span>${a.responsable}</span></div>`:'<span class="pro-empty">—</span>';
@@ -2767,8 +2951,7 @@ async function renderApplications(){
           /* Quick action: mostrar botón "Marcar realizada" si NO está realizada ni cancelada. */
           const quickBtnApp=(estA!=='realizada'&&estA!=='cancelada')?`<button class="quick-realizada" onclick="quickMarkAppRealizada('${a.id}',event)" title="Marcar como realizada"><i data-lucide="check"></i></button>`:'';
           /* Quick photo: botón cámara visible si hay al menos un slot libre. */
-          const slotsLibres=(!a.fotoProducto)+(!a.fotoAplicacion);
-          const quickPhotoApp=slotsLibres>0?`<button class="quick-photo" onclick="triggerQuickPhoto('app','${a.id}',event)" title="Subir/tomar foto (${slotsLibres} slot${slotsLibres===1?'':'s'} libre${slotsLibres===1?'':'s'})"><i data-lucide="camera"></i></button>`:'';
+          const quickPhotoApp=`<button class="quick-photo" onclick="triggerQuickPhoto('app','${a.id}',event)" title="Subir/tomar foto"><i data-lucide="camera"></i></button>`;
           /* === FILA REESTRUCTURADA: 6 columnas con jerarquía interna === */
           const fechaFmtA=fmt(fechaMostrar);
           /* Columna 1: estado + fecha apilados verticalmente */
@@ -2898,14 +3081,19 @@ async function viewApp(id){
       <div class="dview-section-head"><i data-lucide="file-text"></i>Motivo / Descripción</div>
       <div class="dview-quote">${esc(a.motivo)}</div>
     </div>`:''}
-    <!-- Fotos -->
-    <div class="dview-section">
-      <div class="dview-section-head" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><i data-lucide="camera"></i>Fotografías ${(a.fotoProducto?1:0)+(a.fotoAplicacion?1:0)?`(${(a.fotoProducto?1:0)+(a.fotoAplicacion?1:0)})`:''}</span>${((!a.fotoProducto||!a.fotoAplicacion))?`<button type="button" class="dview-add-photo-btn" onclick="triggerQuickPhotoFromDetail('app','${a.id}',event)" title="Subir o tomar foto"><i data-lucide="camera-plus"></i>Subir foto</button>`:''}</div>
-      ${(a.fotoProducto||a.fotoAplicacion)?`<div class="dview-photos">
-        ${a.fotoProducto?`<div class="dview-photo-card" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><img src="${a.fotoProducto}"><div class="dview-photo-card-label">Producto · Etiqueta</div></div>`:''}
-        ${a.fotoAplicacion?`<div class="dview-photo-card" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><img src="${a.fotoAplicacion}"><div class="dview-photo-card-label">Aplicación en terreno</div></div>`:''}
-      </div>`:`<div style="text-align:center;padding:24px;color:var(--gris);font-size:13px;background:var(--gris-xl);border-radius:10px;border:1px dashed var(--gris-l)">Sin fotos. Toca <strong>"Subir foto"</strong> para agregar la primera.</div>`}
-    </div>
+    <!-- Fotos multi-categoría (multi-imagen por categoría) -->
+    ${(()=>{
+      const fpProd=getFotosProducto(a);
+      const fpApl=getFotosAplicacion(a);
+      const total=fpProd.length+fpApl.length;
+      return `<div class="dview-section">
+        <div class="dview-section-head" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><i data-lucide="camera"></i>Fotografías${total?` (${total})`:''}</span><button type="button" class="dview-add-photo-btn" onclick="triggerQuickPhotoFromDetail('app','${a.id}',event)" title="Subir o tomar foto de aplicación"><i data-lucide="camera-plus"></i>Subir foto</button></div>
+        ${total?`
+          ${fpProd.length?`<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin:8px 0 10px">Producto · Etiqueta (${fpProd.length})</div><div class="dview-photos">${fpProd.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Producto ${i+1}</div></div>`).join('')}</div>`:''}
+          ${fpApl.length?`<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin:${fpProd.length?'16px':'8px'} 0 10px">Aplicación en terreno (${fpApl.length})</div><div class="dview-photos">${fpApl.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Terreno ${i+1}</div></div>`).join('')}</div>`:''}
+        `:`<div style="text-align:center;padding:24px;color:var(--gris);font-size:13px;background:var(--gris-xl);border-radius:10px;border:1px dashed var(--gris-l)">Sin fotos. Toca <strong>"Subir foto"</strong> para agregar la primera.</div>`}
+      </div>`;
+    })()}
     <!-- Registro -->
     ${creador?`<div class="dview-section">
       <div class="dview-section-head"><i data-lucide="user-check"></i>Registro de la aplicación</div>
@@ -2931,7 +3119,10 @@ async function editApp(id){
   const curName=userById(CURRENT_USER).nombre;
   /* Para nuevas aplicaciones por defecto estado='realizada' (registro de algo ya aplicado).
      fechaPlanificada se autocompleta con today() en programadas. */
-  const a=id?await get('applications',id):{fecha:today(),fechaPlanificada:today(),estado:'realizada',producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:'',fotoProducto:'',fotoAplicacion:''};
+  const a=id?await get('applications',id):{fecha:today(),fechaPlanificada:today(),estado:'realizada',producto:'',categoria:'',bloques:[],dosis:'',volumen:'',motivo:'',carencia:'',carenciaDias:'',responsable:curName,ingrediente:'',tempC:'',humedad:'',viento:'',horaApp:'',prestador:'',metodoAplicacion:''};
+  /* Inicializar galerías multi-foto: soporta legacy fotoProducto/fotoAplicacion single + arrays nuevos. */
+  _editAppFotosProducto=getFotosProducto(a);
+  _editAppFotosAplicacion=getFotosAplicacion(a);
   const bloquesSel=getBloques(a);
   const estActApp=estadoApp(a);
   /* Categorías: salen de la biblioteca de productos. Sumamos 'Bioestabilizado',
@@ -2971,16 +3162,30 @@ async function editApp(id){
       </div>
     </div>
     <div class="alert-box info" id="apto-preview" style="margin-top:6px"><i data-lucide="clock"></i><div class="ab-content">Apto cosecha desde: <strong id="apto-val">—</strong></div></div>
-    <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías (opcional pero recomendado)</h4>
+    <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías <span style="color:var(--gris);font-weight:400;font-size:11px">(múltiples por categoría — opcional pero recomendado)</span></h4>
     <div class="form-grid">
-      <div class="form-row"><label>Foto del producto / etiqueta</label>
-        ${a.fotoProducto?`<div class="appfoto-wrap" id="appfoto-prod-wrap"><img src="${a.fotoProducto}" onclick="viewImage('${a.fotoProducto.replace(/'/g,"\\'")}')"><button type="button" class="appfoto-del-btn" id="appfoto-prod-btn" onclick="toggleAppFotoDelete('prod')" aria-label="Quitar foto" title="Quitar foto">×</button><div class="appfoto-overlay" id="appfoto-prod-overlay">Marcada para eliminar</div><input type="checkbox" id="f-del-fotoprod" style="display:none"></div>`:''}
-        <input id="f-fotoprod" type="file" accept="image/*" capture="environment">
-        <small style="color:var(--gris);font-size:11px">Etiqueta / envase del producto aplicado</small></div>
-      <div class="form-row"><label>Foto de la aplicación</label>
-        ${a.fotoAplicacion?`<div class="appfoto-wrap" id="appfoto-apl-wrap"><img src="${a.fotoAplicacion}" onclick="viewImage('${a.fotoAplicacion.replace(/'/g,"\\'")}')"><button type="button" class="appfoto-del-btn" id="appfoto-apl-btn" onclick="toggleAppFotoDelete('apl')" aria-label="Quitar foto" title="Quitar foto">×</button><div class="appfoto-overlay" id="appfoto-apl-overlay">Marcada para eliminar</div><input type="checkbox" id="f-del-fotoapl" style="display:none"></div>`:''}
-        <input id="f-fotoapl" type="file" accept="image/*" capture="environment">
-        <small style="color:var(--gris);font-size:11px">Equipo / operario aplicando</small></div>
+      <div class="form-row"><label>Fotos del producto / etiqueta <small style="color:var(--gris);font-weight:400">(<span id="f-appfotos-prod-count">${_editAppFotosProducto.length}</span> agregada/s)</small></label>
+        <div id="f-appfotos-prod" style="margin-bottom:10px;display:flex;flex-wrap:wrap;min-height:24px">${renderEditAppFotosGallery('prod')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <label class="btn small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">📷 Tomar foto
+            <input type="file" accept="image/*" capture="environment" onchange="addEditAppFotos(this,'prod')" style="display:none">
+          </label>
+          <label class="btn small ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">🖼 Elegir de la galería
+            <input type="file" accept="image/*" multiple onchange="addEditAppFotos(this,'prod')" style="display:none">
+          </label>
+        </div>
+        <small style="color:var(--gris);font-size:11px">Etiquetas / envases del producto aplicado (SKU, lote, fecha vencimiento).</small></div>
+      <div class="form-row"><label>Fotos de la aplicación en terreno <small style="color:var(--gris);font-weight:400">(<span id="f-appfotos-apl-count">${_editAppFotosAplicacion.length}</span> agregada/s)</small></label>
+        <div id="f-appfotos-apl" style="margin-bottom:10px;display:flex;flex-wrap:wrap;min-height:24px">${renderEditAppFotosGallery('apl')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <label class="btn small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">📷 Tomar foto
+            <input type="file" accept="image/*" capture="environment" onchange="addEditAppFotos(this,'apl')" style="display:none">
+          </label>
+          <label class="btn small ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">🖼 Elegir de la galería
+            <input type="file" accept="image/*" multiple onchange="addEditAppFotos(this,'apl')" style="display:none">
+          </label>
+        </div>
+        <small style="color:var(--gris);font-size:11px">Equipo, operario, cuartel aplicado, condiciones observadas.</small></div>
     </div>
     <h4><i data-lucide="cloud" style="width:14px;height:14px;vertical-align:-2px"></i> Condiciones climáticas al aplicar <span style="color:var(--gris);font-weight:400;font-size:11px">(recomendado GlobalG.A.P./MPS)</span></h4>
     <div class="form-grid">
@@ -3039,16 +3244,11 @@ async function saveApp(id){
       return;
     }
   }
-  const fProd=document.getElementById('f-fotoprod');
-  const fApl=document.getElementById('f-fotoapl');
-  const delProd=document.getElementById('f-del-fotoprod')?.checked;
-  const delApl=document.getElementById('f-del-fotoapl')?.checked;
-  if(fProd&&fProd.files&&fProd.files[0]){try{data.fotoProducto=await fileToDataURL(fProd.files[0]);}catch(e){toast('Error procesando foto producto','warn')}}
-  else if(delProd){data.fotoProducto=null;}
-  else if(id){const prev=await get('applications',id);if(prev&&prev.fotoProducto)data.fotoProducto=prev.fotoProducto;}
-  if(fApl&&fApl.files&&fApl.files[0]){try{data.fotoAplicacion=await fileToDataURL(fApl.files[0]);}catch(e){toast('Error procesando foto aplicación','warn')}}
-  else if(delApl){data.fotoAplicacion=null;}
-  else if(id){const prev=await get('applications',id);if(prev&&prev.fotoAplicacion)data.fotoAplicacion=prev.fotoAplicacion;}
+  /* Galerías multi-foto: guardamos los arrays completos y limpiamos los campos legacy. */
+  data.fotosProducto=Array.isArray(_editAppFotosProducto)?_editAppFotosProducto.slice():[];
+  data.fotosAplicacion=Array.isArray(_editAppFotosAplicacion)?_editAppFotosAplicacion.slice():[];
+  data.fotoProducto=null;
+  data.fotoAplicacion=null;
   let isNew=!id;
   // Chequeo de tamaño antes de enviar a Firestore (límite 1 MB por documento).
   const sz=approxDocSize(data);
@@ -3137,18 +3337,22 @@ async function quickAddPhotoApp(id,file,reopenDetail){
   const a=await get('applications',id);
   if(!a){toast('Aplicación no encontrada','warn');return}
   const dataURL=await fileToDataURL(file,1400,250);
-  /* Primer slot vacío gana: foto producto, luego foto aplicación. */
-  let slotTxt='';
-  if(!a.fotoProducto){a.fotoProducto=dataURL;slotTxt='producto';}
-  else if(!a.fotoAplicacion){a.fotoAplicacion=dataURL;slotTxt='aplicación';}
-  else{toast('Los 2 slots de foto están ocupados — edita la aplicación para reemplazar','warn');return;}
+  /* Migración inline al modelo multi-foto + append siempre a "Aplicación en terreno"
+     (que es la categoría operativa, la que se toma con la cámara en el huerto). */
+  const arrProd=getFotosProducto(a);
+  const arrApl=getFotosAplicacion(a);
+  arrApl.push(dataURL);
+  a.fotosProducto=arrProd;
+  a.fotosAplicacion=arrApl;
+  a.fotoProducto=null;
+  a.fotoAplicacion=null;
   a.id=id;
   const sz=approxDocSize(a);
-  if(sz>950000){toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Edita la aplicación para optimizar.','warn');return;}
+  if(sz>950000){arrApl.pop();a.fotosAplicacion=arrApl;toast('Documento muy grande ('+(sz/1024).toFixed(0)+' KB). Edita la aplicación para gestionar fotos.','warn');return;}
   try{await put('applications',a);}
   catch(e){toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
   if(navigator.vibrate)navigator.vibrate(20);
-  toast('✓ Foto '+slotTxt+' agregada');
+  toast('✓ Foto de terreno agregada (total: '+(arrProd.length+arrApl.length)+')');
   renderApplications();
   /* Si la subida vino desde el modal de detalle, lo re-abrimos para que el usuario vea la foto. */
   if(reopenDetail)setTimeout(()=>viewApp(id),120);
