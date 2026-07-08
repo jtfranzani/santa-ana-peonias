@@ -359,6 +359,42 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-card-desc.app-card-com{background:linear-gradient(90deg,#fdf2f8 0%,var(--gris-xl) 100%);border-left-color:var(--rosa-d)}
 .app-card-desc.expanded{-webkit-line-clamp:unset;display:block}
 .app-card-desc-toggle{font-size:11.5px;color:var(--info);margin-top:5px;font-weight:600;cursor:pointer;display:inline-block;padding:4px 0;user-select:none}
+/* Labels "MOTIVO" / "COMENTARIOS" arriba de cada bloque desc en la card mobile */
+.app-card-desc-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;margin-top:10px;margin-bottom:4px}
+.app-card-desc-label-mot{color:var(--verde-d)}
+.app-card-desc-label-com{color:var(--rosa-d)}
+/* === Compactación mobile de la card de Aplicación (≤768px). Reduce padding, tipografías,
+   spacing y clamp para que se vea más resumida y quepan más items por pantalla. === */
+@media (max-width:768px){
+  .app-card{padding:10px 11px 10px 15px;margin-bottom:0}
+  .app-card::before{width:4px}
+  .app-card-head{margin-bottom:5px;gap:6px}
+  .app-card-status{gap:4px}
+  .app-card-status .tag{font-size:10px;padding:2px 6px}
+  .app-card-title{font-size:14.5px;margin-bottom:2px;gap:5px;line-height:1.25}
+  .app-card-lock{font-size:9.5px;padding:1px 5px}
+  .app-card-date{font-size:11.5px;margin-bottom:6px;gap:6px}
+  .app-card-date .sub-tag{font-size:8.5px;padding:1px 5px;letter-spacing:.3px}
+  .app-card-chips{gap:4px;margin-bottom:6px}
+  .app-card-chips .tag,.app-card-chips .chip{font-size:10px;padding:2px 7px;border-radius:8px}
+  .app-card-row{padding:5px 0;font-size:12px}
+  .app-card-row-label{font-size:9.5px}
+  .app-card-foot{margin-top:6px;padding-top:6px;font-size:11.5px}
+  .app-card-resp{font-size:11.5px;gap:5px}
+  .app-card-resp-avatar{width:20px;height:20px;font-size:9px}
+  .app-card-fotos{gap:4px}
+  .app-card-fotos img{width:30px;height:30px;border-radius:6px}
+  .app-card-desc-label{margin-top:6px;margin-bottom:2px;font-size:8.5px;letter-spacing:.4px}
+  .app-card-desc{padding:6px 9px;font-size:11.5px;line-height:1.4;-webkit-line-clamp:2;border-left-width:3px}
+  .app-card-desc-toggle{font-size:11px;padding:2px 0;margin-top:2px}
+  /* Botones quick-action de la card más compactos (siguen siendo tocables ≥28px) */
+  .card-quick-realizada{padding:5px 10px;font-size:11px;min-height:30px}
+  .card-quick-realizada svg{width:12px;height:12px}
+  .card-quick-photo{padding:5px 9px;min-height:30px}
+  .card-quick-photo svg{width:14px;height:14px}
+  /* Gap entre cards más chico (contenedor .apps-mobile-cards) */
+  .apps-mobile-cards{gap:8px}
+}
 .app-card-empty{background:#fff;border-radius:12px;padding:48px 24px;text-align:center;color:var(--gris);border:1px dashed var(--gris-l)}
 .app-card-empty i{width:42px;height:42px;color:var(--gris-m);margin-bottom:12px}
 .app-card-empty-msg{font-size:14px;color:var(--texto-m);font-weight:500;margin-bottom:6px}
@@ -438,6 +474,18 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .dview-add-photo-btn:active{transform:scale(.96)}
 .dview-add-photo-btn svg{width:13px;height:13px;stroke-width:2.4;color:inherit!important}
 @media (max-width:768px){.dview-add-photo-btn{padding:7px 13px;font-size:12px;min-height:36px}.dview-add-photo-btn svg{width:15px;height:15px}}
+/* === Dashboard: calendario mes grid solo mobile (widget table-view solo desktop). === */
+.dash-mobile-cal{display:none}
+@media (max-width:768px){
+  .dash-mobile-cal{display:block;padding:14px 12px;margin-bottom:14px}
+  .dash-mobile-cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+  .dash-mobile-cal-title{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:var(--texto)}
+  .dash-mobile-cal-title svg{width:18px;height:18px;color:var(--verde-d);stroke-width:2.2}
+  .dash-mobile-cal-count{background:var(--verde-d);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:10px;font-variant-numeric:tabular-nums;min-width:24px;text-align:center}
+  .dash-mobile-cal-legend{display:flex;justify-content:center;gap:12px;font-size:10.5px;color:var(--gris-d);margin-top:10px;flex-wrap:wrap}
+  .dash-mobile-cal-legend>span{display:inline-flex;align-items:center;gap:4px}
+  .dash-cal-desktop-only{display:none!important}
+}
 /* === Dashboard rediseñado: hero "HOY" + secciones operativas compactas === */
 .dash-hoy{background:linear-gradient(135deg,#fff 0%,var(--crema) 100%);border:1px solid var(--gris-l);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:var(--sombra-sm);position:relative;overflow:hidden}
 .dash-hoy::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--verde) 0%,var(--verde-d) 100%)}
@@ -583,7 +631,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .main{padding-bottom:90px!important}
   /* Ocultar en mobile elementos que ya se resuelven con el FAB o que aportan ruido en pantalla chica.
      Estas clases están puestas en Aplicaciones y Bitácora Labores. */
-  .mobile-hide-new,.mobile-hide-suggested,.mobile-hide-cat-filter{display:none!important}
+  .mobile-hide-new,.mobile-hide-suggested,.mobile-hide-cat-filter,.mobile-hide-cuarteles-filter{display:none!important}
   /* Floating Action Button (FAB) en zona del pulgar derecho */
   .mobile-fab{display:flex;position:fixed;bottom:74px;right:16px;width:60px;height:60px;border-radius:30px;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);color:#fff;border:none;box-shadow:0 6px 20px rgba(36,72,47,.4),0 2px 6px rgba(0,0,0,.12);align-items:center;justify-content:center;cursor:pointer;z-index:95;transition:transform .15s ease;padding:0}
   .mobile-fab svg{width:28px;height:28px;stroke-width:2.5;color:#fff}
@@ -884,7 +932,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.33';
+const APP_VERSION='2026.05.18.37';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1648,6 +1696,61 @@ async function renderDashboard(){
         <button class="btn ghost" onclick="editTask()"><i data-lucide="clipboard-list"></i>Nueva labor</button>
       </div>
     </div>
+    <!-- CALENDARIO MES GRID (mobile-only) — se muestra arriba de todo en mobile.
+         Tap en cualquier día con items → openDayDetail(dateStr) que ya existe. -->
+    ${(()=>{
+      const yearM=hoy.getFullYear();const monthM=hoy.getMonth();
+      const m0=new Date(yearM,monthM,1);const m1=new Date(yearM,monthM+1,0);
+      const enMes=fechaStr=>{if(!fechaStr)return false;const d=parseLocalDate(fechaStr);if(!d)return false;return d>=m0&&d<=m1;};
+      const tasksMG=tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&enMes(t.fechaPlanificada||t.fecha)).map(t=>({tipo:'labor',id:t.id,fecha:t.fechaPlanificada||t.fecha,titulo:t.nombre||'(sin nombre)',atrasada:laborAtrasada(t)}));
+      const appsMG=apps.filter(a=>estadoApp(a)==='programada'&&enMes(a.fechaPlanificada||a.fecha)).map(a=>({tipo:'aplicacion',id:a.id,fecha:a.fechaPlanificada||a.fecha,titulo:a.producto||'(sin producto)',atrasada:aplicacionAtrasada(a)}));
+      const itemsMG=[...tasksMG,...appsMG];
+      const mesNombre=hoy.toLocaleDateString('es-CL',{month:'long',year:'numeric'});
+      const primerDia=new Date(yearM,monthM,1);const ultimoDia=new Date(yearM,monthM+1,0);
+      let primerDow=primerDia.getDay()-1;if(primerDow<0)primerDow=6;
+      const porDia={};
+      itemsMG.forEach(i=>{const d=parseLocalDate(i.fecha);if(!d)return;const day=d.getDate();(porDia[day]=porDia[day]||[]).push(i);});
+      Object.values(porDia).forEach(arr=>arr.sort((a,b)=>{if(a.atrasada!==b.atrasada)return a.atrasada?-1:1;if(a.tipo!==b.tipo)return a.tipo==='labor'?-1:1;return (a.titulo||'').localeCompare(b.titulo||'','es');}));
+      const hoyDN=hoy.getDate();
+      const esHoyD=d=>d===hoyDN;
+      const esPasadoD=d=>{const cd=new Date(yearM,monthM,d);return cd<new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());};
+      let cellsHtml='';
+      for(let i=0;i<primerDow;i++)cellsHtml+='<div class="cal-cell empty"></div>';
+      for(let d=1;d<=ultimoDia.getDate();d++){
+        const arr=porDia[d]||[];
+        const isToday=esHoyD(d);const isPast=esPasadoD(d)&&!isToday;
+        const dateStr=`${yearM}-${String(monthM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const visible=arr.slice(0,4);const restantes=arr.length-visible.length;
+        const tieneAtr=arr.some(x=>x.atrasada);
+        const clases=['cal-cell'];if(isToday)clases.push('today');else if(isPast)clases.push('past');if(arr.length)clases.push('has-items');if(tieneAtr)clases.push('has-atrasada');
+        cellsHtml+=`<div class="${clases.join(' ')}" ${arr.length?`onclick="openDayDetail('${dateStr}')"`:''}>
+          <div class="cal-cell-head"><span class="cal-day-num">${d}</span>${arr.length?`<span class="cal-count">${arr.length}</span>`:''}</div>
+          <div class="cal-cell-items">${visible.map(i=>{
+            const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
+            const ico=i.tipo==='labor'?'📋':'💧';
+            const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
+            return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
+          }).join('')}</div>
+          ${restantes>0?`<div class="cal-more">+${restantes}</div>`:''}
+        </div>`;
+      }
+      return `<div class="card dash-mobile-cal">
+        <div class="dash-mobile-cal-head">
+          <div class="dash-mobile-cal-title"><i data-lucide="calendar-days"></i><span style="text-transform:capitalize">${mesNombre}</span></div>
+          ${itemsMG.length?`<span class="dash-mobile-cal-count">${itemsMG.length}</span>`:''}
+        </div>
+        <div class="cal-grid">
+          <div class="cal-dow">L</div><div class="cal-dow">M</div><div class="cal-dow">M</div><div class="cal-dow">J</div><div class="cal-dow">V</div><div class="cal-dow">S</div><div class="cal-dow">D</div>
+          ${cellsHtml}
+        </div>
+        <div class="dash-mobile-cal-legend">
+          <span><span class="cal-leg-dot atrasada"></span>Atrasada</span>
+          <span><span class="cal-leg-dot labor"></span>Labor</span>
+          <span><span class="cal-leg-dot aplic"></span>Aplicación</span>
+        </div>
+        <button class="btn small ghost" onclick="nav('calendar')" style="width:100%;margin:10px 0 0;justify-content:center"><i data-lucide="external-link"></i>Ver calendario completo</button>
+      </div>`;
+    })()}
     <!-- BLOQUE HOY (hero operativo) -->
     <div class="dash-hoy ${atrasadasOp.length>0?'has-atrasada':''}">
       <div class="dash-hoy-head">
@@ -1704,7 +1807,7 @@ async function renderDashboard(){
       const itemsMes=[...tasksMes,...appsMes].sort((a,b)=>parseLocalDate(a.fecha)-parseLocalDate(b.fecha));
       if(!itemsMes.length)return '';
       const nombreMes=hoy.toLocaleDateString('es-CL',{month:'long',year:'numeric'});
-      return `<div class="card">
+      return `<div class="card dash-cal-desktop-only">
         <h3 style="display:flex;justify-content:space-between;align-items:center"><span><i data-lucide="calendar-days"></i>Calendario · <span style="text-transform:capitalize">${nombreMes}</span> <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${itemsMes.length} programado${itemsMes.length===1?'':'s'}</span></span><button class="btn small ghost" onclick="nav('calendar')" style="margin:0"><i data-lucide="external-link"></i>Ver calendario completo</button></h3>
         <div class="table-scroll"><table>
           <thead><tr><th style="width:110px">Fecha</th><th>Tipo</th><th>Item</th><th>Cuarteles</th><th>Responsable</th></tr></thead>
@@ -2226,7 +2329,7 @@ async function renderTasks(){
             ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_tasksFiltroCategoria===c?'selected':''}>${c} (${tasks.filter(t=>(t.categoria||'').trim()===c).length})</option>`).join('')}
           </select>
         </div>
-        <div style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_tasksFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_tasksFiltroCuartel.length} seleccionado${_tasksFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
+        <div class="mobile-hide-cuarteles-filter" style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_tasksFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_tasksFiltroCuartel.length} seleccionado${_tasksFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
             <span class="chip ${!_tasksFiltroCuartel.length?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="setTasksFiltroCuartelTodos()">Todos</span>
             ${sinCuartelCount>0?`<span class="chip ${_tasksFiltroCuartel.includes('__general')?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleTasksFiltroCuartel('__general')">Sin cuartel <strong>${sinCuartelCount}</strong></span>`:''}
@@ -2831,7 +2934,7 @@ async function renderApplications(){
             ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>(a.categoria||'').trim()===c).length})</option>`).join('')}
           </select>
         </div>
-        <div style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_appsFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCuartel.length} seleccionado${_appsFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
+        <div class="mobile-hide-cuarteles-filter" style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_appsFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCuartel.length} seleccionado${_appsFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
             <span class="chip ${!_appsFiltroCuartel.length?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="setAppsFiltroCuartelTodos()">Todos</span>
             ${cuartelesUnicos.map(c=>`<span class="chip ${_appsFiltroCuartel.includes(c)?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleAppsFiltroCuartel(${JSON.stringify(c).replace(/"/g,'&quot;')})">${c} <strong>${apps.filter(a=>{const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);return bs.map(x=>String(x).trim()).includes(c)}).length}</strong></span>`).join('')}
@@ -2893,11 +2996,11 @@ async function renderApplications(){
         /* Descripción (motivo) con clamp */
         const motivoVal=(a.motivo||'').toString();
         const motivoLargo=motivoVal.length>110||motivoVal.includes('\n');
-        const descHTML=motivoVal?`<div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--verde-d);font-weight:800;margin-top:10px;margin-bottom:4px">Motivo</div><div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
+        const descHTML=motivoVal?`<div class="app-card-desc-label app-card-desc-label-mot">Motivo</div><div id="appcarddesc-${a.id}" class="app-card-desc">${motivoVal}</div>${motivoLargo?`<span class="app-card-desc-toggle" onclick="event.stopPropagation();toggleAppCardDesc('${a.id}')">ver más</span>`:''}`:'';
         /* Comentarios del día (opcional) con clamp separado */
         const comValM=(a.comentarios||'').toString();
         const comLargoM=comValM.length>110||comValM.includes('\n');
-        const comHTML=comValM?`<div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--rosa-d);font-weight:800;margin-top:10px;margin-bottom:4px">Comentarios</div><div id="appcardcom-${a.id}" class="app-card-desc app-card-com">${comValM}</div>${comLargoM?`<span class="app-card-desc-toggle app-card-com-toggle" onclick="event.stopPropagation();toggleAppCardCom('${a.id}')">ver más</span>`:''}`:'';
+        const comHTML=comValM?`<div class="app-card-desc-label app-card-desc-label-com">Comentarios</div><div id="appcardcom-${a.id}" class="app-card-desc app-card-com">${comValM}</div>${comLargoM?`<span class="app-card-desc-toggle app-card-com-toggle" onclick="event.stopPropagation();toggleAppCardCom('${a.id}')">ver más</span>`:''}`:'';
         /* Método/Prestador */
         const metodoTxt=[a.metodoAplicacion,a.prestador].filter(Boolean).join(' · ');
         /* Quick action: botón "Realizada" en el header de la card si está programada y no cancelada. */
