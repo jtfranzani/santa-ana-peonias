@@ -581,6 +581,9 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .mbn-item:active{background:var(--gris-xl)}
   /* Padding bottom del main para que el contenido no quede tapado por bottom-nav + FAB */
   .main{padding-bottom:90px!important}
+  /* Ocultar en mobile elementos que ya se resuelven con el FAB o que aportan ruido en pantalla chica.
+     Estas clases están puestas en Aplicaciones y Bitácora Labores. */
+  .mobile-hide-new,.mobile-hide-suggested,.mobile-hide-cat-filter{display:none!important}
   /* Floating Action Button (FAB) en zona del pulgar derecho */
   .mobile-fab{display:flex;position:fixed;bottom:74px;right:16px;width:60px;height:60px;border-radius:30px;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);color:#fff;border:none;box-shadow:0 6px 20px rgba(36,72,47,.4),0 2px 6px rgba(0,0,0,.12);align-items:center;justify-content:center;cursor:pointer;z-index:95;transition:transform .15s ease;padding:0}
   .mobile-fab svg{width:28px;height:28px;stroke-width:2.5;color:#fff}
@@ -881,7 +884,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.32';
+const APP_VERSION='2026.05.18.33';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2205,8 +2208,8 @@ async function renderTasks(){
   const sinCuartelCount=tasks.filter(t=>getBloques(t).length===0).length;
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Bitácora de labores</h2><div class="sub">Planifica, ejecuta y registra todas las faenas del huerto</div></div>
-    <button class="btn" onclick="editTask()">+ Nueva labor</button></div>
-    ${sugeridas.length?`<div class="card"><h3>💡 Sugeridas para este mes (${new Date().toLocaleDateString('es-CL',{month:'long'})})</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${sugeridas.map(s=>`<button class="btn small ghost" onclick='quickTask(${JSON.stringify(s).replace(/'/g,"&apos;")})'>+ ${s.nombre}</button>`).join('')}</div></div>`:''}
+    <button class="btn mobile-hide-new" onclick="editTask()">+ Nueva labor</button></div>
+    ${sugeridas.length?`<div class="card mobile-hide-suggested"><h3>💡 Sugeridas para este mes (${new Date().toLocaleDateString('es-CL',{month:'long'})})</h3><div style="display:flex;gap:8px;flex-wrap:wrap">${sugeridas.map(s=>`<button class="btn small ghost" onclick='quickTask(${JSON.stringify(s).replace(/'/g,"&apos;")})'>+ ${s.nombre}</button>`).join('')}</div></div>`:''}
     <div class="card">
       <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">
         ${chip('todas','Todas')}
@@ -2217,7 +2220,7 @@ async function renderTasks(){
         ${chip('cancelada','⚪ Canceladas')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
-        <div style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
+        <div class="mobile-hide-cat-filter" style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
           <select onchange="setTasksFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
             <option value="todas" ${_tasksFiltroCategoria==='todas'?'selected':''}>Todas (${tasks.length})</option>
             ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_tasksFiltroCategoria===c?'selected':''}>${c} (${tasks.filter(t=>(t.categoria||'').trim()===c).length})</option>`).join('')}
@@ -2811,7 +2814,7 @@ async function renderApplications(){
   const chipApp=(k,lbl)=>`<span class="chip ${_appsFiltroEstado===k?'active':''}" onclick="setAppsFiltroEstado('${k}')">${lbl} <strong>${countsApp[k]||0}</strong></span>`;
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Programa, ejecuta y registra fitosanitarios, fertilizantes y bioestimulantes</div></div>
-    <button class="btn" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
+    <button class="btn mobile-hide-new" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
     <div class="alert-box warn"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Importante:</strong> Registra TODA aplicación incluyendo dosis, motivo, carencia y condiciones climáticas. Obligatorio para GlobalG.A.P. / MPS y trazabilidad de exportación.</div></div>
     <div class="card">
       <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">
@@ -2822,7 +2825,7 @@ async function renderApplications(){
         ${chipApp('cancelada','⚪ Canceladas')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
-        <div style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
+        <div class="mobile-hide-cat-filter" style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
           <select onchange="setAppsFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
             <option value="todas" ${_appsFiltroCategoria==='todas'?'selected':''}>Todas (${apps.length})</option>
             ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>(a.categoria||'').trim()===c).length})</option>`).join('')}
