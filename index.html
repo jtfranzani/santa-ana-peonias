@@ -363,6 +363,36 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .app-card-desc-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;margin-top:10px;margin-bottom:4px}
 .app-card-desc-label-mot{color:var(--verde-d)}
 .app-card-desc-label-com{color:var(--rosa-d)}
+/* === Panel "Ejecución por cuartel" en el form de Aplicación === */
+.bloques-estado-panel{border:1px solid var(--gris-l);border-radius:10px;background:#fafafa;padding:10px;margin-top:6px}
+.bloques-estado-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+.bloques-estado-panel-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700}
+.bloques-estado-row-panel{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;align-items:center;padding:7px 4px;border-top:1px dashed var(--gris-xl)}
+.bloques-estado-row-panel:first-of-type{border-top:none}
+.bloques-estado-row-panel .be-nombre{font-size:12.5px;font-weight:600;color:var(--texto);overflow:hidden;text-overflow:ellipsis}
+.bloques-estado-row-panel select,.bloques-estado-row-panel input[type=date]{padding:6px 8px;font-size:12px;border:1px solid var(--gris-l);border-radius:6px;background:#fff}
+.bloques-estado-row-panel input[type=date][disabled]{background:var(--gris-xl);opacity:.6;cursor:not-allowed}
+.bloques-sync-btn{background:var(--verde-l);color:var(--verde-d);border:1px solid var(--verde);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+.bloques-sync-btn:hover{background:var(--verde);color:#fff}
+.bloques-sync-btn svg{width:12px;height:12px}
+@media (max-width:768px){
+  .bloques-estado-row-panel{grid-template-columns:1fr;gap:5px;padding:9px 4px}
+  .bloques-estado-row-panel .be-nombre{font-weight:700;margin-bottom:2px}
+}
+/* === Badge de progreso "2/3" en estado agregado === */
+.tag-progreso{display:inline-flex;align-items:center;gap:3px;background:var(--verde-l);color:var(--verde-d);border:1px solid var(--verde);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;letter-spacing:0}
+.tag-progreso.done{background:var(--ok);color:#fff;border-color:var(--ok)}
+/* === Tabla "Ejecución por cuartel" en viewApp === */
+.dview-cuarteles-tabla{display:grid;grid-template-columns:1.4fr auto auto;gap:0;background:var(--gris-xl);border-radius:10px;overflow:hidden;border:1px solid var(--gris-xl)}
+.dview-cuarteles-tabla>div{padding:9px 12px;background:#fff;display:flex;align-items:center;gap:6px;font-size:13px;border-top:1px solid var(--gris-xl)}
+.dview-cuarteles-tabla>div.tbl-h{background:#f9fafb;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;border-top:none}
+.dview-cuarteles-tabla>div.tbl-cuartel{font-weight:600;color:var(--texto)}
+.dview-cuarteles-tabla>div.tbl-fecha{font-variant-numeric:tabular-nums;color:var(--texto-m);justify-content:flex-end}
+@media (max-width:640px){
+  .dview-cuarteles-tabla{grid-template-columns:1fr auto}
+  .dview-cuarteles-tabla>div.tbl-fecha{grid-column:1/-1;border-top:none;padding-top:0;font-size:11.5px;justify-content:flex-start;color:var(--gris)}
+  .dview-cuarteles-tabla>div.tbl-h.tbl-h-fecha{display:none}
+}
 /* === Compactación mobile de la card de Aplicación (≤768px). Reduce padding, tipografías,
    spacing y clamp para que se vea más resumida y quepan más items por pantalla. === */
 @media (max-width:768px){
@@ -631,7 +661,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .main{padding-bottom:90px!important}
   /* Ocultar en mobile elementos que ya se resuelven con el FAB o que aportan ruido en pantalla chica.
      Estas clases están puestas en Aplicaciones y Bitácora Labores. */
-  .mobile-hide-new,.mobile-hide-suggested,.mobile-hide-cat-filter,.mobile-hide-cuarteles-filter{display:none!important}
+  .mobile-hide-new,.mobile-hide-suggested,.mobile-hide-cat-filter,.mobile-hide-cuarteles-filter,.mobile-hide-detail{display:none!important}
   /* Floating Action Button (FAB) en zona del pulgar derecho */
   .mobile-fab{display:flex;position:fixed;bottom:74px;right:16px;width:60px;height:60px;border-radius:30px;background:linear-gradient(135deg,var(--verde) 0%,var(--verde-d) 100%);color:#fff;border:none;box-shadow:0 6px 20px rgba(36,72,47,.4),0 2px 6px rgba(0,0,0,.12);align-items:center;justify-content:center;cursor:pointer;z-index:95;transition:transform .15s ease;padding:0}
   .mobile-fab svg{width:28px;height:28px;stroke-width:2.5;color:#fff}
@@ -932,7 +962,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.37';
+const APP_VERSION='2026.05.18.42';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1152,7 +1182,47 @@ function carenciaActiva(app){const f=fechaFinCarencia(app);return f?parseLocalDa
    arrays fotosProducto/fotosAplicacion. */
 function getFotosProducto(a){if(!a)return[];if(Array.isArray(a.fotosProducto))return a.fotosProducto.slice();if(a.fotoProducto)return[a.fotoProducto];return[]}
 function getFotosAplicacion(a){if(!a)return[];if(Array.isArray(a.fotosAplicacion))return a.fotosAplicacion.slice();if(a.fotoAplicacion)return[a.fotoAplicacion];return[]}
-function getFotosApp(a){return[...getFotosProducto(a),...getFotosAplicacion(a)]}
+function getFotosOtros(a){if(!a)return[];if(Array.isArray(a.fotosOtros))return a.fotosOtros.slice();return[]}
+function getFotosApp(a){return[...getFotosProducto(a),...getFotosAplicacion(a),...getFotosOtros(a)]}
+/* === Ejecución por cuartel: cada bloque de una aplicación puede tener su propia fecha y estado.
+   Retorna [{bloque, estado, fecha}] para todos los cuarteles. Si no hay data almacenada, deriva del top-level. */
+function getBloquesEstado(a){
+  if(!a)return[];
+  const bloques=getBloques(a);
+  const stored=Array.isArray(a.bloquesEstado)?a.bloquesEstado:[];
+  return bloques.map(b=>{
+    const found=stored.find(be=>be&&be.bloque===b);
+    if(found)return{bloque:b,estado:found.estado||'programada',fecha:found.fecha||null};
+    return{bloque:b,estado:a.estado||'programada',fecha:(a.estado==='realizada'?(a.fecha||null):null)};
+  });
+}
+/* True cuando los cuarteles NO comparten el mismo estado y fecha (indica gestión granular). */
+function tieneEstadoMixtoApp(a){
+  const be=getBloquesEstado(a);
+  if(be.length<2)return false;
+  const estados=new Set(be.map(x=>x.estado));
+  const fechas=new Set(be.map(x=>x.fecha||''));
+  return estados.size>1||fechas.size>1;
+}
+/* Progreso de realización: {realizadas, total}. */
+function progresoRealizadaApp(a){
+  const be=getBloquesEstado(a);
+  return{realizadas:be.filter(x=>x.estado==='realizada').length,total:be.length};
+}
+/* Fecha derivada cuando hay bloquesEstado con fechas por cuartel.
+   Regla: próxima pendiente si hay pendientes; si todas realizadas, la más reciente ejecutada;
+   sino, fallback a fechaPlanificada/fecha del top-level.
+   Retorna {fecha, tipo:'pendiente'|'ejecutada'|'original'}. */
+function fechaProximaApp(a){
+  const be=getBloquesEstado(a);
+  if(be.length<2)return{fecha:a.fechaPlanificada||a.fecha,tipo:'original'};
+  const pendientes=be.filter(x=>x.estado==='programada'&&x.fecha).map(x=>x.fecha).sort();
+  const realizadas=be.filter(x=>x.estado==='realizada'&&x.fecha).map(x=>x.fecha).sort();
+  const totalActivos=be.filter(x=>x.estado!=='cancelada').length;
+  if(pendientes.length>0)return{fecha:pendientes[0],tipo:'pendiente'};
+  if(realizadas.length>0&&realizadas.length===totalActivos)return{fecha:realizadas[realizadas.length-1],tipo:'ejecutada'};
+  return{fecha:a.fechaPlanificada||a.fecha,tipo:'original'};
+}
 /* ============ DEPENDENCIAS (PRERREQUISITOS) ============
    Una labor o aplicación puede declarar `dependeDe: {type:'labor'|'app', id:'xxx'}`.
    Cuando se intenta pasar el item a estado realizada, validamos que el prereq
@@ -2526,28 +2596,44 @@ function tiempoAHoras(num,unidad){
    el usuario puede tocar "Agregar fotos" tantas veces como quiera y siempre se
    acumulan. Después de guardar, esta lista se persiste en `data.fotos`. */
 let _editTaskFotosExistentes=[];
-/* State de fotos de Aplicación en el modal de edición (dos galerías multi-foto). */
+/* State de fotos de Aplicación en el modal de edición (tres galerías multi-foto). */
 let _editAppFotosProducto=[];
 let _editAppFotosAplicacion=[];
+let _editAppFotosOtros=[];
+/* Helper para mapear slot → array de state y IDs de DOM. */
+function _editAppSlotArr(slot){
+  if(slot==='prod')return _editAppFotosProducto;
+  if(slot==='apl')return _editAppFotosAplicacion;
+  return _editAppFotosOtros;
+}
+function _editAppSlotContId(slot){
+  if(slot==='prod')return 'f-appfotos-prod';
+  if(slot==='apl')return 'f-appfotos-apl';
+  return 'f-appfotos-otros';
+}
+function _editAppSlotCountId(slot){
+  if(slot==='prod')return 'f-appfotos-prod-count';
+  if(slot==='apl')return 'f-appfotos-apl-count';
+  return 'f-appfotos-otros-count';
+}
 function renderEditAppFotosGallery(slot){
-  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  const arr=_editAppSlotArr(slot);
   if(!arr.length)return'<small style="color:var(--gris);font-size:11px">Aún no hay fotos. Toca "Tomar foto" o "Elegir de galería" — puedes agregar varias.</small>';
   return arr.map((src,i)=>`<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img src="${src}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--gris-l)" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><button type="button" onclick="removeEditAppFoto('${slot}',${i})" title="Quitar esta foto" style="position:absolute;top:-8px;right:-8px;background:#c0392b;color:#fff;border:2px solid #fff;width:32px;height:32px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.35)">×</button></div>`).join('');
 }
 async function addEditAppFotos(input,slot){
   if(!input||!input.files||!input.files.length)return;
   const files=Array.from(input.files);
-  const contId=slot==='prod'?'f-appfotos-prod':'f-appfotos-apl';
-  const cont=document.getElementById(contId);
+  const cont=document.getElementById(_editAppSlotContId(slot));
   if(cont)cont.innerHTML='<small style="color:var(--verde-d);font-size:11px">Procesando '+files.length+' foto'+(files.length>1?'s':'')+'…</small>';
-  /* targetKB dinámico: cuantas más fotos totales, más bajo el target. */
-  const total=_editAppFotosProducto.length+_editAppFotosAplicacion.length+files.length;
+  /* targetKB dinámico: cuantas más fotos totales (sumando las 3 categorías), más bajo el target. */
+  const total=_editAppFotosProducto.length+_editAppFotosAplicacion.length+_editAppFotosOtros.length+files.length;
   let perPhotoKB=280;
   if(total>=3)perPhotoKB=220;
   if(total>=5)perPhotoKB=170;
   if(total>=7)perPhotoKB=130;
   if(total>=10)perPhotoKB=100;
-  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  const arr=_editAppSlotArr(slot);
   let okCount=0,failCount=0;
   for(const f of files){
     try{
@@ -2557,19 +2643,106 @@ async function addEditAppFotos(input,slot){
   }
   try{input.value='';}catch(e){}
   if(cont)cont.innerHTML=renderEditAppFotosGallery(slot);
-  /* Contador visible */
-  const cnt=document.getElementById(slot==='prod'?'f-appfotos-prod-count':'f-appfotos-apl-count');
+  const cnt=document.getElementById(_editAppSlotCountId(slot));
   if(cnt)cnt.textContent=arr.length;
   if(okCount)toast('✓ '+okCount+' foto'+(okCount>1?'s':'')+' agregada'+(okCount>1?'s':''));
   if(failCount)toast(failCount+' foto no se pudo procesar','warn');
 }
 function removeEditAppFoto(slot,idx){
-  const arr=slot==='prod'?_editAppFotosProducto:_editAppFotosAplicacion;
+  const arr=_editAppSlotArr(slot);
   arr.splice(idx,1);
-  const cont=document.getElementById(slot==='prod'?'f-appfotos-prod':'f-appfotos-apl');
+  const cont=document.getElementById(_editAppSlotContId(slot));
   if(cont)cont.innerHTML=renderEditAppFotosGallery(slot);
-  const cnt=document.getElementById(slot==='prod'?'f-appfotos-prod-count':'f-appfotos-apl-count');
+  const cnt=document.getElementById(_editAppSlotCountId(slot));
   if(cnt)cnt.textContent=arr.length;
+}
+/* === Panel dinámico "Ejecución por cuartel" en editApp === */
+/* State inline: map de bloque → {estado, fecha} para preservar cambios mientras el usuario
+   toggle-a cuarteles. Se inicializa en editApp() desde a.bloquesEstado o del top-level. */
+let _editAppBloquesEstado={};
+function bloquesEstadoRowHTML(bloque){
+  const st=_editAppBloquesEstado[bloque]||{estado:'programada',fecha:null};
+  const isCanc=st.estado==='cancelada';
+  return `<div class="bloques-estado-row-panel" data-bloque="${bloque.replace(/"/g,'&quot;')}">
+    <div class="be-nombre">${bloque}</div>
+    <select class="be-estado" onchange="onBloqueEstadoChange('${bloque.replace(/'/g,"\\'")}')">
+      <option value="programada" ${st.estado==='programada'?'selected':''}>🟡 Programada</option>
+      <option value="realizada" ${st.estado==='realizada'?'selected':''}>🟢 Realizada</option>
+      <option value="cancelada" ${isCanc?'selected':''}>⚪ Cancelada</option>
+    </select>
+    <input type="date" class="be-fecha" value="${isCanc?'':(st.fecha||'')}" ${isCanc?'disabled':''} onchange="onBloqueFechaChange('${bloque.replace(/'/g,"\\'")}')" title="${st.estado==='realizada'?'Fecha de ejecución real':'Fecha planificada para este cuartel'}">
+  </div>`;
+}
+function renderBloquesEstadoPanel(){
+  const bloquesSel=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
+  const row=document.getElementById('bloques-estado-form-row');
+  const cont=document.getElementById('bloques-estado-container');
+  if(!row||!cont)return;
+  /* Solo mostrar con 2+ cuarteles (con 1 es redundante). */
+  if(bloquesSel.length<2){row.style.display='none';return;}
+  row.style.display='';
+  /* Inicializar estados nuevos con el estado top-level actual. */
+  const topEstado=document.getElementById('f-app-estado')?.value||'programada';
+  const topFecha=document.getElementById('f-fecha')?.value||null;
+  bloquesSel.forEach(b=>{
+    if(!_editAppBloquesEstado[b]){
+      _editAppBloquesEstado[b]={estado:topEstado,fecha:topEstado==='realizada'?topFecha:null};
+    }
+  });
+  const filas=bloquesSel.map(bloquesEstadoRowHTML).join('');
+  const totalReal=bloquesSel.filter(b=>_editAppBloquesEstado[b]?.estado==='realizada').length;
+  cont.innerHTML=`<div class="bloques-estado-panel">
+    <div class="bloques-estado-panel-head">
+      <span class="bloques-estado-panel-title">${bloquesSel.length} cuarteles · ${totalReal} realizado${totalReal===1?'':'s'}</span>
+      <button type="button" class="bloques-sync-btn" onclick="syncBloquesEstadoConTop()"><i data-lucide="refresh-cw"></i>Sincronizar todos con fecha ejecutada</button>
+    </div>
+    ${filas}
+  </div>`;
+  if(window.lucide)try{window.lucide.createIcons()}catch(e){}
+}
+function onBloqueEstadoChange(bloque){
+  const row=document.querySelector(`.bloques-estado-row-panel[data-bloque="${bloque.replace(/"/g,'&quot;')}"]`);
+  if(!row)return;
+  const sel=row.querySelector('.be-estado');const fe=row.querySelector('.be-fecha');
+  if(!sel||!fe)return;
+  const newEst=sel.value;
+  const prev=_editAppBloquesEstado[bloque]||{};
+  /* Conservamos la fecha existente al cambiar de estado — la fecha es
+     "fecha planificada" cuando está Programada y "fecha ejecutada" cuando está Realizada.
+     Solo cancelada limpia la fecha. */
+  _editAppBloquesEstado[bloque]={estado:newEst,fecha:prev.fecha||null};
+  if(newEst==='cancelada'){
+    fe.disabled=true;fe.value='';_editAppBloquesEstado[bloque].fecha=null;
+  }else{
+    fe.disabled=false;
+    /* Si pasa a realizada y la fecha estaba vacía, autocompleta con hoy o la top-level */
+    if(newEst==='realizada'&&!fe.value){
+      const topFecha=document.getElementById('f-fecha')?.value||today();
+      fe.value=topFecha;_editAppBloquesEstado[bloque].fecha=topFecha;
+    }
+    /* Actualizar título/tooltip según nuevo estado */
+    fe.title=newEst==='realizada'?'Fecha de ejecución real':'Fecha planificada para este cuartel';
+  }
+  /* Refrescar el header con conteo actualizado */
+  renderBloquesEstadoPanel();
+}
+function onBloqueFechaChange(bloque){
+  const row=document.querySelector(`.bloques-estado-row-panel[data-bloque="${bloque.replace(/"/g,'&quot;')}"]`);
+  if(!row)return;
+  const fe=row.querySelector('.be-fecha');
+  if(!fe)return;
+  if(!_editAppBloquesEstado[bloque])_editAppBloquesEstado[bloque]={estado:'realizada',fecha:null};
+  _editAppBloquesEstado[bloque].fecha=fe.value||null;
+}
+function syncBloquesEstadoConTop(){
+  const topEstado=document.getElementById('f-app-estado')?.value||'programada';
+  const topFecha=document.getElementById('f-fecha')?.value||today();
+  const bloquesSel=Array.from(document.querySelectorAll('.f-bloq-chk:checked')).map(c=>c.value);
+  bloquesSel.forEach(b=>{
+    _editAppBloquesEstado[b]={estado:topEstado,fecha:topEstado==='realizada'?topFecha:null};
+  });
+  renderBloquesEstadoPanel();
+  toast('✓ Todos los cuarteles sincronizados con estado y fecha top-level');
 }
 function removeEditTaskFoto(idx){
   _editTaskFotosExistentes.splice(idx,1);
@@ -2962,7 +3135,7 @@ async function renderApplications(){
       <div class="apps-mobile-cards" id="apps-mobile-cards">${sorted.length?sorted.map(a=>{
         const estA=estadoApp(a);
         const atrA=aplicacionAtrasada(a);
-        const fechaMostrar=estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada);
+        const fechaMostrar=(()=>{const fp=fechaProximaApp(a);return fp.fecha||(estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada));})();
         const subFechaA=(estA==='programada'&&a.fechaPlanificada)?'plan.':(estA==='realizada'?'ejec.':'');
         const fin=fechaFinCarencia(a);
         const activa=carenciaActiva(a);
@@ -2971,8 +3144,10 @@ async function renderApplications(){
         /* Clase de estado para la barra de color izquierda */
         let estClass='estado-'+(atrA?'atrasada':estA);
         if(activa)estClass+=' carencia-activa';
-        /* Tags de estado + tiempo */
-        const estTag=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>`;
+        /* Tags de estado + tiempo. Badge de progreso "X/Y" si hay avance parcial. */
+        const _progC=progresoRealizadaApp(a);
+        const _progBadge=(_progC.total>=2&&_progC.realizadas>0&&_progC.realizadas<_progC.total)?`<span class="tag-progreso" title="${_progC.realizadas} de ${_progC.total} cuarteles realizadas">${_progC.realizadas}/${_progC.total}</span>`:'';
+        const estTag=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>${_progBadge}`;
         const dDif=fechaMostrar?daysBetween(today(),fechaMostrar):null;
         let timeBadge='';
         if(atrA&&dDif!=null)timeBadge=`<span class="tag atrasada" style="font-size:10px">${Math.abs(dDif)}d</span>`;
@@ -3027,9 +3202,12 @@ async function renderApplications(){
         <tbody>${sorted.length?sorted.map(a=>{
           const estA=estadoApp(a);
           const atrA=aplicacionAtrasada(a);
-          const fechaMostrar=estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada);
+          const fechaMostrar=(()=>{const fp=fechaProximaApp(a);return fp.fecha||(estA==='programada'?(a.fechaPlanificada||a.fecha):(a.fecha||a.fechaPlanificada));})();
           const subFechaA=(estA==='programada'&&a.fechaPlanificada)?'plan.':(estA==='realizada'?'ejec.':'');
-          const estHTMLA=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>`;
+          /* Badge progreso "X/Y" si hay avance parcial entre cuarteles */
+          const _progG=progresoRealizadaApp(a);
+          const _progBadgeG=(_progG.total>=2&&_progG.realizadas>0&&_progG.realizadas<_progG.total)?`<span class="tag-progreso" title="${_progG.realizadas} de ${_progG.total} cuarteles realizadas">${_progG.realizadas}/${_progG.total}</span>`:'';
+          const estHTMLA=atrA?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estA]||'info'}">${APP_ESTADO_LBL[estA]||estA}</span>${_progBadgeG}`;
           const fin=fechaFinCarencia(a);
           const activa=carenciaActiva(a);
           const aptoTxt=fin?(activa?`<span class="tag warn">🚫 ${fmt(fin)}</span>`:`<span class="tag ok">✓ ${fmt(fin)}</span>`):'<span style="color:var(--gris-m);font-size:11px">—</span>';
@@ -3131,8 +3309,13 @@ async function viewApp(id){
   const estDet=estadoApp(a);
   const atrDet=aplicacionAtrasada(a);
   const estTagDet=atrDet?'<span class="tag atrasada">⚠ Atrasada</span>':`<span class="tag ${APP_ESTADO_CLS[estDet]||'info'}">${APP_ESTADO_LBL[estDet]||estDet}</span>`;
-  const fechaPrincipal=estDet==='realizada'?(a.fecha||a.fechaPlanificada):(a.fechaPlanificada||a.fecha);
-  const fechaPrincipalLbl=estDet==='realizada'?'Aplicada':'Planificada para';
+  /* Fecha derivada: si hay bloquesEstado, muestra próxima pendiente o última ejecutada.
+     Sino, usa la fecha top-level normal. */
+  const _fechaProx=fechaProximaApp(a);
+  const fechaPrincipal=_fechaProx.fecha;
+  const fechaPrincipalLbl=_fechaProx.tipo==='ejecutada'?'Aplicada'
+    :_fechaProx.tipo==='pendiente'?'Próxima pendiente'
+    :(estDet==='realizada'?'Aplicada':'Planificada para');
   const respIni=((a.responsable||'').match(/[A-ZÁÉÍÓÚÑa-záéíóúñ]/g)||[]).slice(0,2).join('').toUpperCase()||'?';
   /* HTML-escape helper para textos largos */
   const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -3182,8 +3365,8 @@ async function viewApp(id){
         ${a.volumen?`<div class="dview-field"><div class="dview-field-label">Volumen total</div><div class="dview-field-value">${a.volumen}</div></div>`:''}
       </div>
     </div>`:''}
-    <!-- Cuándo y dónde -->
-    <div class="dview-section">
+    <!-- Cuándo y dónde (oculto en mobile — la info ya está en header + quick facts) -->
+    <div class="dview-section mobile-hide-detail">
       <div class="dview-section-head"><i data-lucide="map-pin"></i>Cuándo y dónde</div>
       <div class="dview-fields">
         <div class="dview-field"><div class="dview-field-label">Fecha planificada</div><div class="dview-field-value${!a.fechaPlanificada?' is-empty':''}">${a.fechaPlanificada?fmt(a.fechaPlanificada):'sin fecha'}</div></div>
@@ -3193,6 +3376,31 @@ async function viewApp(id){
         ${a.prestador?`<div class="dview-field"><div class="dview-field-label">Prestador del servicio</div><div class="dview-field-value">${a.prestador}</div></div>`:''}
       </div>
     </div>
+    <!-- Ejecución por cuartel: aparece cuando hay 2+ cuarteles con estados o fechas distintas -->
+    ${(()=>{
+      const be=getBloquesEstado(a);
+      if(be.length<2)return '';
+      const mixto=tieneEstadoMixtoApp(a);
+      const prog=progresoRealizadaApp(a);
+      const estadoTag=est=>{
+        if(est==='realizada')return '<span class="tag ok" style="font-size:11px">🟢 Realizada</span>';
+        if(est==='cancelada')return '<span class="tag" style="background:var(--gris-xl);color:var(--gris-d);font-size:11px">⚪ Cancelada</span>';
+        return '<span class="tag warn" style="font-size:11px">🟡 Programada</span>';
+      };
+      return `<div class="dview-section">
+        <div class="dview-section-head"><i data-lucide="check-square"></i>Ejecución por cuartel <span style="margin-left:auto;font-size:11px;color:var(--gris);font-weight:600">${prog.realizadas}/${prog.total} realizada${prog.realizadas===1?'':'s'}${mixto?' · fechas mixtas':''}</span></div>
+        <div class="dview-cuarteles-tabla">
+          <div class="tbl-h">Cuartel</div>
+          <div class="tbl-h">Estado</div>
+          <div class="tbl-h tbl-h-fecha">Fecha</div>
+          ${be.map(x=>`
+            <div class="tbl-cuartel">${x.bloque}</div>
+            <div>${estadoTag(x.estado)}</div>
+            <div class="tbl-fecha">${x.fecha?fmt(x.fecha):'—'}</div>
+          `).join('')}
+        </div>
+      </div>`;
+    })()}
     <!-- Responsable y clima -->
     ${(a.responsable||clima)?`<div class="dview-section">
       <div class="dview-section-head"><i data-lucide="cloud-sun"></i>Responsable y condiciones</div>
@@ -3211,16 +3419,19 @@ async function viewApp(id){
       <div class="dview-section-head" style="color:var(--rosa-d)"><i data-lucide="message-square"></i>Comentarios</div>
       <div class="dview-quote" style="border-left-color:var(--rosa-d);background:linear-gradient(90deg,#fdf2f8 0%,#fff 50%)">${esc(a.comentarios)}</div>
     </div>`:''}
-    <!-- Fotos multi-categoría (multi-imagen por categoría) -->
+    <!-- Fotos multi-categoría (multi-imagen por categoría: producto, aplicación, otros) -->
     ${(()=>{
       const fpProd=getFotosProducto(a);
       const fpApl=getFotosAplicacion(a);
-      const total=fpProd.length+fpApl.length;
+      const fpOtros=getFotosOtros(a);
+      const total=fpProd.length+fpApl.length+fpOtros.length;
+      const labelStyle='font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin:8px 0 10px';
       return `<div class="dview-section">
         <div class="dview-section-head" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><i data-lucide="camera"></i>Fotografías${total?` (${total})`:''}</span><button type="button" class="dview-add-photo-btn" onclick="triggerQuickPhotoFromDetail('app','${a.id}',event)" title="Subir o tomar foto de aplicación"><i data-lucide="camera-plus"></i>Subir foto</button></div>
         ${total?`
-          ${fpProd.length?`<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin:8px 0 10px">Producto · Etiqueta (${fpProd.length})</div><div class="dview-photos">${fpProd.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Producto ${i+1}</div></div>`).join('')}</div>`:''}
-          ${fpApl.length?`<div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris-d);font-weight:700;margin:${fpProd.length?'16px':'8px'} 0 10px">Aplicación en terreno (${fpApl.length})</div><div class="dview-photos">${fpApl.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Terreno ${i+1}</div></div>`).join('')}</div>`:''}
+          ${fpProd.length?`<div style="${labelStyle}">Producto · Etiqueta (${fpProd.length})</div><div class="dview-photos">${fpProd.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Producto ${i+1}</div></div>`).join('')}</div>`:''}
+          ${fpApl.length?`<div style="${labelStyle};margin-top:${fpProd.length?'16px':'8px'}">Aplicación en terreno (${fpApl.length})</div><div class="dview-photos">${fpApl.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Terreno ${i+1}</div></div>`).join('')}</div>`:''}
+          ${fpOtros.length?`<div style="${labelStyle};margin-top:${(fpProd.length||fpApl.length)?'16px':'8px'}">Otros (${fpOtros.length})</div><div class="dview-photos">${fpOtros.map((src,i)=>`<div class="dview-photo-card" onclick="viewImage('${src.replace(/'/g,"\\'")}')"><img src="${src}"><div class="dview-photo-card-label">Otros ${i+1}</div></div>`).join('')}</div>`:''}
         `:`<div style="text-align:center;padding:24px;color:var(--gris);font-size:13px;background:var(--gris-xl);border-radius:10px;border:1px dashed var(--gris-l)">Sin fotos. Toca <strong>"Subir foto"</strong> para agregar la primera.</div>`}
       </div>`;
     })()}
@@ -3235,7 +3446,7 @@ async function viewApp(id){
     <!-- Actions -->
     <div class="dview-actions">
       <button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button>
-      <button class="btn small ghost" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
+      <button class="btn small ghost mobile-hide-detail" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
       <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
       <div class="spacer"></div>
       <button class="btn" onclick="closeModal();editApp('${a.id}')"><i data-lucide="pencil"></i>Editar</button>
@@ -3253,6 +3464,10 @@ async function editApp(id){
   /* Inicializar galerías multi-foto: soporta legacy fotoProducto/fotoAplicacion single + arrays nuevos. */
   _editAppFotosProducto=getFotosProducto(a);
   _editAppFotosAplicacion=getFotosAplicacion(a);
+  _editAppFotosOtros=getFotosOtros(a);
+  /* Inicializar map de ejecución por cuartel desde a.bloquesEstado o del top-level. */
+  _editAppBloquesEstado={};
+  getBloquesEstado(a).forEach(be=>{_editAppBloquesEstado[be.bloque]={estado:be.estado,fecha:be.fecha}});
   const bloquesSel=getBloques(a);
   const estActApp=estadoApp(a);
   /* Categorías: salen de la biblioteca de productos. Sumamos 'Bioestabilizado',
@@ -3288,8 +3503,13 @@ async function editApp(id){
     </div>
     <div class="form-row"><label>Cuarteles aplicados <span style="color:var(--gris);font-weight:400;font-size:11px">(selecciona uno o varios)</span></label>
       <div class="checkbox-grid">
-        ${blocks.map(b=>`<div class="check-item"><input type="checkbox" id="cb-${b.id}" class="f-bloq-chk" value="${b.nombre}" ${bloquesSel.includes(b.nombre)?'checked':''}><label for="cb-${b.id}">${b.nombre} <small style="font-weight:400;color:var(--gris-m)">(${(b.cantidad||0).toLocaleString()} riz.)</small></label></div>`).join('')}
+        ${blocks.map(b=>`<div class="check-item"><input type="checkbox" id="cb-${b.id}" class="f-bloq-chk" value="${b.nombre}" ${bloquesSel.includes(b.nombre)?'checked':''} onchange="renderBloquesEstadoPanel()"><label for="cb-${b.id}">${b.nombre} <small style="font-weight:400;color:var(--gris-m)">(${(b.cantidad||0).toLocaleString()} riz.)</small></label></div>`).join('')}
       </div>
+    </div>
+    <!-- Panel dinámico "Ejecución por cuartel": aparece solo cuando hay 2+ cuarteles seleccionados. -->
+    <div class="form-row" id="bloques-estado-form-row" style="display:none">
+      <label>Ejecución por cuartel <small style="color:var(--gris);font-weight:400">(cada cuartel puede tener su propia fecha real si se aplicó en distintos días)</small></label>
+      <div id="bloques-estado-container"></div>
     </div>
     <div class="alert-box info" id="apto-preview" style="margin-top:6px"><i data-lucide="clock"></i><div class="ab-content">Apto cosecha desde: <strong id="apto-val">—</strong></div></div>
     <h4><i data-lucide="camera" style="width:14px;height:14px;vertical-align:-2px"></i> Fotografías <span style="color:var(--gris);font-weight:400;font-size:11px">(múltiples por categoría — opcional pero recomendado)</span></h4>
@@ -3316,6 +3536,17 @@ async function editApp(id){
           </label>
         </div>
         <small style="color:var(--gris);font-size:11px">Equipo, operario, cuartel aplicado, condiciones observadas.</small></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Otros <small style="color:var(--gris);font-weight:400">(<span id="f-appfotos-otros-count">${_editAppFotosOtros.length}</span> agregada/s)</small></label>
+        <div id="f-appfotos-otros" style="margin-bottom:10px;display:flex;flex-wrap:wrap;min-height:24px">${renderEditAppFotosGallery('otros')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <label class="btn small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">📷 Tomar foto
+            <input type="file" accept="image/*" capture="environment" onchange="addEditAppFotos(this,'otros')" style="display:none">
+          </label>
+          <label class="btn small ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">🖼 Elegir de la galería
+            <input type="file" accept="image/*" multiple onchange="addEditAppFotos(this,'otros')" style="display:none">
+          </label>
+        </div>
+        <small style="color:var(--gris);font-size:11px">Cualquier otra foto relevante — planilla, receta técnica, resultado observado, etc.</small></div>
     </div>
     <h4><i data-lucide="cloud" style="width:14px;height:14px;vertical-align:-2px"></i> Condiciones climáticas al aplicar <span style="color:var(--gris);font-weight:400;font-size:11px">(recomendado GlobalG.A.P./MPS)</span></h4>
     <div class="form-grid">
@@ -3339,6 +3570,7 @@ async function editApp(id){
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveApp(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
   toggleAppFechaEjec();
   actualizarAptoDesde();
+  renderBloquesEstadoPanel();
   lucideInit();
 }
 /* Muestra/oculta el campo "Fecha aplicación (ejecutada)" según estado.
@@ -3378,8 +3610,44 @@ async function saveApp(id){
   /* Galerías multi-foto: guardamos los arrays completos y limpiamos los campos legacy. */
   data.fotosProducto=Array.isArray(_editAppFotosProducto)?_editAppFotosProducto.slice():[];
   data.fotosAplicacion=Array.isArray(_editAppFotosAplicacion)?_editAppFotosAplicacion.slice():[];
+  data.fotosOtros=Array.isArray(_editAppFotosOtros)?_editAppFotosOtros.slice():[];
   data.fotoProducto=null;
   data.fotoAplicacion=null;
+  /* Ejecución por cuartel: guardamos SOLO si hay 2+ cuarteles seleccionados.
+     Con 1 cuartel el estado agregado top-level basta. */
+  if(bloques.length>=2){
+    data.bloquesEstado=bloques.map(b=>{
+      const st=_editAppBloquesEstado[b]||{estado:data.estado||'programada',fecha:null};
+      return{bloque:b,estado:st.estado,fecha:st.fecha||null};
+    });
+    /* Derivamos estado agregado y fechas top-level desde bloquesEstado.
+       fechaPlanificada = próxima pendiente (para que la aplicación "salte" a la siguiente).
+       fecha = más reciente ejecutada cuando todas están realizadas. */
+    const estados=data.bloquesEstado.map(x=>x.estado);
+    const pendientesFechas=data.bloquesEstado.filter(x=>x.estado==='programada'&&x.fecha).map(x=>x.fecha).sort();
+    const realizadasFechas=data.bloquesEstado.filter(x=>x.estado==='realizada'&&x.fecha).map(x=>x.fecha).sort();
+    if(estados.every(e=>e==='realizada')){
+      data.estado='realizada';
+      if(realizadasFechas.length){data.fecha=realizadasFechas[realizadasFechas.length-1];data.fechaPlanificada=realizadasFechas[0];}
+    }else if(estados.every(e=>e==='cancelada')){
+      data.estado='cancelada';
+    }else{
+      data.estado='programada';
+      /* En estado mixto/programada: fechaPlanificada = próxima pendiente; fecha = null. */
+      if(pendientesFechas.length)data.fechaPlanificada=pendientesFechas[0];
+      data.fecha=null;
+    }
+    /* Validación prereq re-aplicada si el estado agregado quedó realizada */
+    if(data.estado==='realizada'&&dependeDeApp){
+      const depItem2=await getDepItem(dependeDeApp);
+      if(!depItemCompleto(depItem2,dependeDeApp.type)){
+        toast(`Bloqueada: el prereq "${depItemLabel(depItem2,dependeDeApp.type)}" aún no está realizado.`,'warn');
+        return;
+      }
+    }
+  }else{
+    data.bloquesEstado=null;
+  }
   let isNew=!id;
   // Chequeo de tamaño antes de enviar a Firestore (límite 1 MB por documento).
   const sz=approxDocSize(data);
@@ -3423,6 +3691,13 @@ async function quickMarkAppRealizada(id,ev){
       return;
     }
   }
+  /* Si hay 2+ cuarteles, abrimos modal selectivo para que el usuario elija cuáles marcar. */
+  const bloques=getBloques(a);
+  if(bloques.length>=2){
+    openQuickMarkAppModal(id,a);
+    return;
+  }
+  /* Caso 1 cuartel (o ninguno): comportamiento simple, sin modal. */
   a.estado='realizada';
   if(!a.fecha)a.fecha=a.fechaPlanificada||today();
   a.id=id;
@@ -3430,6 +3705,67 @@ async function quickMarkAppRealizada(id,ev){
   catch(e){toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
   if(navigator.vibrate)navigator.vibrate(25);
   toast('✓ Aplicación marcada como realizada');
+  renderApplications();
+}
+/* Modal selectivo para marcar cuáles cuarteles se marcan como realizada, con fecha común.
+   Al confirmar: guarda bloquesEstado con los realizados + los pendientes conservan estado previo. */
+function openQuickMarkAppModal(id,a){
+  const be=getBloquesEstado(a);
+  const pendientes=be.filter(x=>x.estado!=='realizada'&&x.estado!=='cancelada');
+  const yaRealizadas=be.filter(x=>x.estado==='realizada');
+  if(!pendientes.length){toast('Todos los cuarteles ya están realizados','warn');return}
+  const fechaDefault=a.fechaPlanificada||today();
+  openModal(`
+    <h3><i data-lucide="check-circle" style="width:18px;height:18px;vertical-align:-3px;color:var(--ok)"></i> Marcar cuarteles como realizada</h3>
+    <div style="color:var(--gris-d);font-size:12.5px;margin-bottom:14px;line-height:1.5">Elige cuáles cuarteles se aplicaron. Puedes marcar varios ahora y volver después para los otros con su fecha real.</div>
+    <div class="form-row"><label>Fecha de aplicación</label><input type="date" id="qmark-fecha" value="${fechaDefault}" style="max-width:200px"></div>
+    <div class="form-row"><label>Cuarteles pendientes <small style="color:var(--gris);font-weight:400">(marca los que aplicaste)</small></label>
+      <div class="checkbox-grid" style="margin-top:4px">
+        ${pendientes.map((be,i)=>`<div class="check-item"><input type="checkbox" id="qmark-cb-${i}" class="qmark-chk" value="${be.bloque.replace(/"/g,'&quot;')}" checked><label for="qmark-cb-${i}">${be.bloque}</label></div>`).join('')}
+      </div>
+    </div>
+    ${yaRealizadas.length?`<div class="alert-box info" style="margin-top:10px"><i data-lucide="check-circle"></i><div class="ab-content"><strong>Ya realizados:</strong> ${yaRealizadas.map(x=>x.bloque+(x.fecha?` (${fmt(x.fecha)})`:'')).join(' · ')}</div></div>`:''}
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn modal-quick-realizada" onclick="confirmarQuickMarkApp('${id}')"><i data-lucide="check"></i>Marcar seleccionados</button>
+    </div>
+  `);
+  lucideInit();
+}
+async function confirmarQuickMarkApp(id){
+  const a=await get('applications',id);
+  if(!a){toast('Aplicación no encontrada','warn');closeModal();return}
+  const fecha=document.getElementById('qmark-fecha')?.value||a.fechaPlanificada||today();
+  const seleccionados=Array.from(document.querySelectorAll('.qmark-chk:checked')).map(c=>c.value);
+  if(!seleccionados.length){toast('No seleccionaste ningún cuartel','warn');return}
+  /* Merge con estado actual */
+  const be=getBloquesEstado(a);
+  const updated=be.map(x=>{
+    if(seleccionados.includes(x.bloque))return{bloque:x.bloque,estado:'realizada',fecha};
+    return x;
+  });
+  a.bloquesEstado=updated;
+  /* Derivar estado agregado + fechas top-level. fechaPlanificada = próxima pendiente. */
+  const estados=updated.map(x=>x.estado);
+  const pendFechas=updated.filter(x=>x.estado==='programada'&&x.fecha).map(x=>x.fecha).sort();
+  const realFechas=updated.filter(x=>x.estado==='realizada'&&x.fecha).map(x=>x.fecha).sort();
+  if(estados.every(e=>e==='realizada')){
+    a.estado='realizada';
+    if(realFechas.length){a.fecha=realFechas[realFechas.length-1];a.fechaPlanificada=realFechas[0];}
+  }else if(estados.every(e=>e==='cancelada')){
+    a.estado='cancelada';
+  }else{
+    a.estado='programada';
+    if(pendFechas.length)a.fechaPlanificada=pendFechas[0];
+    a.fecha=null;
+  }
+  a.id=id;
+  try{await put('applications',a);}
+  catch(e){toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  if(navigator.vibrate)navigator.vibrate(25);
+  const restantes=updated.filter(x=>x.estado!=='realizada').length;
+  toast(`✓ ${seleccionados.length} cuartel${seleccionados.length>1?'es':''} marcado${seleccionados.length>1?'s':''} realizada${restantes?' · '+restantes+' pendiente'+(restantes>1?'s':''):''}`);
+  closeModal();
   renderApplications();
 }
 /* === Quick photo: agregar foto directo desde la grilla/card sin entrar a editar.
