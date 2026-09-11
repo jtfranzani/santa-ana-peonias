@@ -771,6 +771,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .apx-prod-icon{width:18px;height:18px;color:var(--rosa-d);flex-shrink:0;stroke-width:2.2;opacity:.85}
   .apx-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--texto);letter-spacing:-.015em;line-height:1.25;word-break:break-word}
   .apx-cat-tag{display:inline-flex;align-items:center;align-self:flex-start;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);color:#1e40af;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:.4px;text-transform:uppercase;border:1px solid #bfdbfe}
+  .apx-cat-tags-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
   .apx-desc-wrap{border-left:3px solid var(--verde);padding:4px 0 4px 12px;margin-top:6px}
   .apx-desc-wrap.apx-com-wrap{border-left-color:var(--rosa-d);margin-top:8px}
   .apx-desc-wrap .app-desc{font-size:12.5px;font-style:italic;color:var(--gris-d);line-height:1.55;font-weight:400;letter-spacing:.1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
@@ -962,7 +963,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.42';
+const APP_VERSION='2026.05.18.43';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1184,6 +1185,8 @@ function getFotosProducto(a){if(!a)return[];if(Array.isArray(a.fotosProducto))re
 function getFotosAplicacion(a){if(!a)return[];if(Array.isArray(a.fotosAplicacion))return a.fotosAplicacion.slice();if(a.fotoAplicacion)return[a.fotoAplicacion];return[]}
 function getFotosOtros(a){if(!a)return[];if(Array.isArray(a.fotosOtros))return a.fotosOtros.slice();return[]}
 function getFotosApp(a){return[...getFotosProducto(a),...getFotosAplicacion(a),...getFotosOtros(a)]}
+/* Categorías múltiples: soporta campo nuevo `categorias` (array) y legacy `categoria` (string). */
+function getCategorias(a){if(!a)return[];if(Array.isArray(a.categorias)&&a.categorias.length)return a.categorias.slice();if(a.categoria)return[a.categoria];return[]}
 /* === Ejecución por cuartel: cada bloque de una aplicación puede tener su propia fecha y estado.
    Retorna [{bloque, estado, fecha}] para todos los cuarteles. Si no hay data almacenada, deriva del top-level. */
 function getBloquesEstado(a){
@@ -2601,6 +2604,16 @@ let _editAppFotosProducto=[];
 let _editAppFotosAplicacion=[];
 let _editAppFotosOtros=[];
 /* Helper para mapear slot → array de state y IDs de DOM. */
+/* Marca el checkbox de categoría correspondiente cuando se elige una plantilla de producto.
+   No des-marca las otras (permite acumular al probar plantillas sucesivas). */
+function setAppCatChecked(catName){
+  if(!catName)return;
+  const chks=document.querySelectorAll('.f-cat-chk');
+  let found=false;
+  chks.forEach(c=>{if(c.value===catName){c.checked=true;found=true;}});
+  const hid=document.getElementById('f-cat');if(hid)hid.value=catName;
+  return found;
+}
 function _editAppSlotArr(slot){
   if(slot==='prod')return _editAppFotosProducto;
   if(slot==='apl')return _editAppFotosAplicacion;
@@ -3055,7 +3068,7 @@ async function renderApplications(){
   const countsApp={todas:apps.length,programada:0,realizada:0,cancelada:0,atrasada:0};
   apps.forEach(a=>{countsApp[estadoApp(a)]=(countsApp[estadoApp(a)]||0)+1;if(aplicacionAtrasada(a))countsApp.atrasada++});
   /* Listas únicas para los dropdowns. */
-  const categoriasUnicas=[...new Set(apps.map(a=>(a.categoria||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  const categoriasUnicas=[...new Set(apps.flatMap(a=>getCategorias(a).map(c=>(c||'').trim())).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
   /* Cuarteles: cada aplicación puede tener varios; aplanamos. */
   const cuartelesSet=new Set();
   apps.forEach(a=>{const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);bs.forEach(b=>{if(b)cuartelesSet.add(String(b).trim());});});
@@ -3067,7 +3080,7 @@ async function renderApplications(){
       if(_appsFiltroEstado==='atrasada'){if(!aplicacionAtrasada(a))return false;}
       else if(estadoApp(a)!==_appsFiltroEstado)return false;
     }
-    if(_appsFiltroCategoria!=='todas'&&(a.categoria||'').trim()!==_appsFiltroCategoria)return false;
+    if(_appsFiltroCategoria!=='todas'&&!getCategorias(a).map(x=>(x||'').trim()).includes(_appsFiltroCategoria))return false;
     if(_appsFiltroCuartel.length>0){
       const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
       const bsKeys=bs.map(x=>String(x).trim());
@@ -3104,7 +3117,7 @@ async function renderApplications(){
         <div class="mobile-hide-cat-filter" style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
           <select onchange="setAppsFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
             <option value="todas" ${_appsFiltroCategoria==='todas'?'selected':''}>Todas (${apps.length})</option>
-            ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>(a.categoria||'').trim()===c).length})</option>`).join('')}
+            ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>getCategorias(a).map(x=>(x||'').trim()).includes(c)).length})</option>`).join('')}
           </select>
         </div>
         <div class="mobile-hide-cuarteles-filter" style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_appsFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCuartel.length} seleccionado${_appsFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
@@ -3158,7 +3171,8 @@ async function renderApplications(){
         }
         const lockBadge=isBloqueada?'<span class="app-card-lock">🔒 Bloqueada</span>':'';
         /* Chips de categoría + cuarteles */
-        const catTag=a.categoria?`<span class="tag info">${a.categoria}</span>`:'';
+        const _catsCard=getCategorias(a);
+        const catTag=_catsCard.length?_catsCard.map(c=>`<span class="tag info">${c}</span>`).join(''):'';
         const bsArr=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
         const bloquesHTML=bsArr.length?bsArr.map(b=>`<span class="chip">${b}</span>`).join(''):'';
         /* Fotos thumbnails: multi-imagen desde ambas categorías. Muestro las 3 primeras + contador. */
@@ -3256,7 +3270,9 @@ async function renderApplications(){
           /* Columna 1: estado + fecha apilados verticalmente */
           const col1=`<div class="apx-status-cell"><div>${estHTMLA}</div><div class="apx-date-wrap">${fechaFmtA?`<span class="pro-date">${fechaFmtA}</span>`:''}${subFechaA?`<span class="pro-date-sub">${subFechaA}</span>`:''}</div></div>`;
           /* Columna 2: producto bold grande + categoría chip + descripción (motivo) quote + comentarios quote (rosa) */
-          const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${a.categoria?`<span class="apx-cat-tag">${a.categoria}</span>`:''}${a.motivo?`<div class="apx-desc-wrap"><div class="apx-desc-mini-label">Motivo</div>${descTxt}</div>`:''}${a.comentarios?`<div class="apx-desc-wrap apx-com-wrap"><div class="apx-desc-mini-label apx-com-label">Comentarios</div>${comTxt}</div>`:''}</div>`;
+          const _catsRow=getCategorias(a);
+          const _catsRowHTML=_catsRow.length?`<div class="apx-cat-tags-wrap">${_catsRow.map(c=>`<span class="apx-cat-tag">${c}</span>`).join('')}</div>`:'';
+          const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${_catsRowHTML}${a.motivo?`<div class="apx-desc-wrap"><div class="apx-desc-mini-label">Motivo</div>${descTxt}</div>`:''}${a.comentarios?`<div class="apx-desc-wrap apx-com-wrap"><div class="apx-desc-mini-label apx-com-label">Comentarios</div>${comTxt}</div>`:''}</div>`;
           /* Columna 3: cuarteles chips */
           const col3=`<div class="apx-bloques-cell">${bloquesTags(a)}</div>`;
           /* Columna 4: dosis bold + volumen sub + método */
@@ -3326,7 +3342,7 @@ async function viewApp(id){
         <div class="dview-title"><span>${a.producto||'(sin producto)'}</span>${depBloqueadaA?'<span class="dview-lock-badge">🔒 Bloqueada</span>':''}</div>
         <div class="dview-meta-row">
           ${estTagDet}
-          ${a.categoria?`<span class="tag info">${a.categoria}</span>`:''}
+          ${getCategorias(a).map(c=>`<span class="tag info">${c}</span>`).join('')}
           ${fechaPrincipal?`<span class="dview-date">${fechaPrincipalLbl} ${fmt(fechaPrincipal)}${a.horaApp?' · '+a.horaApp:''}</span>`:''}
         </div>
       </div>
@@ -3477,7 +3493,7 @@ async function editApp(id){
   const metodos=['Barra tractor','Barra espalda','Dron','Mochila manual','Pulverizadora espalda','Aéreo','Riego por goteo','Otro'];
   const cdIni=a.carenciaDias!=null&&a.carenciaDias!==''?a.carenciaDias:(parseCarenciaDias(a.carencia)||'');
   openModal(`<h3>${id?'Editar':'Registrar'} aplicación</h3>
-    <div class="form-row"><label>Seleccionar producto conocido (opcional)</label><select onchange="if(this.value){const p=PRODUCT_TEMPLATES[this.value];document.getElementById('f-prod').value=p.nombre;document.getElementById('f-cat').value=p.cat;document.getElementById('f-ing').value=p.tipo;document.getElementById('f-dos').value=p.dosis_rec;document.getElementById('f-mot').value=p.motivo;document.getElementById('f-car').value=p.carencia;document.getElementById('f-cdias').value=parseCarenciaDias(p.carencia)||'';actualizarAptoDesde()}">
+    <div class="form-row"><label>Seleccionar producto conocido (opcional)</label><select onchange="if(this.value){const p=PRODUCT_TEMPLATES[this.value];document.getElementById('f-prod').value=p.nombre;setAppCatChecked(p.cat);document.getElementById('f-ing').value=p.tipo;document.getElementById('f-dos').value=p.dosis_rec;document.getElementById('f-mot').value=p.motivo;document.getElementById('f-car').value=p.carencia;document.getElementById('f-cdias').value=parseCarenciaDias(p.carencia)||'';actualizarAptoDesde()}">
       <option value="">-- Buscar en biblioteca --</option>
       ${cats.map(c=>`<optgroup label="${c}">${PRODUCT_TEMPLATES.map((p,i)=>p.cat===c?`<option value="${i}">${p.nombre}</option>`:'').join('')}</optgroup>`).join('')}
     </select></div>
@@ -3491,7 +3507,12 @@ async function editApp(id){
       <div class="form-row" id="row-app-fejec"><label>Fecha aplicación (ejecutada)</label><input id="f-fecha" type="date" value="${a.fecha||''}" onchange="actualizarAptoDesde()"></div>
       <div class="form-row"><label>Hora aplicación</label><input id="f-hora" type="time" value="${a.horaApp||''}"></div>
       <div class="form-row"><label>Producto comercial</label><input id="f-prod" value="${a.producto||''}"></div>
-      <div class="form-row"><label>Categoría</label><select id="f-cat">${['',...cats].map(c=>`<option ${a.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Categorías <small style="color:var(--gris);font-weight:400;font-size:11px">(marca una o varias — ej: Fungicida + Insecticida)</small></label>
+        <div class="checkbox-grid">
+          ${cats.map((c,i)=>{const isChecked=getCategorias(a).includes(c);return `<div class="check-item"><input type="checkbox" id="cb-cat-${i}" class="f-cat-chk" value="${c.replace(/"/g,'&quot;')}" ${isChecked?'checked':''}><label for="cb-cat-${i}">${c}</label></div>`}).join('')}
+        </div>
+        <input type="hidden" id="f-cat" value="${(getCategorias(a)[0]||'').replace(/"/g,'&quot;')}">
+      </div>
       <div class="form-row"><label>Ingrediente activo / Tipo</label><input id="f-ing" value="${a.ingrediente||''}"></div>
       <div class="form-row"><label>Dosis</label><input id="f-dos" value="${a.dosis||''}" placeholder="ej. 2 g/L"></div>
       <div class="form-row"><label>Volumen aplicado</label><input id="f-vol" value="${a.volumen||''}" placeholder="ej. 500 L total"></div>
@@ -3596,7 +3617,9 @@ async function saveApp(id){
   const fechaEjecFinal=estadoSel==='realizada'?(fejec||fplan||today()):null;
   const depRawApp=document.getElementById('f-dep')?.value||'';
   const dependeDeApp=depDecode(depRawApp);
-  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categoria:document.getElementById('f-cat').value,ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,comentarios:document.getElementById('f-com')?.value||'',tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null,dependeDe:dependeDeApp};
+  /* Categorías múltiples: leemos los checkboxes marcados. Guardamos categorias (array) + categoria (compat legacy = primera). */
+  const catsSel=Array.from(document.querySelectorAll('.f-cat-chk:checked')).map(c=>c.value);
+  const data={estado:estadoSel,fechaPlanificada:fplan||null,fecha:fechaEjecFinal,horaApp:document.getElementById('f-hora').value||null,producto:document.getElementById('f-prod').value,categorias:catsSel,categoria:catsSel[0]||'',ingrediente:document.getElementById('f-ing').value,bloques:bloques,bloque:bloques[0]||'',dosis:document.getElementById('f-dos').value,volumen:document.getElementById('f-vol').value,carencia:document.getElementById('f-car').value,carenciaDias:cdias,responsable:document.getElementById('f-resp').value,prestador:document.getElementById('f-prest').value,metodoAplicacion:document.getElementById('f-metodo').value,motivo:document.getElementById('f-mot').value,comentarios:document.getElementById('f-com')?.value||'',tempC:document.getElementById('f-temp').value!==''?parseFloat(document.getElementById('f-temp').value):null,humedad:document.getElementById('f-hum').value!==''?parseFloat(document.getElementById('f-hum').value):null,viento:document.getElementById('f-vto').value!==''?parseFloat(document.getElementById('f-vto').value):null,dependeDe:dependeDeApp};
   if(!data.producto){toast('Producto requerido','warn');return}
   if(!data.fechaPlanificada){toast('Fecha planificada requerida','warn');return}
   /* Validación de prerrequisito: si se intenta dejar en estado realizada y el prereq no está realizado, bloquear. */
@@ -3671,7 +3694,7 @@ async function saveApp(id){
   const estLabel=data.estado==='realizada'?'🟢 Realizada':data.estado==='programada'?'🟡 Programada':data.estado==='cancelada'?'⚪ Cancelada':data.estado;
   const fechaNotif=data.estado==='realizada'?(data.fecha||data.fechaPlanificada):data.fechaPlanificada;
   if(isNew||data.estado==='realizada'){
-    notifyHook('Aplicación fitosanitaria',`${estLabel}: ${data.producto}${data.categoria?' ('+data.categoria+')':''}`,`Fecha: ${fmt(fechaNotif)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
+    notifyHook('Aplicación fitosanitaria',`${estLabel}: ${data.producto}${(Array.isArray(data.categorias)&&data.categorias.length)?' ('+data.categorias.join(' + ')+')':(data.categoria?' ('+data.categoria+')':'')}`,`Fecha: ${fmt(fechaNotif)}${data.horaApp?' '+data.horaApp:''}\nCuarteles: ${(data.bloques||[]).join(', ')||'General'}\nDosis: ${data.dosis||'-'}\n${data.volumen?'Volumen: '+data.volumen+'\n':''}${data.motivo?'Motivo: '+data.motivo+'\n':''}${data.carencia?'Carencia: '+data.carencia:''}${fin?'\n🚫 Apto desde: '+fmt(fin):''}${data.responsable?'\nResponsable: '+data.responsable:''}${data.prestador?'\nPrestador: '+data.prestador:''}${data.metodoAplicacion?'\nMétodo: '+data.metodoAplicacion:''}`,'apps');
   }
   renderApplications();
 }
@@ -5241,7 +5264,7 @@ async function renderReports(){
   blocks.forEach(b=>{
     const appBlock=ultAppMonth.filter(a=>bloqueMatch(a,b.nombre));
     if(mes>=9&&mes<=11){
-      const fung=appBlock.filter(a=>a.categoria==='Fungicida');
+      const fung=appBlock.filter(a=>getCategorias(a).includes('Fungicida'));
       if(fung.length===0)alertasSanitarias.push({tipo:'warn',bloque:b.nombre,msg:'Sin fungicida preventivo en últimos 30 días durante período crítico (botoneo/floración). Considerar aplicación preventiva contra Botrytis.'});
     }
   });
@@ -5253,7 +5276,8 @@ async function renderReports(){
   const hhPorCat={};
   tasks.forEach(t=>{hhPorCat[t.categoria||'Sin categoría']=(hhPorCat[t.categoria||'Sin categoría']||0)+(tiempoAHoras(t.horas,t.unidadTiempo)||0)});
   /* Total aplicaciones por categoría */
-  const appPorCat={};apps.forEach(a=>{appPorCat[a.categoria||'Otro']=(appPorCat[a.categoria||'Otro']||0)+1});
+  /* Contamos cada categoría; una aplicación con múltiples cuenta en cada una. */
+  const appPorCat={};apps.forEach(a=>{const cs=getCategorias(a);if(!cs.length){appPorCat['Otro']=(appPorCat['Otro']||0)+1;return}cs.forEach(c=>{appPorCat[c]=(appPorCat[c]||0)+1})});
 
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Informes comparativos</h2><div class="sub">Análisis automatizado de datos registrados</div></div>
@@ -5282,7 +5306,7 @@ async function renderReports(){
 
       <h3 style="margin-top:20px">💧 Aplicaciones</h3>
       <table><tr><th>Categoría</th><th>Total aplicaciones</th><th>Últimos 30 días</th></tr>
-      ${Object.entries(appPorCat).map(([cat,n])=>{const n30=apps.filter(a=>a.categoria===cat&&daysBetween(a.fecha,hoy)<=30).length;return `<tr><td>${cat}</td><td>${n}</td><td>${n30}</td></tr>`}).join('')}
+      ${Object.entries(appPorCat).map(([cat,n])=>{const n30=apps.filter(a=>getCategorias(a).includes(cat)&&daysBetween(a.fecha,hoy)<=30).length;return `<tr><td>${cat}</td><td>${n}</td><td>${n30}</td></tr>`}).join('')}
       </table>
 
       <h3 style="margin-top:20px">⚠️ Alertas sanitarias y recomendaciones</h3>
