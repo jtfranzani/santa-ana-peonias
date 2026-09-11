@@ -265,6 +265,15 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .cal-leg-dot.atrasada{background:#fee2e2;border:1px solid #ef4444}
 .cal-leg-dot.labor{background:#dbeafe;border:1px solid #2563eb}
 .cal-leg-dot.aplic{background:#fce7f3;border:1px solid #be185d}
+.cal-leg-dot.fito{background:#fce7f3;border:1px solid #be185d}
+.cal-leg-dot.nutri{background:#dcfce7;border:1px solid #16a34a}
+.cal-leg-dot.otro-cat{background:#fef3c7;border:1px solid #d97706}
+/* Barras verticales de método (mini indicador dentro de la leyenda) */
+.cal-leg-bar{display:inline-block;width:4px;height:12px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.cal-leg-bar.goteo{background:#0284c7}
+.cal-leg-bar.barra{background:#7c3aed}
+.cal-leg-bar.foliar{background:#15803d}
+.cal-leg-bar.manual{background:#b45309}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--gris-l);border:1px solid var(--gris-l);border-radius:8px;overflow:hidden}
 .cal-dow{background:var(--gris-xl);padding:8px;text-align:center;font-size:10.5px;font-weight:600;color:var(--gris-d);text-transform:uppercase;letter-spacing:.5px}
 .cal-cell{background:#fff;min-height:115px;padding:6px;display:flex;flex-direction:column;gap:3px}
@@ -281,7 +290,18 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .cal-item{font-size:11px;padding:3px 7px;border-radius:4px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;border:1px solid transparent}
 .cal-item.item-atrasada{background:#fee2e2;color:#991b1b;border-color:#fecaca}
 .cal-item.item-labor{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
-.cal-item.item-app{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}
+/* Aplicaciones divididas por tipo dominante:
+   - item-app-fito (fitosanitario): rosa (histórico, señal de químico)
+   - item-app-nutri (fertilizante/nutrición): verde
+   - item-app-otro: ámbar/gris  */
+.cal-item.item-app-fito,.cal-item.item-app{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}
+.cal-item.item-app-nutri{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.cal-item.item-app-otro{background:#fef3c7;color:#92400e;border-color:#fde68a}
+/* Distinción de método: borde izquierdo grueso indica goteo/barra/foliar/manual */
+.cal-item.metodo-goteo{border-left:3px solid #0284c7}
+.cal-item.metodo-barra{border-left:3px solid #7c3aed}
+.cal-item.metodo-foliar{border-left:3px solid #15803d}
+.cal-item.metodo-manual{border-left:3px solid #b45309}
 .cal-item:hover{filter:brightness(0.94)}
 .cal-more{font-size:10.5px;color:var(--info);cursor:pointer;padding:2px 6px;margin-top:auto;font-weight:500}
 .cal-more:hover{text-decoration:underline}
@@ -312,10 +332,18 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .cal-count{font-size:9px;padding:1px 5px;min-width:18px;text-align:center}
   /* Items se convierten en puntos: ocultamos el texto, mostramos un círculo */
   .cal-cell-items{flex-direction:row;flex-wrap:wrap;gap:3px;align-items:center}
-  .cal-item{width:8px;height:8px;border-radius:50%;padding:0!important;border:none!important;overflow:hidden;flex-shrink:0}
+  .cal-item{width:9px;height:9px;border-radius:50%;padding:0!important;border:none!important;overflow:hidden;flex-shrink:0;position:relative}
   .cal-item.item-atrasada{background:#ef4444}
   .cal-item.item-labor{background:#2563eb}
-  .cal-item.item-app{background:#be185d}
+  .cal-item.item-app,.cal-item.item-app-fito{background:#be185d}
+  .cal-item.item-app-nutri{background:#16a34a}
+  .cal-item.item-app-otro{background:#d97706}
+  /* Indicador de método: pequeño ring alrededor del dot según el método.
+     Goteo = ring azul, Barra = ring violeta, Foliar = ring verde oscuro, Manual = ring ámbar. */
+  .cal-item.metodo-goteo{box-shadow:0 0 0 1.5px #0284c7}
+  .cal-item.metodo-barra{box-shadow:0 0 0 1.5px #7c3aed}
+  .cal-item.metodo-foliar{box-shadow:0 0 0 1.5px #15803d}
+  .cal-item.metodo-manual{box-shadow:0 0 0 1.5px #b45309}
   .cal-item-text{display:none!important}
   /* "+N" más compacto */
   .cal-more{font-size:10px;padding:0;margin-top:2px;font-weight:700}
@@ -986,7 +1014,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.46';
+const APP_VERSION='2026.05.18.47';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1229,6 +1257,34 @@ function tipoDominanteApp(a){
   if(clases.includes('cat-fito'))return 'fito';
   if(clases.includes('cat-nutri'))return 'nutri';
   return 'otro';
+}
+/* Clasifica el método de aplicación en 'goteo' | 'barra' | 'foliar' | 'otro'.
+   Se usa para elegir ícono en el calendario y diferenciar visualmente. */
+function metodoAplicClass(m){
+  const s=(m||'').toString().toLowerCase().trim();
+  if(!s)return 'metodo-otro';
+  if(/gote|fertirrieg|drench|riego|inyec/.test(s))return 'metodo-goteo';
+  if(/foliar/.test(s))return 'metodo-foliar';
+  if(/barra|espalda|lanza|pulveriz|aspersi|bomba|nebuli|atomiz/.test(s))return 'metodo-barra';
+  if(/granul|manual|corona|espolvore|voleo/.test(s))return 'metodo-manual';
+  return 'metodo-otro';
+}
+/* Ícono para el método de aplicación (usado en calendario y otros lugares compactos). */
+function metodoAplicIcon(m){
+  const c=metodoAplicClass(m);
+  return c==='metodo-goteo'?'💧'
+       :c==='metodo-barra'?'💦'
+       :c==='metodo-foliar'?'🍃'
+       :c==='metodo-manual'?'🌱'
+       :'💠';
+}
+/* Etiqueta legible del método (para leyendas). */
+function metodoAplicLabel(c){
+  return c==='metodo-goteo'?'Goteo/Riego'
+       :c==='metodo-barra'?'Barra/Aspersión'
+       :c==='metodo-foliar'?'Foliar'
+       :c==='metodo-manual'?'Manual/Granular'
+       :'Otro';
 }
 /* === Ejecución por cuartel: cada bloque de una aplicación puede tener su propia fecha y estado.
    Retorna [{bloque, estado, fecha}] para todos los cuarteles. Si no hay data almacenada, deriva del top-level. */
@@ -1819,7 +1875,7 @@ async function renderDashboard(){
       const m0=new Date(yearM,monthM,1);const m1=new Date(yearM,monthM+1,0);
       const enMes=fechaStr=>{if(!fechaStr)return false;const d=parseLocalDate(fechaStr);if(!d)return false;return d>=m0&&d<=m1;};
       const tasksMG=tasks.filter(t=>['pendiente','en_curso'].includes(estadoLabor(t))&&enMes(t.fechaPlanificada||t.fecha)).map(t=>({tipo:'labor',id:t.id,fecha:t.fechaPlanificada||t.fecha,titulo:t.nombre||'(sin nombre)',atrasada:laborAtrasada(t)}));
-      const appsMG=apps.filter(a=>estadoApp(a)==='programada'&&enMes(a.fechaPlanificada||a.fecha)).map(a=>({tipo:'aplicacion',id:a.id,fecha:a.fechaPlanificada||a.fecha,titulo:a.producto||'(sin producto)',atrasada:aplicacionAtrasada(a)}));
+      const appsMG=apps.filter(a=>estadoApp(a)==='programada'&&enMes(a.fechaPlanificada||a.fecha)).map(a=>({tipo:'aplicacion',id:a.id,fecha:a.fechaPlanificada||a.fecha,titulo:a.producto||'(sin producto)',atrasada:aplicacionAtrasada(a),tipoDom:tipoDominanteApp(a),metodoAplicacion:a.metodoAplicacion||'',metodoCls:metodoAplicClass(a.metodoAplicacion)}));
       const itemsMG=[...tasksMG,...appsMG];
       const mesNombre=hoy.toLocaleDateString('es-CL',{month:'long',year:'numeric'});
       const primerDia=new Date(yearM,monthM,1);const ultimoDia=new Date(yearM,monthM+1,0);
@@ -1842,10 +1898,16 @@ async function renderDashboard(){
         cellsHtml+=`<div class="${clases.join(' ')}" ${arr.length?`onclick="openDayDetail('${dateStr}')"`:''}>
           <div class="cal-cell-head"><span class="cal-day-num">${d}</span>${arr.length?`<span class="cal-count">${arr.length}</span>`:''}</div>
           <div class="cal-cell-items">${visible.map(i=>{
-            const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
-            const ico=i.tipo==='labor'?'📋':'💧';
+            let colorClass;
+            if(i.atrasada)colorClass='item-atrasada';
+            else if(i.tipo==='labor')colorClass='item-labor';
+            else if(i.tipoDom==='nutri')colorClass='item-app-nutri';
+            else if(i.tipoDom==='otro')colorClass='item-app-otro';
+            else colorClass='item-app-fito';
+            const ico=i.tipo==='labor'?'📋':metodoAplicIcon(i.metodoAplicacion);
             const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
-            return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
+            const tipTxt=i.tipo==='aplicacion'&&i.metodoAplicacion?` · ${i.metodoAplicacion}`:'';
+            return `<div class="cal-item ${colorClass} ${i.tipo==='aplicacion'?i.metodoCls:''}" onclick="event.stopPropagation();${viewFn}" title="${((i.titulo||'')+tipTxt).replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
           }).join('')}</div>
           ${restantes>0?`<div class="cal-more">+${restantes}</div>`:''}
         </div>`;
@@ -1862,7 +1924,10 @@ async function renderDashboard(){
         <div class="dash-mobile-cal-legend">
           <span><span class="cal-leg-dot atrasada"></span>Atrasada</span>
           <span><span class="cal-leg-dot labor"></span>Labor</span>
-          <span><span class="cal-leg-dot aplic"></span>Aplicación</span>
+          <span><span class="cal-leg-dot fito"></span>Fitosanitario</span>
+          <span><span class="cal-leg-dot nutri"></span>Fertilizante</span>
+          <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar goteo"></span>Goteo</span>
+          <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar barra"></span>Barra</span>
         </div>
         <button class="btn small ghost" onclick="nav('calendar')" style="width:100%;margin:10px 0 0;justify-content:center"><i data-lucide="external-link"></i>Ver calendario completo</button>
       </div>`;
@@ -4576,12 +4641,17 @@ async function renderCalendar(){
     atrasada:laborAtrasada(t),
     notas:t.notas||''
   }));
-  /* Aplicaciones programadas. */
+  /* Aplicaciones programadas. Incluimos tipoDom (fito/nutri/otro) y metodoCls (goteo/barra/foliar/manual/otro)
+     para diferenciar visualmente en el calendario. */
   const appsProgs=apps.filter(a=>estadoApp(a)==='programada').map(a=>({
     tipo:'aplicacion',id:a.id,
     fecha:a.fechaPlanificada||a.fecha||'',
     titulo:a.producto||'(sin producto)',
     categoria:a.categoria||'',
+    categorias:getCategorias(a),
+    tipoDom:tipoDominanteApp(a),
+    metodoAplicacion:a.metodoAplicacion||'',
+    metodoCls:metodoAplicClass(a.metodoAplicacion),
     bloques:Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]),
     estado:estadoApp(a),
     responsable:a.responsable||'',
@@ -4684,10 +4754,19 @@ async function renderCalendar(){
         </div>
         <div class="cal-cell-items">
           ${visible.map(i=>{
-            const colorClass=i.atrasada?'item-atrasada':(i.tipo==='labor'?'item-labor':'item-app');
-            const ico=i.tipo==='labor'?'📋':'💧';
+            /* Clase de color: atrasada > tipo-labor > tipo-app subdividido por tipoDom (fito/nutri/otro) */
+            let colorClass;
+            if(i.atrasada)colorClass='item-atrasada';
+            else if(i.tipo==='labor')colorClass='item-labor';
+            else if(i.tipoDom==='nutri')colorClass='item-app-nutri';
+            else if(i.tipoDom==='otro')colorClass='item-app-otro';
+            else colorClass='item-app-fito';
+            /* Ícono: labor = 📋; aplicación = ícono según método (goteo/barra/foliar/manual) */
+            const ico=i.tipo==='labor'?'📋':metodoAplicIcon(i.metodoAplicacion);
             const viewFn=i.tipo==='labor'?`viewTask('${i.id}')`:`viewApp('${i.id}')`;
-            return `<div class="cal-item ${colorClass}" onclick="event.stopPropagation();${viewFn}" title="${(i.titulo||'').replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
+            /* Título del tooltip: incluye método si es aplicación, para poder identificarlo en hover */
+            const tipTxt=i.tipo==='aplicacion'&&i.metodoAplicacion?` · ${i.metodoAplicacion}`:'';
+            return `<div class="cal-item ${colorClass} ${i.tipo==='aplicacion'?i.metodoCls:''}" onclick="event.stopPropagation();${viewFn}" title="${((i.titulo||'')+tipTxt).replace(/"/g,'&quot;')}"><span class="cal-item-text">${ico} ${i.titulo}</span></div>`;
           }).join('')}
         </div>
         ${restantes>0?`<div class="cal-more">+${restantes}</div>`:''}
@@ -4706,7 +4785,14 @@ async function renderCalendar(){
           <div class="cal-legend">
             <span><span class="cal-leg-dot atrasada"></span>Atrasada</span>
             <span><span class="cal-leg-dot labor"></span>Labor</span>
-            <span><span class="cal-leg-dot aplic"></span>Aplicación</span>
+            <span><span class="cal-leg-dot fito"></span>Fitosanitario</span>
+            <span><span class="cal-leg-dot nutri"></span>Fertilizante</span>
+            <span><span class="cal-leg-dot otro-cat"></span>Otro</span>
+            <span style="border-left:1px solid var(--gris-l);padding-left:12px;color:var(--gris-m);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600">Método:</span>
+            <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar goteo"></span>Goteo</span>
+            <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar barra"></span>Barra</span>
+            <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar foliar"></span>Foliar</span>
+            <span style="display:flex;align-items:center;gap:2px"><span class="cal-leg-bar manual"></span>Manual</span>
           </div>
         </div>
         <div class="cal-grid">
