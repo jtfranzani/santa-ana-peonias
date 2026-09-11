@@ -772,6 +772,29 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   .apx-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--texto);letter-spacing:-.015em;line-height:1.25;word-break:break-word}
   .apx-cat-tag{display:inline-flex;align-items:center;align-self:flex-start;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);color:#1e40af;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:.4px;text-transform:uppercase;border:1px solid #bfdbfe}
   .apx-cat-tags-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  /* === Diferenciación visual por tipo de categoría ===
+     Fitosanitario (Fungicida/Insecticida/Nematicida/Herbicida/Acaricida/Bactericida) = azul (default)
+     Nutrición (Fertilizante/Bioestimulante/Foliar/Suelo/Bioestabilizado) = verde
+     Otro (Adyuvante, etc.) = gris neutro */
+  .apx-cat-tag.cat-nutri,.tag.cat-nutri{background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);color:#065f46;border-color:#a7f3d0}
+  .apx-cat-tag.cat-fito,.tag.cat-fito{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);color:#1e40af;border-color:#bfdbfe}
+  .apx-cat-tag.cat-otro,.tag.cat-otro{background:linear-gradient(135deg,#f9fafb 0%,#f3f4f6 100%);color:#4b5563;border-color:#e5e7eb}
+  .tag.cat-nutri,.tag.cat-fito,.tag.cat-otro{border:1px solid;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+  /* Chips de filtro de categoría (multi-select). Estados inactivo → sutil con color de acento;
+     activo → fill sólido del color del grupo (fito=azul, nutri=verde, otro=gris). */
+  .chip.cat-chip{transition:all .15s ease}
+  .chip.cat-chip strong{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:8px;font-size:10.5px;font-weight:700;margin-left:4px}
+  .chip.cat-chip.active{color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .chip.cat-chip.active strong{background:rgba(255,255,255,.28);color:#fff}
+  .chip.cat-chip.active.cat-fito{background:#2563eb;border-color:#2563eb}
+  .chip.cat-chip.active.cat-nutri{background:#059669;border-color:#059669}
+  .chip.cat-chip.active.cat-otro{background:#6b7280;border-color:#6b7280}
+  /* Contenedor del filtro de categorías: reserva ancho completo y padding cómodo en mobile. */
+  .cat-chips-container{display:flex;flex-direction:column;gap:2px}
+  @media(max-width:768px){
+    .cat-chips-container .chip{min-height:34px;font-size:12.5px!important;padding:7px 12px!important}
+    .cat-chips-container .chip strong{font-size:11px}
+  }
   .apx-desc-wrap{border-left:3px solid var(--verde);padding:4px 0 4px 12px;margin-top:6px}
   .apx-desc-wrap.apx-com-wrap{border-left-color:var(--rosa-d);margin-top:8px}
   .apx-desc-wrap .app-desc{font-size:12.5px;font-style:italic;color:var(--gris-d);line-height:1.55;font-weight:400;letter-spacing:.1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
@@ -963,7 +986,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.43';
+const APP_VERSION='2026.05.18.46';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1187,6 +1210,26 @@ function getFotosOtros(a){if(!a)return[];if(Array.isArray(a.fotosOtros))return a
 function getFotosApp(a){return[...getFotosProducto(a),...getFotosAplicacion(a),...getFotosOtros(a)]}
 /* Categorías múltiples: soporta campo nuevo `categorias` (array) y legacy `categoria` (string). */
 function getCategorias(a){if(!a)return[];if(Array.isArray(a.categorias)&&a.categorias.length)return a.categorias.slice();if(a.categoria)return[a.categoria];return[]}
+/* Clasifica una categoría en 'nutri' (fertilizantes/bioestimulantes), 'fito' (fitosanitarios) u 'otro'.
+   Retorna el sufijo de clase CSS. Se usa para colorear los tags distinto en la UI. */
+function catTagClass(c){
+  const s=(c||'').toString().toLowerCase().trim();
+  if(!s)return 'cat-otro';
+  if(/fertiliz|bioestim|bioestab|foliar|abono|nutri|npk|humico|fulvico|urea|calcio|potasio|magnesio|fosfato|sulfato|suelo/.test(s))return 'cat-nutri';
+  if(/fungicid|insecticid|nematicid|herbicid|acaricid|bactericid|molusquicid|fitosanit|plagicid/.test(s))return 'cat-fito';
+  return 'cat-otro';
+}
+/* Clasifica el "tipo dominante" de una aplicación considerando TODAS sus categorías.
+   Prioridad: si hay al menos una fitosanitaria → fito; si solo hay nutricional → nutri; sino → otro.
+   (Esto sirve, por ejemplo, para pintar el borde de una card con lógica coherente.) */
+function tipoDominanteApp(a){
+  const cs=getCategorias(a);
+  if(!cs.length)return 'otro';
+  const clases=cs.map(catTagClass);
+  if(clases.includes('cat-fito'))return 'fito';
+  if(clases.includes('cat-nutri'))return 'nutri';
+  return 'otro';
+}
 /* === Ejecución por cuartel: cada bloque de una aplicación puede tener su propia fecha y estado.
    Retorna [{bloque, estado, fecha}] para todos los cuarteles. Si no hay data almacenada, deriva del top-level. */
 function getBloquesEstado(a){
@@ -1898,7 +1941,7 @@ async function renderDashboard(){
             const bloquesTxt=i.bloques.length
               ?i.bloques.map(b=>`<span class="chip" style="font-size:10.5px;padding:2px 7px;margin:1px">${b}</span>`).join('')
               :'<span style="color:var(--gris-m);font-size:11px">General</span>';
-            return `<tr class="clickable-row" onclick="${viewFn}" style="cursor:pointer"><td><strong>${fmt(i.fecha)}</strong><div style="margin-top:3px">${estTag}</div></td><td>${tipoTag}</td><td><strong>${i.titulo}</strong>${i.categoria?`<div style="margin-top:3px"><span class="tag info" style="font-size:10.5px">${i.categoria}</span></div>`:''}</td><td>${bloquesTxt}</td><td style="font-size:12.5px">${i.responsable||'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td></tr>`;
+            return `<tr class="clickable-row" onclick="${viewFn}" style="cursor:pointer"><td><strong>${fmt(i.fecha)}</strong><div style="margin-top:3px">${estTag}</div></td><td>${tipoTag}</td><td><strong>${i.titulo}</strong>${i.categoria?`<div style="margin-top:3px"><span class="tag ${i.tipo==='aplicacion'?catTagClass(i.categoria):'info'}" style="font-size:10.5px">${i.categoria}</span></div>`:''}</td><td>${bloquesTxt}</td><td style="font-size:12.5px">${i.responsable||'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td></tr>`;
           }).join('')}</tbody>
         </table></div>
       </div>`;
@@ -3034,20 +3077,34 @@ async function viewTask(id){
 
 /* ============ APLICACIONES ============ */
 let _appsFiltroEstado='todas';
-let _appsFiltroCategoria='todas';
+/* _appsFiltroCategoria: array de categorías seleccionadas. [] = todas.
+   Multi-select con chips (Fungicida + Insecticida + Fertilizante simultáneamente). */
+let _appsFiltroCategoria=[];
 /* _appsFiltroCuartel: array de cuarteles seleccionados. [] = todos. */
 let _appsFiltroCuartel=[];
 let _appsFiltroAno='todos';
 let _appsFiltroCarencia='todas';
 let _appsFiltroSearch='';
 function setAppsFiltroEstado(k){_appsFiltroEstado=k;renderApplications()}
-function setAppsFiltroCat(v){_appsFiltroCategoria=v;renderApplications()}
+function toggleAppsFiltroCat(v){const i=_appsFiltroCategoria.indexOf(v);if(i>=0)_appsFiltroCategoria.splice(i,1);else _appsFiltroCategoria.push(v);renderApplications()}
+function setAppsFiltroCatTodas(){_appsFiltroCategoria=[];renderApplications()}
+/* Presets rápidos: seleccionar todos los fito/todos los nutri con un click */
+function setAppsFiltroCatGrupo(grupo){
+  /* grupo: 'fito' | 'nutri' | 'otro' */
+  const apps=window._appsCacheCategorias||[];
+  const target=apps.filter(c=>catTagClass(c)==='cat-'+grupo);
+  /* Si TODOS los del grupo ya están seleccionados, toggle off. Sino, agregamos los faltantes. */
+  const yaTodos=target.length>0&&target.every(c=>_appsFiltroCategoria.includes(c));
+  if(yaTodos){_appsFiltroCategoria=_appsFiltroCategoria.filter(c=>!target.includes(c));}
+  else{target.forEach(c=>{if(!_appsFiltroCategoria.includes(c))_appsFiltroCategoria.push(c);});}
+  renderApplications();
+}
 function toggleAppsFiltroCuartel(v){const i=_appsFiltroCuartel.indexOf(v);if(i>=0)_appsFiltroCuartel.splice(i,1);else _appsFiltroCuartel.push(v);renderApplications()}
 function setAppsFiltroCuartelTodos(){_appsFiltroCuartel=[];renderApplications()}
 function setAppsFiltroAno(v){_appsFiltroAno=v;renderApplications()}
 function setAppsFiltroCarencia(v){_appsFiltroCarencia=v;renderApplications()}
 function setAppsFiltroSearch(v){_appsFiltroSearch=v||'';filterApps(v)}
-function clearAppsFiltros(){_appsFiltroEstado='todas';_appsFiltroCategoria='todas';_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
+function clearAppsFiltros(){_appsFiltroEstado='todas';_appsFiltroCategoria=[];_appsFiltroCuartel=[];_appsFiltroAno='todos';_appsFiltroCarencia='todas';_appsFiltroSearch='';renderApplications()}
 async function renderApplications(){
   const [apps,blocks,tasksForDeps]=await Promise.all([getAll('applications'),getAll('blocks'),getAll('tasks')]);
   /* Fecha efectiva para sort y muestra: fecha (ejecutada) si existe, sino fechaPlanificada. */
@@ -3080,7 +3137,11 @@ async function renderApplications(){
       if(_appsFiltroEstado==='atrasada'){if(!aplicacionAtrasada(a))return false;}
       else if(estadoApp(a)!==_appsFiltroEstado)return false;
     }
-    if(_appsFiltroCategoria!=='todas'&&!getCategorias(a).map(x=>(x||'').trim()).includes(_appsFiltroCategoria))return false;
+    if(_appsFiltroCategoria.length>0){
+      /* La aplicación pasa si tiene AL MENOS UNA de las categorías seleccionadas (OR). */
+      const cats=getCategorias(a).map(x=>(x||'').trim());
+      if(!_appsFiltroCategoria.some(c=>cats.includes(c)))return false;
+    }
     if(_appsFiltroCuartel.length>0){
       const bs=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
       const bsKeys=bs.map(x=>String(x).trim());
@@ -3099,7 +3160,18 @@ async function renderApplications(){
     }
     return true;
   });
-  const filtrosActivos=(_appsFiltroEstado!=='todas')+(_appsFiltroCategoria!=='todas')+(_appsFiltroCuartel.length>0?1:0)+(_appsFiltroAno!=='todos')+(_appsFiltroCarencia!=='todas')+(_appsFiltroSearch?1:0);
+  const filtrosActivos=(_appsFiltroEstado!=='todas'?1:0)+(_appsFiltroCategoria.length>0?1:0)+(_appsFiltroCuartel.length>0?1:0)+(_appsFiltroAno!=='todos'?1:0)+(_appsFiltroCarencia!=='todas'?1:0)+(_appsFiltroSearch?1:0);
+  /* Cache para presets de grupo (fito/nutri): la lógica del grupo lee window._appsCacheCategorias. */
+  window._appsCacheCategorias=categoriasUnicas.slice();
+  /* Pre-cálculo: qué categorías son de cada tipo (para render agrupado y presets). */
+  const _catsFito=categoriasUnicas.filter(c=>catTagClass(c)==='cat-fito');
+  const _catsNutri=categoriasUnicas.filter(c=>catTagClass(c)==='cat-nutri');
+  const _catsOtro=categoriasUnicas.filter(c=>catTagClass(c)==='cat-otro');
+  const _countCat=c=>apps.filter(a=>getCategorias(a).map(x=>(x||'').trim()).includes(c)).length;
+  /* Render de un chip individual de categoría. Cuando está activo, colorea con la clase del tipo. */
+  const _chipCat=(c)=>{const act=_appsFiltroCategoria.includes(c);const cls=catTagClass(c);return `<span class="chip cat-chip ${act?'active '+cls:''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="toggleAppsFiltroCat(${JSON.stringify(c).replace(/"/g,'&quot;')})">${c} <strong>${_countCat(c)}</strong></span>`};
+  /* Header de grupo con preset "seleccionar todos". */
+  const _grupoHeader=(grupo,lbl,cats)=>{if(!cats.length)return '';const activos=cats.filter(c=>_appsFiltroCategoria.includes(c)).length;const todos=activos===cats.length;return `<div style="display:flex;align-items:center;gap:6px;margin:8px 0 4px;flex-wrap:wrap"><span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);font-weight:700">${lbl}</span> <span onclick="setAppsFiltroCatGrupo('${grupo}')" style="font-size:10.5px;color:var(--verde-d);cursor:pointer;text-decoration:underline;font-weight:600">${todos?'quitar grupo':activos>0?`${activos}/${cats.length} · toggle grupo`:'seleccionar todos'}</span></div>`};
   const chipApp=(k,lbl)=>`<span class="chip ${_appsFiltroEstado===k?'active':''}" onclick="setAppsFiltroEstado('${k}')">${lbl} <strong>${countsApp[k]||0}</strong></span>`;
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Programa, ejecuta y registra fitosanitarios, fertilizantes y bioestimulantes</div></div>
@@ -3114,11 +3186,13 @@ async function renderApplications(){
         ${chipApp('cancelada','⚪ Canceladas')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;padding:10px 12px;background:var(--gris-xl);border-radius:8px">
-        <div class="mobile-hide-cat-filter" style="flex:1;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categoría</label>
-          <select onchange="setAppsFiltroCat(this.value)" style="padding:7px 10px;font-size:12px">
-            <option value="todas" ${_appsFiltroCategoria==='todas'?'selected':''}>Todas (${apps.length})</option>
-            ${categoriasUnicas.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${_appsFiltroCategoria===c?'selected':''}>${c} (${apps.filter(a=>getCategorias(a).map(x=>(x||'').trim()).includes(c)).length})</option>`).join('')}
-          </select>
+        <div class="cat-filter-block" style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Categorías ${_appsFiltroCategoria.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCategoria.length} seleccionada${_appsFiltroCategoria.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para elegir una o varias</small></label>
+          <div class="cat-chips-container">
+            <span class="chip ${!_appsFiltroCategoria.length?'active':''}" style="padding:5px 11px;font-size:11.5px;margin:0" onclick="setAppsFiltroCatTodas()">Todas <strong>${apps.length}</strong></span>
+            ${_catsFito.length?`${_grupoHeader('fito','Fitosanitarios',_catsFito)}<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">${_catsFito.map(_chipCat).join('')}</div>`:''}
+            ${_catsNutri.length?`${_grupoHeader('nutri','Nutrición',_catsNutri)}<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">${_catsNutri.map(_chipCat).join('')}</div>`:''}
+            ${_catsOtro.length?`${_grupoHeader('otro','Otros',_catsOtro)}<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">${_catsOtro.map(_chipCat).join('')}</div>`:''}
+          </div>
         </div>
         <div class="mobile-hide-cuarteles-filter" style="flex:1 1 100%;min-width:160px"><label style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;margin-bottom:4px;display:block">Cuarteles ${_appsFiltroCuartel.length?`<span style="color:var(--verde-d);font-weight:700">(${_appsFiltroCuartel.length} seleccionado${_appsFiltroCuartel.length>1?'s':''})</span>`:''} <small style="text-transform:none;letter-spacing:0;color:var(--gris-m);font-weight:400">— toca para seleccionar uno o varios</small></label>
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
@@ -3172,7 +3246,7 @@ async function renderApplications(){
         const lockBadge=isBloqueada?'<span class="app-card-lock">🔒 Bloqueada</span>':'';
         /* Chips de categoría + cuarteles */
         const _catsCard=getCategorias(a);
-        const catTag=_catsCard.length?_catsCard.map(c=>`<span class="tag info">${c}</span>`).join(''):'';
+        const catTag=_catsCard.length?_catsCard.map(c=>`<span class="tag ${catTagClass(c)}">${c}</span>`).join(''):'';
         const bsArr=Array.isArray(a.bloques)?a.bloques:(a.bloque?[a.bloque]:[]);
         const bloquesHTML=bsArr.length?bsArr.map(b=>`<span class="chip">${b}</span>`).join(''):'';
         /* Fotos thumbnails: multi-imagen desde ambas categorías. Muestro las 3 primeras + contador. */
@@ -3271,7 +3345,7 @@ async function renderApplications(){
           const col1=`<div class="apx-status-cell"><div>${estHTMLA}</div><div class="apx-date-wrap">${fechaFmtA?`<span class="pro-date">${fechaFmtA}</span>`:''}${subFechaA?`<span class="pro-date-sub">${subFechaA}</span>`:''}</div></div>`;
           /* Columna 2: producto bold grande + categoría chip + descripción (motivo) quote + comentarios quote (rosa) */
           const _catsRow=getCategorias(a);
-          const _catsRowHTML=_catsRow.length?`<div class="apx-cat-tags-wrap">${_catsRow.map(c=>`<span class="apx-cat-tag">${c}</span>`).join('')}</div>`:'';
+          const _catsRowHTML=_catsRow.length?`<div class="apx-cat-tags-wrap">${_catsRow.map(c=>`<span class="apx-cat-tag ${catTagClass(c)}">${c}</span>`).join('')}</div>`:'';
           const col2=`<div class="apx-product-cell"><div class="apx-title-row"><i data-lucide="droplet" class="apx-prod-icon"></i><span class="apx-title">${a.producto}</span>${lockTagApp}</div>${_catsRowHTML}${a.motivo?`<div class="apx-desc-wrap"><div class="apx-desc-mini-label">Motivo</div>${descTxt}</div>`:''}${a.comentarios?`<div class="apx-desc-wrap apx-com-wrap"><div class="apx-desc-mini-label apx-com-label">Comentarios</div>${comTxt}</div>`:''}</div>`;
           /* Columna 3: cuarteles chips */
           const col3=`<div class="apx-bloques-cell">${bloquesTags(a)}</div>`;
@@ -3280,7 +3354,7 @@ async function renderApplications(){
           /* Columna 5: responsable con avatar + fotos thumbnails */
           const col5=`<div class="apx-resp-cell"><div class="apx-resp-row">${respHTML}</div><div class="apx-fotos-row">${fotosTxt}</div></div>`;
           /* Columna 6: acciones agrupadas */
-          const col6=`<div class="pro-actions">${quickPhotoApp}${quickBtnApp}<button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div>`;
+          const col6=`<div class="pro-actions">${quickPhotoApp}${quickBtnApp}<button onclick="event.stopPropagation();viewApp('${a.id}')" title="Ver detalle"><i data-lucide="eye"></i></button><button onclick="event.stopPropagation();editApp('${a.id}')" title="Editar"><i data-lucide="pencil"></i></button><button onclick="event.stopPropagation();duplicateApp('${a.id}')" title="Duplicar (copia con nueva fecha)"><i data-lucide="copy"></i></button><button class="danger" onclick="event.stopPropagation();delApp('${a.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></div>`;
           return `<tr class="${activa?'fila-carencia':''} ${trEst} clickable-row" onclick="if(!event.target.closest('button')&&!event.target.closest('.app-desc-toggle')){viewApp('${a.id}')}" style="cursor:pointer"><td>${col1}</td><td>${col2}</td><td>${col3}</td><td>${col4}</td><td>${col5}</td><td>${col6}</td></tr>`;
         }).join(''):'<tr><td colspan="6" class="empty"><i data-lucide="inbox"></i><div>Sin aplicaciones registradas</div></td></tr>'}</tbody>
       </table></div>
@@ -3342,7 +3416,7 @@ async function viewApp(id){
         <div class="dview-title"><span>${a.producto||'(sin producto)'}</span>${depBloqueadaA?'<span class="dview-lock-badge">🔒 Bloqueada</span>':''}</div>
         <div class="dview-meta-row">
           ${estTagDet}
-          ${getCategorias(a).map(c=>`<span class="tag info">${c}</span>`).join('')}
+          ${getCategorias(a).map(c=>`<span class="tag ${catTagClass(c)}">${c}</span>`).join('')}
           ${fechaPrincipal?`<span class="dview-date">${fechaPrincipalLbl} ${fmt(fechaPrincipal)}${a.horaApp?' · '+a.horaApp:''}</span>`:''}
         </div>
       </div>
@@ -3462,6 +3536,7 @@ async function viewApp(id){
     <!-- Actions -->
     <div class="dview-actions">
       <button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button>
+      <button class="btn small ghost" onclick="duplicateApp('${a.id}')" title="Crear una copia de esta aplicación con nueva fecha"><i data-lucide="copy"></i>Duplicar</button>
       <button class="btn small ghost mobile-hide-detail" onclick="convertAppToTask('${a.id}')" title="Convertir esta aplicación a una labor"><i data-lucide="arrow-right-left"></i>Convertir a labor</button>
       <button class="btn small danger" onclick="closeModal();delApp('${a.id}')"><i data-lucide="trash-2"></i>Eliminar</button>
       <div class="spacer"></div>
@@ -3699,6 +3774,79 @@ async function saveApp(id){
   renderApplications();
 }
 async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+/* === Duplicar aplicación === Crea una copia con los mismos datos (producto, dosis, cuarteles,
+   categorías, comentarios, etc.) pero en estado "programada" y con una nueva fecha planificada.
+   Útil para repetir una aplicación/fertilización en otra fecha sin volver a llenar el formulario. */
+async function duplicateApp(id){
+  const orig=await get('applications',id);
+  if(!orig){toast('Aplicación no encontrada','warn');return}
+  const hoy=today();
+  /* Sugerencia: hoy + 14 días como valor por defecto (fertilizaciones se suelen repetir cada 2-4 sem). */
+  const sugerida=(()=>{const d=new Date(hoy);d.setDate(d.getDate()+14);return d.toISOString().slice(0,10)})();
+  const catsTxt=getCategorias(orig).join(' + ')||'-';
+  const bloquesTxt=getBloques(orig).join(', ')||'General';
+  openModal(`<h3><i data-lucide="copy" style="width:18px;height:18px;vertical-align:-3px"></i> Duplicar aplicación</h3>
+    <div class="alert-box info"><i data-lucide="info"></i><div class="ab-content"><strong>${orig.producto||'(sin producto)'}</strong> · ${catsTxt}<br><small>Cuarteles: ${bloquesTxt} · Dosis: ${orig.dosis||'-'}</small><br>Se creará una copia idéntica en estado <strong>🟡 Programada</strong>. Solo elige la nueva fecha.</div></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Nueva fecha planificada <span style="color:var(--alerta)">*</span></label>
+        <input type="date" id="f-dup-fecha" value="${sugerida}" min="${hoy}">
+      </div>
+      <div class="form-row"><label>Responsable</label>
+        <input type="text" id="f-dup-resp" value="${(orig.responsable||'').replace(/"/g,'&quot;')}">
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;cursor:pointer;user-select:none">
+      <input type="checkbox" id="f-dup-fotos"> <span>Copiar también las fotos (por defecto se dejan vacías porque suelen ser específicas de cada aplicación)</span>
+    </label>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="saveDuplicateApp('${id}')"><i data-lucide="copy"></i>Duplicar</button>
+    </div>`);
+  lucideInit();
+}
+async function saveDuplicateApp(origId){
+  const orig=await get('applications',origId);
+  if(!orig){toast('Aplicación no encontrada','warn');return}
+  const fecha=document.getElementById('f-dup-fecha').value;
+  if(!fecha){toast('Fecha requerida','warn');return}
+  const resp=document.getElementById('f-dup-resp').value||orig.responsable||'';
+  const copiarFotos=document.getElementById('f-dup-fotos').checked;
+  /* Copia superficial + limpieza de campos de ejecución */
+  const nuevo={...orig};
+  delete nuevo.id;
+  nuevo.estado='programada';
+  nuevo.fechaPlanificada=fecha;
+  nuevo.fecha=null;
+  nuevo.horaApp=null;
+  nuevo.responsable=resp;
+  /* Reset por-cuartel: todos a programada, sin fechas de ejecución */
+  if(Array.isArray(nuevo.bloquesEstado)&&nuevo.bloquesEstado.length){
+    nuevo.bloquesEstado=nuevo.bloquesEstado.map(x=>({bloque:x.bloque,estado:'programada',fecha:null}));
+  }
+  /* Fotos: por defecto se limpian (una nueva aplicación tendrá sus propias evidencias) */
+  if(!copiarFotos){
+    nuevo.fotosProducto=[];
+    nuevo.fotosAplicacion=[];
+    nuevo.fotosOtros=[];
+    nuevo.fotoProducto=null;
+    nuevo.fotoAplicacion=null;
+  }
+  /* Clima: se limpia (será distinto el día de aplicación) */
+  nuevo.tempC=null;nuevo.humedad=null;nuevo.viento=null;
+  /* Metadatos de creación + trazabilidad */
+  nuevo.createdBy=CURRENT_USER;
+  nuevo.createdAt=new Date().toISOString();
+  nuevo.duplicadoDe=origId;
+  try{
+    await add('applications',nuevo);
+    closeModal();
+    toast('Aplicación duplicada ✓');
+    renderApplications();
+  }catch(e){
+    console.error('duplicateApp falló:',e);
+    toast('Error al duplicar: '+(e.message||e.code||'ver consola'),'warn');
+  }
+}
 /* === Quick action: marcar aplicación como Realizada de un solo clic, sin abrir el modal.
    Valida prereq y carga la fecha planificada como fecha de ejecución si no se cargó otra. */
 async function quickMarkAppRealizada(id,ev){
@@ -4397,7 +4545,7 @@ async function openDayDetail(dateStr){
             <div>${tipoTag}${atrTag}</div>
           </div>
           <div style="font-size:12px;color:var(--gris);margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-            ${i.categoria?`<span class="tag info" style="font-size:10.5px">${i.categoria}</span>`:''}
+            ${i.categoria?`<span class="tag ${i.tipo==='aplicacion'?catTagClass(i.categoria):'info'}" style="font-size:10.5px">${i.categoria}</span>`:''}
             <span>${i.bloques.length?i.bloques.join(', '):'General'}</span>
             <span>·</span>
             <span>${i.responsable||'Sin responsable'}</span>
@@ -4485,7 +4633,7 @@ async function renderCalendar(){
       ?i.bloques.map(b=>`<span class="chip" style="font-size:10.5px;padding:2px 7px;margin:1px">${b}</span>`).join('')
       :'<span style="color:var(--gris-m);font-size:11px">General</span>';
     const fechaCell=mostrarFecha?`<td><strong>${fmt(i.fecha)}</strong><div style="margin-top:3px">${estTag}</div></td>`:'';
-    return `<tr class="clickable-row" onclick="if(!event.target.closest('button')){${viewFn}}" style="cursor:pointer">${fechaCell}<td>${tipoTag}</td><td><strong>${i.titulo}</strong>${i.notas?`<div style="font-size:11px;color:var(--gris);max-width:240px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${i.notas}</div>`:''}</td><td>${i.categoria?`<span class="tag info">${i.categoria}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${bloquesTxt}</td><td>${i.responsable||'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();${viewFn}" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();${editFn}" title="Editar / Marcar realizada"><i data-lucide="pencil"></i></button></td></tr>`;
+    return `<tr class="clickable-row" onclick="if(!event.target.closest('button')){${viewFn}}" style="cursor:pointer">${fechaCell}<td>${tipoTag}</td><td><strong>${i.titulo}</strong>${i.notas?`<div style="font-size:11px;color:var(--gris);max-width:240px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${i.notas}</div>`:''}</td><td>${i.categoria?`<span class="tag ${i.tipo==='aplicacion'?catTagClass(i.categoria):'info'}">${i.categoria}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${bloquesTxt}</td><td>${i.responsable||'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td style="white-space:nowrap"><button class="btn small ghost" onclick="event.stopPropagation();${viewFn}" title="Ver detalle"><i data-lucide="eye"></i></button> <button class="btn small ghost" onclick="event.stopPropagation();${editFn}" title="Editar / Marcar realizada"><i data-lucide="pencil"></i></button></td></tr>`;
   };
   const cabezaTabla=`<thead><tr><th style="width:130px">Fecha</th><th>Tipo</th><th>Item</th><th>Categoría</th><th>Cuarteles</th><th>Responsable</th><th></th></tr></thead>`;
   const cabezaTablaSinFecha=`<thead><tr><th>Tipo</th><th>Item</th><th>Categoría</th><th>Cuarteles</th><th>Responsable</th><th></th></tr></thead>`;
@@ -4677,7 +4825,7 @@ async function renderInventory(){
           const venc=i.vencimiento?fmt(i.vencimiento):'—';
           const ven=i.vencimiento?daysBetween(today(),i.vencimiento):null;
           const vencCls=ven!=null&&ven<0?'color:var(--alerta);font-weight:600':(ven!=null&&ven<=30?'color:#b45309;font-weight:600':'color:var(--texto-m)');
-          return `<tr><td><span class="tag ${stockCls}">${st.lbl}</span></td><td><strong>${i.nombre}</strong>${i.ingrediente?`<div style="font-size:11px;color:var(--gris);margin-top:1px">${i.ingrediente}</div>`:''}</td><td><span class="tag info">${i.categoria||'-'}</span></td><td>${i.marca||'—'}</td><td>${i.presentacion||'—'}</td><td><strong style="font-variant-numeric:tabular-nums">${(i.stock||0).toLocaleString('es-CL')}</strong> <small style="color:var(--gris)">${i.unidad||''}</small></td><td style="color:var(--gris-m)">${i.stockMinimo||'—'}</td><td style="${vencCls}">${venc}</td><td style="font-size:12px">${i.ubicacion||'—'}</td><td style="font-variant-numeric:tabular-nums">${i.precio?`$${parseFloat(i.precio).toLocaleString('es-CL')}`:'—'}</td><td style="white-space:nowrap"><button class="btn small" onclick="adjustStock('${i.id}')" title="Ajustar stock"><i data-lucide="edit-3"></i></button> <button class="btn small ghost" onclick="editInvItem('${i.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delInvItem('${i.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+          return `<tr><td><span class="tag ${stockCls}">${st.lbl}</span></td><td><strong>${i.nombre}</strong>${i.ingrediente?`<div style="font-size:11px;color:var(--gris);margin-top:1px">${i.ingrediente}</div>`:''}</td><td>${i.categoria?`<span class="tag ${catTagClass(i.categoria)}">${i.categoria}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td>${i.marca||'—'}</td><td>${i.presentacion||'—'}</td><td><strong style="font-variant-numeric:tabular-nums">${(i.stock||0).toLocaleString('es-CL')}</strong> <small style="color:var(--gris)">${i.unidad||''}</small></td><td style="color:var(--gris-m)">${i.stockMinimo||'—'}</td><td style="${vencCls}">${venc}</td><td style="font-size:12px">${i.ubicacion||'—'}</td><td style="font-variant-numeric:tabular-nums">${i.precio?`$${parseFloat(i.precio).toLocaleString('es-CL')}`:'—'}</td><td style="white-space:nowrap"><button class="btn small" onclick="adjustStock('${i.id}')" title="Ajustar stock"><i data-lucide="edit-3"></i></button> <button class="btn small ghost" onclick="editInvItem('${i.id}')" title="Editar"><i data-lucide="pencil"></i></button> <button class="btn small danger" onclick="delInvItem('${i.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
         }).join(''):`<tr><td colspan="11" class="empty"><i data-lucide="package"></i><div>Sin productos en inventario</div></td></tr>`}</tbody>
       </table></div>
     </div>`;
