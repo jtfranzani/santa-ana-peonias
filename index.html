@@ -87,6 +87,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .kpi.rosa .kpi-icon{background:var(--rosa-l);color:var(--rosa-d)}
 .kpi.warn .kpi-icon{background:#fef3c7;color:#b45309}
 .kpi.info .kpi-icon{background:#dbeafe;color:#1d4ed8}
+.kpi.ok::before{background:var(--ok)}
+.kpi.ok .kpi-icon{background:#d1fae5;color:#065f46}
+.hl-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-right:4px}
 .kpi .kpi-icon svg{width:18px;height:18px;stroke-width:2}
 .kpi .label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .kpi .value{font-size:28px;font-weight:700;color:var(--texto);margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
@@ -173,6 +176,64 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .toolbar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center}
 .toolbar input,.toolbar select{max-width:240px}
 .filters-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gris-xl)}
+/* === Fecha de Cosecha: comparativa anual, estimaciones y línea de tiempo === */
+.hv-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;flex-shrink:0}
+.hv-tabla th{text-align:center;white-space:nowrap}
+.hv-tabla th:first-child{text-align:left}
+.hv-tabla td.hv-var{white-space:nowrap;vertical-align:middle}
+.hv-cell{cursor:pointer;vertical-align:top;min-width:150px;transition:background .15s}
+.hv-cell:hover{background:var(--verde-l)}
+.hv-cell.hv-empty{color:var(--gris-m);text-align:center;cursor:default}
+.hv-cell.hv-empty:hover{background:transparent}
+.hv-cell-fechas{font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.hv-cell-meta{font-size:11px;color:var(--gris);margin-top:2px}
+.hv-cell-estado{display:inline-block;margin-top:4px;font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;color:#065f46;background:#d1fae5;padding:1px 7px;border-radius:5px}
+.hv-encurso{color:#b45309;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.hv-delta{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;margin-left:2px}
+.hv-delta.tarde{background:#fef3c7;color:#92400e}
+.hv-delta.temprano{background:#dbeafe;color:#1e40af}
+.hv-est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.hv-est{padding:12px 14px;border:1px solid var(--gris-l);border-radius:8px;background:linear-gradient(135deg,#fdfdfd 0%,#f6f9f6 100%)}
+.hv-est.done{opacity:.65}
+.hv-est-var{font-size:12px;font-weight:700;color:var(--texto);display:flex;align-items:center}
+.hv-est-fecha{font-family:'Playfair Display',serif;font-size:20px;color:var(--verde-d);margin:4px 0 2px;text-transform:capitalize}
+.hv-est-meta{font-size:11px;color:var(--gris)}
+.hv-tl-eje{position:relative;height:18px;margin:10px 0 4px 150px;border-bottom:1px solid var(--gris-l)}
+.hv-tl-tick{position:absolute;top:0;font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;font-weight:600;transform:translateX(-2px)}
+.hv-tl-temporada{display:flex;gap:0;align-items:stretch;margin-top:10px;padding-top:8px;border-top:1px dashed var(--gris-xl)}
+.hv-tl-temporada:first-of-type{border-top:none}
+.hv-tl-year{width:50px;flex-shrink:0;font-family:'Playfair Display',serif;font-size:17px;color:var(--verde-d);padding-top:2px}
+.hv-tl-rows{flex:1;display:flex;flex-direction:column;gap:6px}
+.hv-tl-row{display:flex;align-items:center;gap:8px;cursor:pointer;border-radius:6px;padding:2px 4px}
+.hv-tl-row:hover{background:var(--gris-xl)}
+.hv-tl-label{width:92px;flex-shrink:0;font-size:11.5px;color:var(--texto-m);display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hv-tl-track{flex:1;position:relative;height:18px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/107*7 - 1px),var(--gris-xl) calc(100%/107*7 - 1px),var(--gris-xl) calc(100%/107*7));border-radius:4px}
+.hv-tl-bar{position:absolute;top:3px;height:12px;border-radius:6px;opacity:.9;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.hv-tl-bar.encurso{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0,rgba(255,255,255,.35) 4px,transparent 4px,transparent 8px)}
+.hv-tl-peak{position:absolute;top:1px;width:8px;height:8px;background:#fff;border:2px solid var(--texto);transform:translateX(-50%) rotate(45deg);border-radius:1px;z-index:2}
+.hv-tl-hoy{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--alerta);z-index:1}
+.hv-notas-row td{font-size:11.5px;color:var(--gris-d);background:#fafafa;padding-top:4px!important;padding-bottom:8px!important;font-style:italic}
+/* Referencial: observación de fecha sin cosecha */
+.hv-ref-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.6px;color:#4b5563;background:#f3f4f6;border:1px dashed #9ca3af;padding:1px 5px;border-radius:4px;margin-right:5px;vertical-align:middle}
+.hv-cell.hv-ref{background:repeating-linear-gradient(135deg,#fafafa 0,#fafafa 6px,#f3f4f6 6px,#f3f4f6 12px)}
+.hv-cell.hv-ref:hover{background:var(--verde-l)}
+.hv-row-ref td{color:var(--gris-d)}
+.hv-tl-bar.ref{background:transparent!important;border:2px dashed currentColor;box-shadow:none;opacity:.85;top:2px;height:12px;box-sizing:border-box}
+.hv-tipo-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hv-tipo-opt{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1.5px solid var(--gris-l);border-radius:8px;cursor:pointer;background:#fff;transition:all .15s;font-weight:400}
+.hv-tipo-opt input{position:absolute;opacity:0;pointer-events:none}
+.hv-tipo-opt strong{font-size:13px;color:var(--texto)}
+.hv-tipo-opt small{font-size:11px;color:var(--gris);line-height:1.35}
+.hv-tipo-opt.active{border-color:var(--verde);background:var(--verde-l);box-shadow:0 0 0 2px rgba(63,122,82,.15)}
+@media (max-width:640px){.hv-tipo-switch{grid-template-columns:1fr}}
+@media (max-width:768px){
+  .hv-tl-eje{margin-left:78px}
+  .hv-tl-year{width:36px;font-size:14px}
+  .hv-tl-label{width:34px;font-size:0}
+  .hv-tl-label .hv-dot{width:12px;height:12px;margin-right:0}
+  .hv-est-fecha{font-size:17px}
+  .hv-cell{min-width:130px}
+}
 .timeline{border-left:2px solid var(--gris-l);padding-left:20px;margin-left:10px}
 .timeline-item{margin-bottom:20px;position:relative}
 .timeline-item::before{content:'';position:absolute;left:-26px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--verde);border:2px solid #fff;box-shadow:0 0 0 2px var(--verde)}
@@ -667,7 +728,45 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .adv-file-actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 8px;font-size:11.5px;border:1px solid var(--gris-l);background:#fff;border-radius:6px;cursor:pointer;color:var(--texto-m);font-weight:500;transition:all .15s;min-height:34px}
 .adv-file-actions button:hover{border-color:var(--verde);color:var(--verde-d);background:var(--verde-l)}
 .adv-file-actions button.danger:hover{border-color:var(--alerta);color:var(--alerta);background:#fee2e2}
+.adv-file-actions button.cotizar{background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);color:#065f46;border-color:#a7f3d0;font-weight:600}
+.adv-file-actions button.cotizar:hover{background:linear-gradient(135deg,#d1fae5 0%,#a7f3d0 100%);border-color:#059669;color:#064e3b}
 .adv-file-actions button svg{width:13px;height:13px}
+/* === Cotizador de planes: modal grande con selector de etapa, HA y resultado agrupado === */
+.cot-modal-head{margin-bottom:14px}
+.cot-controles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 14px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:8px;margin-bottom:10px}
+.cot-ctrl-block label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-bottom:4px}
+.cot-ctrl-block select,.cot-ctrl-block input{width:100%;padding:8px 10px;border:1px solid var(--gris-l);border-radius:6px;font-size:13px;background:#fff}
+.cot-ctrl-block input[type=number]{font-variant-numeric:tabular-nums;font-weight:600}
+.cot-info-pill{padding:8px 10px;background:#fff;border:1px solid var(--gris-l);border-radius:6px;font-size:12.5px;color:var(--texto-m);font-weight:600}
+.cot-body{max-height:52vh;overflow-y:auto;margin:6px 0;padding-right:4px}
+.cot-objetivo{margin-bottom:14px;background:#fafafa;border-radius:8px;padding:10px 12px;border:1px solid var(--gris-xl)}
+.cot-obj-head{margin-bottom:6px}
+.cot-obj-badge{display:inline-block;background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);color:#92400e;padding:4px 12px;border-radius:14px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:1px solid #fcd34d}
+.cot-ingrediente{margin-top:8px;background:#fff;border-radius:6px;padding:8px 10px;border:1px solid var(--gris-xl)}
+.cot-ing-head{display:flex;align-items:center;gap:5px;font-size:12px;color:#1e40af;font-weight:700;margin-bottom:6px;padding-bottom:5px;border-bottom:1px dashed #dbeafe}
+.cot-tabla{width:100%;border-collapse:collapse;font-size:12px}
+.cot-tabla th{text-align:left;padding:6px 8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:600;border-bottom:1px solid var(--gris-xl)}
+.cot-tabla th:last-child{text-align:right}
+.cot-tabla td{padding:7px 8px;vertical-align:top;border-bottom:1px solid #f3f4f6}
+.cot-tabla tr:last-child td{border-bottom:none}
+.cot-prod-name{font-size:12.5px;line-height:1.35}
+.cot-prod-dosis{color:var(--gris-d);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.cot-prod-cant{text-align:right;font-variant-numeric:tabular-nums;font-size:14px;color:var(--verde-d);white-space:nowrap;min-width:100px}
+.cot-prod-cant strong{font-size:15px}
+.cot-prod-unidad{font-size:11px;color:var(--gris);font-weight:600;margin-left:2px}
+.cot-rango{display:block;font-size:10.5px;color:#b45309;margin-top:2px;font-weight:500}
+.cot-empty{display:block;font-size:10.5px;color:var(--gris-m);margin-top:2px;font-style:italic}
+@media (max-width:768px){
+  .cot-controles{grid-template-columns:1fr 1fr}
+  .cot-body{max-height:46vh}
+  .cot-tabla{font-size:11.5px}
+  .cot-tabla th{padding:4px 5px}
+  .cot-tabla td{padding:5px}
+  .cot-prod-cant{font-size:13px;min-width:80px}
+  .cot-prod-cant strong{font-size:14px}
+  .cot-objetivo{padding:8px}
+  .cot-ingrediente{padding:6px 8px}
+}
 @media (max-width:768px){
   .adv-files-grid{grid-template-columns:1fr;max-height:none}
 }
@@ -936,10 +1035,10 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
       <div class="nav-section">Manejo</div>
       <a onclick="nav('tasks')" id="nav-tasks"><i data-lucide="clipboard-list"></i><span>Bitácora labores</span></a>
       <a onclick="nav('applications')" id="nav-applications"><i data-lucide="droplet"></i><span>Aplicaciones</span></a>
+      <a onclick="nav('harvestlog')" id="nav-harvestlog"><i data-lucide="flower-2"></i><span>Cosecha diaria</span></a>
       <div class="nav-section">Huerto</div>
       <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
-      <a onclick="nav('weather')" id="nav-weather"><i data-lucide="cloud-rain"></i><span>Clima y lluvias</span></a>
-      <a onclick="nav('inventory')" id="nav-inventory"><i data-lucide="package"></i><span>Inventario</span></a>
+      <a onclick="nav('harvests')" id="nav-harvests"><i data-lucide="scissors"></i><span>Fecha de Cosecha</span></a>
       <a onclick="nav('studies')" id="nav-studies"><i data-lucide="flask-conical"></i><span>Estudios</span></a>
       <a onclick="nav('advisors')" id="nav-advisors"><i data-lucide="user-check"></i><span>Asesores</span></a>
       <div class="nav-section">Registro fotográfico</div>
@@ -1014,7 +1113,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.47';
+const APP_VERSION='2026.05.18.56';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1034,7 +1133,7 @@ function userBadgeFull(id){if(!id)return '';const u=userById(id);return `<span c
 /* ============ FIREBASE ============ */
 let FB_APP=null, FB_DB=null, FB_AUTH=null;
 let CONN_STATUS='offline';
-const STORES=['blocks','photopoints','photos','tasks','applications','inventory','invmoves','advisors','advisorfiles','weather','studies','prices','hitos','config'];
+const STORES=['blocks','photopoints','photos','tasks','applications','inventory','invmoves','advisors','advisorfiles','weather','studies','prices','hitos','harvests','harvestlogs','config'];
 const LISTENERS={}; /* onSnapshot unsubscribers */
 
 function fbInit(){
@@ -1660,7 +1759,7 @@ async function testEmailNotify(){
   toast(`Prueba enviada a ${total} usuario${total===1?'':'s'} (incluido tú) ✓`);
 }
 /* ============ NAVIGATION ============ */
-const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,calendar:renderCalendar,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,prices:renderPrices,reports:renderReports,settings:renderSettings};
+const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,calendar:renderCalendar,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,harvests:renderHarvests,harvestlog:renderHarvestLog,prices:renderPrices,reports:renderReports,settings:renderSettings};
 let currentPage='dashboard';
 function lucideInit(){try{if(window.lucide)window.lucide.createIcons();}catch(e){}}
 /* Sidebar móvil */
@@ -4258,6 +4357,7 @@ async function renderAdvisors(){
               const cat=fileIconCategoria(f.nombre);
               const sizeKB=((f.data||'').length*0.75/1024);
               const sizeStr=sizeKB>=1024?(sizeKB/1024).toFixed(1)+' MB':sizeKB.toFixed(0)+' KB';
+              const esPDF=(f.nombre||'').toLowerCase().endsWith('.pdf');
               return `<div class="adv-file-card">
                 <div class="adv-file-card-head">
                   <div class="adv-file-icon ${cat}"><i data-lucide="${fileIcon(f.nombre)}"></i></div>
@@ -4274,6 +4374,7 @@ async function renderAdvisors(){
                 ${f.descripcion?`<div class="adv-file-desc">${f.descripcion}</div>`:''}
                 <div class="adv-file-actions">
                   <button onclick="viewAdvisorFile('${f.id}')" title="Visualizar"><i data-lucide="eye"></i>Ver</button>
+                  ${esPDF?`<button class="cotizar" onclick="cotizarAdvisorFile('${f.id}')" title="Analizar el PDF, elegir etapa y calcular cantidades por hectárea"><i data-lucide="calculator"></i>Cotizar</button>`:''}
                   <button onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i>Descargar</button>
                   <button class="danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar" style="flex:0 0 auto;padding:7px 10px"><i data-lucide="trash-2"></i></button>
                 </div>
@@ -4551,6 +4652,578 @@ async function viewAdvisorFile(id){
   if(!w)toast('Toca "Permitir ventanas" si el archivo no se abrió','warn');
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+/* ============================================================================
+   COTIZADOR DE PLANES (fitosanitarios / fertilización) — v1
+   Lee un PDF de asesor (Inés Espinoza style: tabla con etapa/objetivo/ingrediente/producto/dosis/mojamiento/obs),
+   permite elegir etapa y hectáreas, y calcula cantidades a comprar. Exporta a WhatsApp/PDF.
+   ============================================================================ */
+
+/* Cache en memoria: { fileId → planParsed } para no re-parsear. */
+window._planParseCache=window._planParseCache||{};
+
+/* ---------- Extracción posicional del PDF ---------- */
+/* Retorna array de rows: [{y, cells:[{x, text}]}] agrupadas por Y (tolerancia 3px) y ordenadas por X.
+   Solo primeras 3 páginas (los planes rara vez pasan). */
+async function _extractPDFCoords(dataURL){
+  if(!window.pdfjsLib){throw new Error('pdf.js no cargado')}
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const blob=dataURLToBlob(dataURL);
+  const buf=await blob.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  const rows=[];
+  const maxPages=Math.min(pdf.numPages,3);
+  for(let p=1;p<=maxPages;p++){
+    const page=await pdf.getPage(p);
+    const vp=page.getViewport({scale:1});
+    const H=vp.height;
+    const c=await page.getTextContent();
+    const items=c.items.filter(it=>(it.str||'').trim()).map(it=>({
+      x:it.transform[4],
+      y:H-it.transform[5], /* flip a top-down para lectura natural */
+      text:it.str.trim(),
+      page:p
+    }));
+    /* Agrupar por Y usando tolerancia de 3 pixeles (los items del mismo row están casi al mismo Y) */
+    const buckets={};
+    items.forEach(it=>{const k=Math.round(it.y/3)*3;(buckets[k]=buckets[k]||[]).push(it);});
+    Object.keys(buckets).map(Number).sort((a,b)=>a-b).forEach(y=>{
+      const arr=buckets[y].sort((a,b)=>a.x-b.x);
+      rows.push({y,page:p,cells:arr.map(it=>({x:it.x,text:it.text}))});
+    });
+  }
+  return rows;
+}
+
+/* ---------- Parser específico para planes tipo "Inés Espinoza" ---------- */
+/* Devuelve estructura semántica:
+   { titulo, etapas: [{ numero, nombre, mojamiento, objetivos:[{nombre, ingredientes:[{nombre, productos:[{nombre, dosisRaw, dosis, unidad, denom}]}]}], observaciones }] }
+   Filas del PDF llegan como columnas [Etapa, Objetivo, Ingrediente, Producto, Dosis, Mojamiento, Observ].
+   El etapa/objetivo/ingrediente aplican por "fill-down" hasta que cambian. */
+function _parsePlanRows(rows){
+  if(!rows||!rows.length)return null;
+  /* 1. Detectar el header. Concatenamos las celdas de cada fila para tolerar celdas separadas
+        ("Ingrediente" y "Activo" pueden salir como dos items distintos según cómo genere el PDF). */
+  const rowLine=r=>r.cells.map(c=>c.text).join(' ');
+  const headerIdx=rows.findIndex(r=>{
+    const line=rowLine(r);
+    return /Ingrediente\s+Activo|Estado\s+Fenol[oó]gico|Producto\s+Comercial|^\s*Dosis\s*\(/i.test(line);
+  });
+  if(headerIdx<0){
+    console.warn('[cotizador] header no encontrado. primeras filas:',rows.slice(0,15).map(rowLine));
+    window._cotDebugFail={reason:'header-not-found',samples:rows.slice(0,20).map(rowLine)};
+    return null;
+  }
+  /* 2. Buscar la X de cada columna en 3 pasos: (a) celda individual, (b) 2 celdas adyacentes por X,
+        (c) match sobre la línea entera devolviendo X del primer cell relevante. */
+  const scanRows=rows.slice(Math.max(0,headerIdx-6),Math.min(rows.length,headerIdx+6));
+  const findX=(re)=>{
+    for(const r of scanRows){
+      for(const c of r.cells){
+        if(re.test(c.text))return c.x;
+      }
+    }
+    for(const r of scanRows){
+      const sorted=[...r.cells].sort((a,b)=>a.x-b.x);
+      for(let i=0;i<sorted.length-1;i++){
+        const combined=sorted[i].text+' '+sorted[i+1].text;
+        if(re.test(combined))return sorted[i].x;
+      }
+    }
+    for(const r of scanRows){
+      const line=rowLine(r);
+      const m=line.match(re);
+      if(m){
+        const firstWord=m[0].split(/\s+/)[0];
+        const cell=r.cells.find(c=>c.text.includes(firstWord));
+        if(cell)return cell.x;
+      }
+    }
+    return null;
+  };
+  const colX={
+    etapa:findX(/Estado\s+Fenol[oó]gico|^Fecha\s+de\s+Aplic/i),
+    objetivo:findX(/^Objetivo\s*$/i),
+    ingrediente:findX(/Ingrediente\s+Activo/i),
+    producto:findX(/Producto\s+Comercial|^Producto\s*$/i),
+    dosis:findX(/^Dosis\s*\(|^Dosis$/i),
+    mojamiento:findX(/^Mojamiento/i),
+    observ:findX(/^Observaciones/i)
+  };
+  /* Debug: dejamos el resultado en window para inspección desde consola */
+  window._cotDebugColX=colX;
+  /* Fallback si algunas columnas no se detectaron */
+  const defaults={etapa:30,objetivo:140,ingrediente:220,producto:330,dosis:430,mojamiento:510,observ:580};
+  Object.keys(colX).forEach(k=>{if(colX[k]==null)colX[k]=defaults[k]});
+  const colKeys=['etapa','objetivo','ingrediente','producto','dosis','mojamiento','observ'];
+  /* 4. Título + saltar sub-labels del header + filtrar pies de página */
+  const isHeaderNoise=t=>{
+    const s=(t||'').trim();
+    if(!s)return true;
+    return /^Estado\s+Fen|^Objetivo\s*$|^Ingrediente|^Producto|^Dosis|^Mojamiento|^Observaciones|^o$|^cc-gr|^\(lt|^Aplicaci[oó]n\s*$|^de\s*$|^Fecha\s+de|^Comercial\s*$|^Activo\s*$/i.test(s);
+  };
+  let titulo='Plan Fitosanitario';
+  for(let i=headerIdx-1;i>=0;i--){
+    const t=rows[i].cells.map(c=>c.text).join(' ').trim();
+    if(t.length>15&&!isHeaderNoise(t)&&!/^\d+\./.test(t)){titulo=t;break}
+  }
+  let firstDataIdx=headerIdx+1;
+  while(firstDataIdx<rows.length){
+    const t=rows[firstDataIdx].cells.map(c=>c.text).join(' ').trim();
+    if(isHeaderNoise(t))firstDataIdx++; else break;
+  }
+  const dataRows=rows.slice(firstDataIdx).filter(r=>{
+    const t=r.cells.map(c=>c.text).join(' ');
+    if(/\*La\s+mayor|Ing(?:\.|eniero)?\s+Agr(?:ó|o|onom)|Espinoza|Asesora\s+en\s+Producci/i.test(t))return false;
+    return true;
+  });
+  /* 5. CALIBRAR X de columnas usando los datos reales.
+        Los header text suelen estar centrados/desplazados DERECHA respecto a los datos.
+        Estrategia: para cada columna, buscamos el X mínimo de las celdas de datos que caen dentro
+        del rango entre los midpoints de headers adyacentes. Ese min-X es el "borde izquierdo real". */
+  const orderedByHdrX=colKeys.map(k=>({k,x:colX[k]})).sort((a,b)=>a.x-b.x);
+  const colStart={};
+  orderedByHdrX.forEach((h,i)=>{
+    const prev=i>0?orderedByHdrX[i-1].x:-Infinity;
+    const next=i<orderedByHdrX.length-1?orderedByHdrX[i+1].x:Infinity;
+    const midPrev=i>0?(prev+h.x)/2:-Infinity;
+    const midNext=i<orderedByHdrX.length-1?(h.x+next)/2:Infinity;
+    let minX=Infinity;
+    for(const r of dataRows){
+      for(const c of r.cells){
+        if(c.x>=midPrev-5&&c.x<midNext&&c.x<minX)minX=c.x;
+      }
+    }
+    colStart[h.k]=(minX===Infinity)?h.x:minX;
+  });
+  /* 6. Rangos [minX, maxX) usando los bordes calibrados */
+  const orderedByStart=colKeys.map(k=>({k,x:colStart[k]})).sort((a,b)=>a.x-b.x);
+  const colRange={};
+  orderedByStart.forEach((c,i)=>{
+    const lo=i===0?-Infinity:(orderedByStart[i-1].x+c.x)/2;
+    const hi=i<orderedByStart.length-1?(c.x+orderedByStart[i+1].x)/2:Infinity;
+    colRange[c.k]=[lo,hi];
+  });
+  const assignCol=(x)=>{
+    for(const k of colKeys){
+      const [lo,hi]=colRange[k];
+      if(x>=lo&&x<hi)return k;
+    }
+    return null;
+  };
+  window._cotDebugColX={headerX:colX,starts:colStart,ranges:colRange};
+  /* 7. Bucketing por columna */
+  const rowsByCol=dataRows.map(r=>{
+    const cols={etapa:'',objetivo:'',ingrediente:'',producto:'',dosis:'',mojamiento:'',observ:'',_y:r.y,_page:r.page};
+    r.cells.forEach(cell=>{
+      const k=assignCol(cell.x);
+      if(k)cols[k]=(cols[k]?cols[k]+' ':'')+cell.text;
+    });
+    Object.keys(cols).forEach(k=>{if(typeof cols[k]==='string')cols[k]=cols[k].trim()});
+    return cols;
+  });
+  window._cotDebugRows=rowsByCol;
+  const isEtapaStart=t=>/^\s*\d+\.\s*/.test(t||'');
+  /* 8. Detectar Y de cada etiqueta de etapa. La etiqueta suele estar centrada verticalmente
+        en su celda merged, por eso una etapa "cubre" desde el midpoint de su Y con la anterior
+        hasta el midpoint con la siguiente. */
+  const etapaLabels=[]; /* [{numero, nombre, y}] */
+  rowsByCol.forEach(r=>{
+    if(r.etapa&&isEtapaStart(r.etapa)){
+      const m=r.etapa.match(/^\s*(\d+)\.\s*(.*)$/);
+      etapaLabels.push({numero:parseInt(m[1],10),nombre:(m[2]||'').trim(),y:r._y});
+    }
+  });
+  etapaLabels.sort((a,b)=>a.y-b.y);
+  /* Asignación de row → numero de etapa por midpoints Y. */
+  const etapaAssign=(y)=>{
+    if(!etapaLabels.length)return null;
+    for(let i=0;i<etapaLabels.length;i++){
+      const cur=etapaLabels[i];
+      const next=etapaLabels[i+1];
+      if(!next)return cur.numero;
+      const boundary=(cur.y+next.y)/2;
+      if(y<boundary)return cur.numero;
+    }
+    return etapaLabels[etapaLabels.length-1].numero;
+  };
+  /* 9. Estructura de etapas */
+  const etapas=etapaLabels.map(l=>({
+    numero:l.numero,nombre:l.nombre,_labelY:l.y,objetivos:[],mojamiento:null,observaciones:''
+  }));
+  const etapaByNum={};
+  etapas.forEach(e=>{etapaByNum[e.numero]=e});
+  /* Procesar cada row: la etapa se decide por Y (no por el orden secuencial).
+     Los objetivos/ingredientes se manejan por fill-down DENTRO de la etapa. */
+  const ctxByEtapa={}; /* {etapaNum: {objetivo, ingrediente, ingredienteLastY}} */
+  rowsByCol.forEach(row=>{
+    const num=etapaAssign(row._y);
+    if(!num)return;
+    const etapa=etapaByNum[num];
+    if(!etapa)return;
+    const ctx=ctxByEtapa[num]=ctxByEtapa[num]||{objetivo:null,ingrediente:null,ingredienteLastY:0};
+    /* Continuación del nombre de la etapa (rows cercanas al label) */
+    if(row.etapa&&!isEtapaStart(row.etapa)&&Math.abs(row._y-etapa._labelY)<30){
+      etapa.nombre=(etapa.nombre+' '+row.etapa).trim();
+    }
+    /* Objetivo */
+    if(row.objetivo){
+      const nomObj=row.objetivo.trim();
+      let o=etapa.objetivos[etapa.objetivos.length-1];
+      if(!o||o.nombre!==nomObj){
+        o={nombre:nomObj,ingredientes:[]};
+        etapa.objetivos.push(o);
+      }
+      ctx.objetivo=o;ctx.ingrediente=null;ctx.ingredienteLastY=0;
+    }
+    if(!ctx.objetivo&&(row.dosis||row.producto||row.ingrediente)){
+      const dummy={nombre:'General',ingredientes:[]};
+      etapa.objetivos.push(dummy);
+      ctx.objetivo=dummy;
+    }
+    /* Ingrediente: si es un wrap (mismo Y cluster que el anterior, sin dosis), concatenar al nombre.
+       Sino, nuevo ingrediente. */
+    if(row.ingrediente&&ctx.objetivo){
+      const nomIng=row.ingrediente.replace(/\s+ó\s*$/,'').trim();
+      const esWrap=ctx.ingrediente&&ctx.ingrediente.productos.length===0&&Math.abs(row._y-ctx.ingredienteLastY)<20&&!row.dosis&&!row.producto;
+      if(esWrap){
+        ctx.ingrediente.nombre=(ctx.ingrediente.nombre+' '+nomIng).trim();
+        ctx.ingredienteLastY=row._y;
+      }else if(!ctx.ingrediente||ctx.ingrediente.nombre!==nomIng){
+        ctx.ingrediente={nombre:nomIng,productos:[]};
+        ctx.objetivo.ingredientes.push(ctx.ingrediente);
+        ctx.ingredienteLastY=row._y;
+      }
+    }
+    if(!ctx.ingrediente&&ctx.objetivo&&(row.producto||row.dosis)){
+      const nomIng=(row.producto||'').replace(/\s+ó\s*$/,'').trim()||'—';
+      ctx.ingrediente={nombre:nomIng,productos:[]};
+      ctx.objetivo.ingredientes.push(ctx.ingrediente);
+      ctx.ingredienteLastY=row._y;
+    }
+    /* Producto + dosis */
+    if(row.producto&&ctx.ingrediente){
+      const nomProd=row.producto.replace(/\s+ó\s*$/,'').trim();
+      const dosisInfo=_parseDosis(row.dosis)||{valor:null,unidad:'',denom:''};
+      if(nomProd){
+        ctx.ingrediente.productos.push({nombre:nomProd,dosisRaw:(row.dosis||'').trim()||'—',...dosisInfo});
+      }
+    }
+    /* Mojamiento */
+    if(row.mojamiento){
+      const mm=row.mojamiento.match(/(\d+(?:[.,]\d+)?)/g);
+      if(mm){
+        const nums=mm.map(x=>parseFloat(x.replace(',','.')));
+        const val=Math.max.apply(null,nums);
+        etapa.mojamiento=Math.max(etapa.mojamiento||0,val);
+      }
+    }
+    /* Observaciones */
+    if(row.observ){
+      etapa.observaciones=(etapa.observaciones+' '+row.observ).trim();
+    }
+  });
+  /* 10. Limpieza */
+  etapas.forEach(e=>{
+    e.nombre=e.nombre.replace(/\s+/g,' ').trim();
+    e.observaciones=e.observaciones.replace(/\s+/g,' ').trim();
+    e.objetivos.forEach(o=>{o.ingredientes=o.ingredientes.filter(i=>i.productos.length>0)});
+    e.objetivos=e.objetivos.filter(o=>o.ingredientes.length>0);
+    delete e._labelY;
+  });
+  const etapasFinales=etapas.filter(e=>e.objetivos.length>0);
+  if(!etapasFinales.length)return null;
+  return {titulo,etapas:etapasFinales};
+}
+
+/* Parsea texto tipo "400-600gr/ha", "2 lt/ha", "125cc/hl", "Dosis etiqueta" → {valor:number|null, unidad, denom, rango?} */
+function _parseDosis(raw){
+  const s=(raw||'').replace(/\s+/g,' ').trim();
+  if(!s||/etiqueta|según/i.test(s))return {valor:null,unidad:'',denom:'',etiqueta:true,rango:null};
+  /* Rango "400-600gr/ha" o "400 - 500cc/ha" → tomar el máximo */
+  const rango=s.match(/(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)\s*([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*\/\s*(ha|hl|hL)/);
+  if(rango){
+    const min=parseFloat(rango[1].replace(',','.'));
+    const max=parseFloat(rango[2].replace(',','.'));
+    return {valor:max,rangoMin:min,rangoMax:max,unidad:rango[3].toLowerCase(),denom:rango[4].toLowerCase()};
+  }
+  /* Único: "2 lt/ha" o "125cc/hl" o "500cc/ha" */
+  const uno=s.match(/(\d+(?:[.,]\d+)?)\s*([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s*\/\s*(ha|hl|hL)/);
+  if(uno){
+    const v=parseFloat(uno[1].replace(',','.'));
+    return {valor:v,rangoMin:null,rangoMax:null,unidad:uno[2].toLowerCase(),denom:uno[3].toLowerCase()};
+  }
+  return {valor:null,unidad:'',denom:'',rango:null};
+}
+
+/* Convierte una dosis (por-ha o por-hL) + hectáreas + mojamiento (lt/ha) a cantidad total en la unidad original.
+   Ej: 125cc/hL, 400 lt/ha mojamiento, 5 ha → 125 × (400/100) × 5 = 2500 cc = 2.5 L */
+function _cantidadTotal(prod,ha,mojamientoLtHa){
+  if(!prod||prod.valor==null)return null;
+  if(prod.denom==='ha'){return prod.valor*ha}
+  if(prod.denom==='hl'||prod.denom==='hL'){
+    if(!mojamientoLtHa)return null; /* sin mojamiento no se puede convertir */
+    return prod.valor*(mojamientoLtHa/100)*ha;
+  }
+  return null;
+}
+
+/* Normaliza unidades para presentación: cc→ml→L cuando corresponde, gr→kg */
+function _formatCantidad(cant,unidad){
+  if(cant==null||isNaN(cant))return {n:'—',u:unidad||''};
+  const u=(unidad||'').toLowerCase();
+  /* Volumen: cc y ml equivalen; convertir a L si >=1000 */
+  if(u==='cc'||u==='ml'){
+    if(cant>=1000)return {n:(cant/1000).toLocaleString('es-CL',{maximumFractionDigits:2}),u:'L'};
+    return {n:cant.toLocaleString('es-CL',{maximumFractionDigits:0}),u:u};
+  }
+  if(u==='lt'||u==='l'){
+    return {n:cant.toLocaleString('es-CL',{maximumFractionDigits:2}),u:'L'};
+  }
+  if(u==='gr'||u==='g'){
+    if(cant>=1000)return {n:(cant/1000).toLocaleString('es-CL',{maximumFractionDigits:2}),u:'kg'};
+    return {n:cant.toLocaleString('es-CL',{maximumFractionDigits:0}),u:'g'};
+  }
+  if(u==='kg'){
+    return {n:cant.toLocaleString('es-CL',{maximumFractionDigits:2}),u:'kg'};
+  }
+  return {n:cant.toLocaleString('es-CL',{maximumFractionDigits:2}),u:u};
+}
+
+/* ---------- UI: modal cotizador ---------- */
+window._cotHaCache=window._cotHaCache||{};
+async function cotizarAdvisorFile(fileId){
+  const f=await get('advisorfiles',fileId);
+  if(!f||!f.data){toast('Archivo no disponible','warn');return}
+  const ext=(f.nombre||'').split('.').pop().toLowerCase();
+  if(ext!=='pdf'){toast('El cotizador solo funciona con PDFs','warn');return}
+  /* Loading modal mientras parsea */
+  openModal(`<h3><i data-lucide="calculator" style="width:18px;height:18px;vertical-align:-3px"></i> Analizando PDF...</h3>
+    <div style="padding:30px;text-align:center;color:var(--gris)"><i data-lucide="loader" style="width:32px;height:32px;color:var(--verde)"></i><div style="margin-top:10px">Extrayendo etapas y dosis...</div></div>`);
+  lucideInit();
+  let plan=window._planParseCache[fileId];
+  if(!plan){
+    try{
+      const rows=await _extractPDFCoords(f.data);
+      plan=_parsePlanRows(rows);
+      if(!plan||!plan.etapas||!plan.etapas.length){
+        /* Guardamos las rows crudas para debug y mostramos ventana con muestra al usuario */
+        window._cotDebugRawRows=rows;
+        const samples=rows.slice(0,30).map(r=>r.cells.map(c=>`[x=${Math.round(c.x)}] ${c.text}`).join('  |  ')).join('\n');
+        const escapeHtml=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        openModal(`<h3><i data-lucide="alert-triangle" style="width:18px;height:18px;vertical-align:-3px"></i> No se detectó la estructura del plan</h3>
+          <div class="alert-box warn" style="margin:8px 0"><i data-lucide="info"></i><div class="ab-content">
+            El PDF no tiene el formato esperado (tabla con columnas Etapa · Objetivo · Ingrediente · Producto · Dosis).
+            <br><br>Abajo aparece la extracción cruda de las primeras 30 filas. Compártela con el desarrollador para que ajuste el parser a este formato específico.
+          </div></div>
+          <div style="margin-top:10px"><strong style="font-size:12px">Extracción cruda (con coordenadas X):</strong></div>
+          <textarea readonly style="width:100%;height:280px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;padding:10px;border:1px solid var(--gris-l);border-radius:6px;margin-top:6px;line-height:1.4">${escapeHtml(samples)}</textarea>
+          <div style="font-size:11px;color:var(--gris);margin-top:6px">También disponible en consola: <code>window._cotDebugRawRows</code></div>
+          <div class="modal-actions"><button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button><button class="btn" onclick="_cotCopyDebug()"><i data-lucide="copy"></i>Copiar debug</button></div>`);
+        lucideInit();
+        return;
+      }
+      window._planParseCache[fileId]=plan;
+    }catch(e){
+      console.error('cotizar parse fallo:',e);
+      closeModal();
+      toast('Error al leer el PDF: '+(e.message||''),'warn');
+      return;
+    }
+  }
+  const haInicial=window._cotHaCache[fileId]||1;
+  const etapaInicial=plan.etapas[0].numero;
+  _renderCotizadorModal(fileId,f.nombre,plan,etapaInicial,haInicial);
+}
+
+function _renderCotizadorModal(fileId,fileName,plan,etapaSel,ha){
+  const etapa=plan.etapas.find(e=>e.numero===etapaSel)||plan.etapas[0];
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  /* Selector de etapas */
+  const etapasOpts=plan.etapas.map(e=>`<option value="${e.numero}" ${e.numero===etapa.numero?'selected':''}>${e.numero}. ${esc(e.nombre)}</option>`).join('');
+  /* Cuerpo del cotizador: agrupado por objetivo → ingrediente → productos */
+  const bodyHTML=etapa.objetivos.map(obj=>{
+    const ingredientesHTML=obj.ingredientes.map(ing=>{
+      const productosHTML=ing.productos.map(p=>{
+        const cant=_cantidadTotal(p,ha,etapa.mojamiento);
+        const fmt=_formatCantidad(cant,p.unidad);
+        const rangoNote=(p.rangoMin&&p.rangoMax)?`<span class="cot-rango">rango ${p.rangoMin}-${p.rangoMax} → usando máx</span>`:'';
+        const dosisNote=p.etiqueta?`<span class="cot-empty">Dosis según etiqueta</span>`:(cant==null?`<span class="cot-empty">Sin conversión (falta mojamiento)</span>`:'');
+        const dosisFmt=p.valor!=null?`${p.valor} ${p.unidad}/${p.denom}`:p.dosisRaw;
+        return `<tr class="cot-prod-row">
+          <td class="cot-prod-name"><strong>${esc(p.nombre)}</strong>${rangoNote}${dosisNote}</td>
+          <td class="cot-prod-dosis">${esc(dosisFmt)}</td>
+          <td class="cot-prod-cant"><strong>${fmt.n}</strong> <span class="cot-prod-unidad">${fmt.u}</span></td>
+        </tr>`;
+      }).join('');
+      return `<div class="cot-ingrediente">
+        <div class="cot-ing-head"><i data-lucide="flask-conical" style="width:14px;height:14px"></i> <span>${esc(ing.nombre)}</span></div>
+        <table class="cot-tabla">
+          <thead><tr><th>Producto comercial <small style="color:var(--gris);font-weight:400">(alternativas)</small></th><th>Dosis</th><th>Cantidad total</th></tr></thead>
+          <tbody>${productosHTML}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+    return `<div class="cot-objetivo">
+      <div class="cot-obj-head"><span class="cot-obj-badge">${esc(obj.nombre)}</span></div>
+      ${ingredientesHTML}
+    </div>`;
+  }).join('');
+  const totalProductos=etapa.objetivos.reduce((s,o)=>s+o.ingredientes.reduce((ss,i)=>ss+i.productos.length,0),0);
+  openModal(`
+    <div class="cot-modal-head">
+      <h3 style="margin:0"><i data-lucide="calculator" style="width:18px;height:18px;vertical-align:-3px"></i> Cotizador · ${esc(plan.titulo)}</h3>
+      <div style="font-size:11.5px;color:var(--gris);margin-top:3px">${esc(fileName)}</div>
+    </div>
+    <div class="cot-controles">
+      <div class="cot-ctrl-block">
+        <label>Etapa</label>
+        <select id="cot-etapa" onchange="_cotChangeEtapa('${fileId}',this.value)">${etapasOpts}</select>
+      </div>
+      <div class="cot-ctrl-block">
+        <label>Hectáreas <span style="color:var(--alerta)">*</span></label>
+        <input id="cot-ha" type="number" step="0.01" min="0.01" value="${ha}" onchange="_cotChangeHa('${fileId}',this.value)" oninput="_cotChangeHa('${fileId}',this.value)">
+      </div>
+      <div class="cot-ctrl-block">
+        <label>Mojamiento</label>
+        <div class="cot-info-pill">${etapa.mojamiento?etapa.mojamiento+' L/ha':'— sin definir'}</div>
+      </div>
+      <div class="cot-ctrl-block">
+        <label>Productos</label>
+        <div class="cot-info-pill">${totalProductos} referenciales</div>
+      </div>
+    </div>
+    ${etapa.observaciones?`<div class="alert-box info" style="margin:8px 0"><i data-lucide="info"></i><div class="ab-content"><strong>Observaciones:</strong> ${esc(etapa.observaciones)}</div></div>`:''}
+    <div class="alert-box warn" style="margin:8px 0"><i data-lucide="alert-triangle"></i><div class="ab-content"><small>Los productos listados son <strong>alternativas</strong> (Producto A ó B ó C con el mismo ingrediente activo). No necesitas todos — es referencial para que la química te diga cuáles tiene. Dosis con rango usan el <strong>máximo</strong>. Dosis /hL usan el mojamiento para convertir a /ha.</small></div></div>
+    <div class="cot-body">${bodyHTML}</div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()"><i data-lucide="x"></i>Cerrar</button>
+      <button class="btn secondary" onclick="_cotCopyWhatsApp('${fileId}')"><i data-lucide="message-circle"></i>Copiar para WhatsApp</button>
+      <button class="btn" onclick="_cotDownloadPDF('${fileId}')"><i data-lucide="download"></i>Descargar PDF</button>
+    </div>
+  `);
+  lucideInit();
+}
+function _cotChangeEtapa(fileId,nEtapa){
+  const plan=window._planParseCache[fileId];if(!plan)return;
+  const ha=parseFloat(document.getElementById('cot-ha').value)||1;
+  window._cotHaCache[fileId]=ha;
+  _renderCotizadorModal(fileId,plan._fileName||'',plan,parseInt(nEtapa,10),ha);
+}
+function _cotChangeHa(fileId,v){
+  const ha=parseFloat(v);if(!ha||ha<=0)return;
+  window._cotHaCache[fileId]=ha;
+  const nEtapa=parseInt(document.getElementById('cot-etapa').value,10);
+  const plan=window._planParseCache[fileId];if(!plan)return;
+  const etapa=plan.etapas.find(e=>e.numero===nEtapa);if(!etapa)return;
+  /* Update solo la columna cantidad, sin re-render completo (para preservar el foco del input) */
+  const rows=document.querySelectorAll('.cot-prod-row');
+  const allProds=[];
+  etapa.objetivos.forEach(o=>o.ingredientes.forEach(i=>i.productos.forEach(p=>allProds.push(p))));
+  rows.forEach((row,idx)=>{
+    const p=allProds[idx];if(!p)return;
+    const cant=_cantidadTotal(p,ha,etapa.mojamiento);
+    const fmt=_formatCantidad(cant,p.unidad);
+    const cell=row.querySelector('.cot-prod-cant');
+    if(cell)cell.innerHTML=`<strong>${fmt.n}</strong> <span class="cot-prod-unidad">${fmt.u}</span>`;
+  });
+}
+/* Copia al portapapeles la extracción cruda del PDF cuando falla el parser.
+   Útil para que el usuario pegue el debug y podamos ajustar el parser al formato específico. */
+function _cotCopyDebug(){
+  const rows=window._cotDebugRawRows;
+  if(!rows){toast('Sin datos de debug','warn');return}
+  const txt=rows.map((r,i)=>`Row ${i} (y=${Math.round(r.y)}, page=${r.page}):\n  `+r.cells.map(c=>`[x=${Math.round(c.x)}] "${c.text}"`).join('\n  ')).join('\n\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('Debug copiado ✓ — pégalo en el chat')).catch(()=>toast('No se pudo copiar','warn'));
+}
+function _cotCopyWhatsApp(fileId){
+  const plan=window._planParseCache[fileId];if(!plan)return;
+  const ha=parseFloat(document.getElementById('cot-ha').value)||1;
+  const nEtapa=parseInt(document.getElementById('cot-etapa').value,10);
+  const etapa=plan.etapas.find(e=>e.numero===nEtapa);if(!etapa)return;
+  let txt=`*Cotización — ${plan.titulo}*\n`;
+  txt+=`Etapa ${etapa.numero}: ${etapa.nombre}\n`;
+  txt+=`Superficie: ${ha} ha\n\n`;
+  etapa.objetivos.forEach(o=>{
+    txt+=`*${o.nombre}*\n`;
+    o.ingredientes.forEach(i=>{
+      i.productos.forEach(p=>{
+        const cant=_cantidadTotal(p,ha,etapa.mojamiento);
+        const fmt=_formatCantidad(cant,p.unidad);
+        const cantTxt=cant!=null?`${fmt.n} ${fmt.u}`:(p.etiqueta?'(según etiqueta)':'(revisar)');
+        /* Producto comercial DESTACADO en negrita (asteriscos = bold en WhatsApp) */
+        txt+=`  • *${p.nombre}* — ${cantTxt}\n`;
+      });
+    });
+    txt+='\n';
+  });
+  txt+=`_Generado por Santa Ana Peonías_`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    toast('Copiado ✓ — pega en el chat de la química');
+  }).catch(e=>{
+    toast('No se pudo copiar automáticamente','warn');
+    /* Fallback: mostrar textarea con el texto para copiar manual */
+    openModal(`<h3>Texto para WhatsApp</h3><textarea rows="15" style="width:100%;font-family:monospace;font-size:12px" readonly>${txt.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</textarea><div class="modal-actions"><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
+  });
+}
+function _cotDownloadPDF(fileId){
+  const plan=window._planParseCache[fileId];if(!plan)return;
+  const ha=parseFloat(document.getElementById('cot-ha').value)||1;
+  const nEtapa=parseInt(document.getElementById('cot-etapa').value,10);
+  const etapa=plan.etapas.find(e=>e.numero===nEtapa);if(!etapa)return;
+  /* Genera un HTML print-friendly y abre ventana con print automático.
+     Es más simple y robusto que jsPDF, y el resultado es un PDF profesional. */
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let body='';
+  etapa.objetivos.forEach(o=>{
+    body+=`<h3 style="background:#f0fdf4;color:#166534;padding:8px 12px;border-left:4px solid #16a34a;margin:14px 0 8px">${esc(o.nombre)}</h3>`;
+    o.ingredientes.forEach(i=>{
+      body+=`<div style="font-weight:600;font-size:12px;color:#1e40af;margin:10px 0 4px">🧪 ${esc(i.nombre)}</div>`;
+      body+='<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:11px"><thead><tr style="background:#f9fafb"><th style="text-align:left;padding:6px;border:1px solid #e5e7eb">Producto (alternativa)</th><th style="text-align:left;padding:6px;border:1px solid #e5e7eb">Dosis</th><th style="text-align:right;padding:6px;border:1px solid #e5e7eb">Cantidad</th></tr></thead><tbody>';
+      i.productos.forEach(p=>{
+        const cant=_cantidadTotal(p,ha,etapa.mojamiento);
+        const fmt=_formatCantidad(cant,p.unidad);
+        const dosisFmt=p.valor!=null?`${p.valor} ${p.unidad}/${p.denom}`:p.dosisRaw;
+        body+=`<tr><td style="padding:6px;border:1px solid #e5e7eb">${esc(p.nombre)}${(p.rangoMin&&p.rangoMax)?` <small style="color:#92400e">(rango ${p.rangoMin}-${p.rangoMax})</small>`:''}</td><td style="padding:6px;border:1px solid #e5e7eb">${esc(dosisFmt)}</td><td style="padding:6px;border:1px solid #e5e7eb;text-align:right"><strong>${fmt.n} ${fmt.u}</strong></td></tr>`;
+      });
+      body+='</tbody></table>';
+    });
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cotización — ${esc(plan.titulo)} · Etapa ${etapa.numero}</title>
+    <style>body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111;max-width:900px;margin:20px auto;padding:0 20px}
+    h1{color:#166534;border-bottom:2px solid #16a34a;padding-bottom:6px;margin-bottom:4px}
+    .head-meta{color:#666;font-size:12.5px;margin-bottom:16px}
+    .banner{background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:14px}
+    @media print{.no-print{display:none}}</style></head>
+    <body>
+    <h1>Cotización · ${esc(plan.titulo)}</h1>
+    <div class="head-meta"><strong>Etapa ${etapa.numero}: ${esc(etapa.nombre)}</strong><br>
+      Superficie a aplicar: <strong>${ha} ha</strong>${etapa.mojamiento?` · Mojamiento: <strong>${etapa.mojamiento} L/ha</strong>`:''}<br>
+      Generado: ${new Date().toLocaleString('es-CL')}</div>
+    <div class="banner">⚠ Los productos por ingrediente son <strong>alternativas</strong>. Confirmar disponibilidad y cotizar los que la química tenga. Dosis con rango usan el máximo. Dosis /hL convertidas usando el mojamiento.</div>
+    ${etapa.observaciones?`<div style="background:#eff6ff;padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:14px"><strong>Observaciones:</strong> ${esc(etapa.observaciones)}</div>`:''}
+    ${body}
+    <div class="no-print" style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;color:#666;font-size:11px">Santa Ana Peonías · Cotizador de planes</div>
+    <script>window.onload=function(){window.print()}<\/script>
+    </body></html>`;
+  /* Abrir ventana SIN 'noopener' porque necesitamos document.write.
+     Fallback: si el navegador bloquea popup, generamos un Blob URL y disparamos click. */
+  let w=null;
+  try{w=window.open('','_blank')}catch(_){}
+  if(w&&w.document){
+    w.document.open();w.document.write(html);w.document.close();
+    return;
+  }
+  /* Fallback: descargar como archivo .html que abre en el navegador para imprimir/guardar como PDF */
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`cotizacion_${(plan.titulo||'plan').replace(/[^a-zA-Z0-9]/g,'_')}_etapa${etapa.numero}.html`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},1500);
+  toast('Descargado el archivo. Ábrelo y usa "Imprimir → Guardar como PDF"','warn');
+}
+
 /* Categoría de ícono para colorear el tile según tipo de archivo. */
 function fileIconCategoria(name){
   const ext=(name||'').split('.').pop().toLowerCase();
@@ -5255,6 +5928,400 @@ function estudioResumenVal(e){
   const items=t.campos.slice(0,3).map(c=>r[c]!=null&&r[c]!==''?`<span class="tag info" style="font-size:10px">${c}: ${r[c]}</span>`:'').filter(Boolean);
   return items.length?items.join(' '):(e.resumen?`<span style="color:var(--gris);font-size:11px">${e.resumen.slice(0,80)}${e.resumen.length>80?'…':''}</span>`:'<span style="color:var(--gris-m);font-size:11px">—</span>');
 }
+/* ============================================================================
+   FECHA DE COSECHA — registro año a año de corte y cosecha por variedad.
+   Criterio productor: lo que importa comparar entre temporadas es (1) primer corte,
+   (2) peak, (3) último corte, (4) estado del botón al corte (marshmallow = exportación),
+   (5) tallos cosechados. Con eso se planifica mano de obra, frío y venta anticipada.
+   ============================================================================ */
+const HARVEST_ESTADOS=[
+  {key:'duro',label:'Botón duro',desc:'Firme, sin color. Demasiado temprano para corte.'},
+  {key:'marshmallow',label:'Marshmallow',desc:'Blando al tacto, color visible. Óptimo exportación / cámara.'},
+  {key:'marshmallow_blando',label:'Marshmallow blando',desc:'Muy blando. Vida en cámara más corta; venta rápida.'},
+  {key:'abriendo',label:'Botón abriendo',desc:'Pétalos separándose. Solo mercado local inmediato.'}
+];
+const HARVEST_COLORS={'Sarah Bernhardt':'#ec4899','Festiva Maxima':'#64748b','Bowl of Cream':'#d97706'};
+function harvestColor(v){if(HARVEST_COLORS[v])return HARVEST_COLORS[v];let h=0;for(const c of (v||''))h=(h*31+c.charCodeAt(0))&0xffff;return `hsl(${h%360} 55% 45%)`;}
+function harvestEstado(k){return HARVEST_ESTADOS.find(e=>e.key===k)||null}
+/* Variedades disponibles: desde cuarteles (sin "—") + base del huerto. */
+function harvestVariedades(blocks){
+  const base=['Sarah Bernhardt','Festiva Maxima','Bowl of Cream'];
+  const fromBlocks=(blocks||[]).map(b=>(b.variedad||'').trim()).filter(v=>v&&v!=='—');
+  return [...new Set([...base,...fromBlocks])];
+}
+/* Día del año (1..366) para comparar fechas entre temporadas distintas. */
+function harvestDOY(dateStr){const d=parseLocalDate(dateStr);if(!d)return null;const s=new Date(d.getFullYear(),0,1);return Math.round((d-s)/86400000)+1}
+function harvestDOYtoDate(year,doy){const d=new Date(year,0,1);d.setDate(d.getDate()+doy-1);return d}
+/* Fecha a "12 nov" corto. */
+function harvestFmtCorto(dateStr){const d=parseLocalDate(dateStr);if(!d)return '—';return d.toLocaleDateString('es-CL',{day:'numeric',month:'short'}).replace('.','')}
+function harvestDuracion(h){if(!h||!h.fechaInicio)return null;const fin=h.fechaFin||today();return daysBetween(h.fechaInicio,fin)+1}
+let _harvestFiltroVar='todas';
+function setHarvestFiltro(v){_harvestFiltroVar=v;renderHarvests()}
+
+async function renderHarvests(){
+  const [harvests,blocks]=await Promise.all([getAll('harvests'),getAll('blocks')]);
+  const variedades=harvestVariedades(blocks);
+  const hoy=new Date();const anoActual=hoy.getFullYear();
+  /* Orden: temporada desc, luego inicio asc */
+  const sorted=[...harvests].sort((a,b)=>(b.temporada-a.temporada)||(new Date(a.fechaInicio||0)-new Date(b.fechaInicio||0)));
+  const temporadas=[...new Set(harvests.map(h=>h.temporada).filter(Boolean))].sort((a,b)=>b-a);
+  const esRef=h=>h.tipo==='referencial';
+  const enCurso=harvests.filter(h=>!esRef(h)&&h.fechaInicio&&!h.fechaFin);
+  const nRef=harvests.filter(esRef).length,nCos=harvests.length-nRef;
+  /* Estimación de próximo inicio por variedad: promedio del DOY de inicio histórico (excluye temporada actual sin cerrar). */
+  const estimaciones=variedades.map(v=>{
+    const hist=harvests.filter(h=>h.variedad===v&&h.fechaInicio);
+    if(!hist.length)return {v,n:0};
+    const doys=hist.map(h=>harvestDOY(h.fechaInicio)).filter(Boolean);
+    const avg=Math.round(doys.reduce((s,x)=>s+x,0)/doys.length);
+    const durs=hist.filter(h=>!esRef(h)&&h.fechaFin).map(harvestDuracion).filter(Boolean);
+    const avgDur=durs.length?Math.round(durs.reduce((s,x)=>s+x,0)/durs.length):null;
+    const yaEsteAno=hist.some(h=>h.temporada===anoActual);
+    return {v,n:hist.length,nRef:hist.filter(esRef).length,avgDoy:avg,fechaEst:harvestDOYtoDate(anoActual,avg),avgDur,yaEsteAno};
+  }).filter(e=>e.n>0);
+  /* Tabla comparativa: filas=variedad, columnas=temporada */
+  const celda=(v,t)=>{
+    const pick=(arr)=>arr.find(x=>!esRef(x))||arr[0]; /* prioriza cosecha real sobre referencial */
+    const enCelda=harvests.filter(x=>x.variedad===v&&x.temporada===t);
+    const h=pick(enCelda);
+    if(!h)return '<td class="hv-cell hv-empty">—</td>';
+    const refExtra=(!esRef(h))?enCelda.find(esRef):null;
+    const dur=harvestDuracion(h);
+    const prevT=temporadas.filter(x=>x<t&&harvests.some(y=>y.variedad===v&&y.temporada===x)).sort((a,b)=>b-a)[0];
+    const prev=prevT?pick(harvests.filter(x=>x.variedad===v&&x.temporada===prevT)):null;
+    let delta='';
+    if(prev&&prev.fechaInicio&&h.fechaInicio){const d=harvestDOY(h.fechaInicio)-harvestDOY(prev.fechaInicio);if(d!==0)delta=`<span class="hv-delta ${d>0?'tarde':'temprano'}" title="vs ${prevT}">${d>0?'+':''}${d}d</span>`}
+    const est=harvestEstado(h.estadoCorte);
+    if(esRef(h)){
+      return `<td class="hv-cell hv-ref" onclick="editHarvest('${h.id}')" title="Referencial: observación de fecha, sin cosecha">
+        <div class="hv-cell-fechas"><span class="hv-ref-badge">REF</span><strong>${harvestFmtCorto(h.fechaInicio)}</strong>${h.fechaFin?` → <strong>${harvestFmtCorto(h.fechaFin)}</strong>`:''}${delta}</div>
+        <div class="hv-cell-meta">lista para corte · sin cosecha${h.fechaFin&&dur?` · ventana ${dur} d`:''}</div>
+        ${est?`<div class="hv-cell-estado">${est.label}</div>`:''}
+      </td>`;
+    }
+    return `<td class="hv-cell" onclick="editHarvest('${h.id}')" title="Editar">
+      <div class="hv-cell-fechas"><strong>${harvestFmtCorto(h.fechaInicio)}</strong> → <strong>${h.fechaFin?harvestFmtCorto(h.fechaFin):'<span class="hv-encurso">en curso</span>'}</strong>${delta}</div>
+      <div class="hv-cell-meta">${dur?`${dur} días`:''}${h.fechaPeak?` · peak ${harvestFmtCorto(h.fechaPeak)}`:''}${h.tallos?` · ${Number(h.tallos).toLocaleString('es-CL')} tallos`:''}</div>
+      ${est?`<div class="hv-cell-estado">${est.label}</div>`:''}
+      ${refExtra?`<div class="hv-cell-meta" onclick="event.stopPropagation();editHarvest('${refExtra.id}')" style="margin-top:4px"><span class="hv-ref-badge">REF</span>lista ${harvestFmtCorto(refExtra.fechaInicio)}</div>`:''}
+    </td>`;
+  };
+  const variedadesConDatos=variedades.filter(v=>harvests.some(h=>h.variedad===v));
+  /* Timeline: eje 15-sep → 31-dic del año de cada temporada (107 días). */
+  const tlStart=(y)=>new Date(y,8,15),tlEnd=(y)=>new Date(y,11,31);
+  const tlPct=(dateStr,y)=>{const d=parseLocalDate(dateStr);if(!d)return null;const a=tlStart(y),b=tlEnd(y);return Math.max(0,Math.min(100,((d-a)/(b-a))*100))};
+  const mesesTL=[{l:'Sep',d:new Date(2000,8,15)},{l:'Oct',d:new Date(2000,9,1)},{l:'Nov',d:new Date(2000,10,1)},{l:'Dic',d:new Date(2000,11,1)}];
+  const ejeTL=mesesTL.map(m=>{const a=new Date(2000,8,15),b=new Date(2000,11,31);const p=((m.d-a)/(b-a))*100;return `<span class="hv-tl-tick" style="left:${p}%">${m.l}</span>`}).join('');
+  const hoyPct=(()=>{const y=anoActual;if(hoy<tlStart(y)||hoy>tlEnd(y))return null;return ((hoy-tlStart(y))/(tlEnd(y)-tlStart(y)))*100})();
+  const timelineHTML=temporadas.map(t=>{
+    const rows=sorted.filter(h=>h.temporada===t&&h.fechaInicio&&(_harvestFiltroVar==='todas'||h.variedad===_harvestFiltroVar));
+    if(!rows.length)return '';
+    return `<div class="hv-tl-temporada">
+      <div class="hv-tl-year">${t}</div>
+      <div class="hv-tl-rows">
+        ${rows.map(h=>{const ref=esRef(h);const p1=tlPct(h.fechaInicio,t);const fin=h.fechaFin||(ref?h.fechaInicio:(t===anoActual?today():h.fechaInicio));const p2=tlPct(fin,t);const pk=h.fechaPeak?tlPct(h.fechaPeak,t):null;const col=harvestColor(h.variedad);
+          const tip=ref?`Referencial: lista para corte ${harvestFmtCorto(h.fechaInicio)}${h.fechaFin?' → '+harvestFmtCorto(h.fechaFin):''} (sin cosecha)`:`${harvestFmtCorto(h.fechaInicio)} → ${h.fechaFin?harvestFmtCorto(h.fechaFin):'en curso'}`;
+          return `<div class="hv-tl-row" onclick="editHarvest('${h.id}')">
+            <div class="hv-tl-label"><span class="hv-dot" style="background:${col}${ref?';opacity:.5':''}"></span>${h.variedad}${ref?' <span class="hv-ref-badge">REF</span>':''}</div>
+            <div class="hv-tl-track">${t===anoActual&&hoyPct!=null?`<span class="hv-tl-hoy" style="left:${hoyPct}%"></span>`:''}
+              <div class="hv-tl-bar ${ref?'ref':(!h.fechaFin?'encurso':'')}" style="left:${p1}%;width:${Math.max(ref?1.6:1.2,(p2-p1))}%;${ref?`border-color:${col};color:${col}`:`background:${col}`}" title="${tip}"></div>
+              ${pk!=null?`<span class="hv-tl-peak" style="left:${pk}%" title="Peak ${harvestFmtCorto(h.fechaPeak)}"></span>`:''}
+            </div>
+          </div>`}).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  const filtList=_harvestFiltroVar==='todas'?sorted:sorted.filter(h=>h.variedad===_harvestFiltroVar);
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Fecha de Cosecha</h2><div class="sub">Registro año a año del corte por variedad · primer corte, peak, último corte y tallos</div></div>
+    <button class="btn" onclick="editHarvest()"><i data-lucide="plus"></i>Registrar cosecha</button></div>
+    ${enCurso.length?`<div class="alert-box ok" style="margin-bottom:14px"><i data-lucide="scissors"></i><div class="ab-content"><strong>Cosecha en curso:</strong> ${enCurso.map(h=>`${h.variedad} (desde ${harvestFmtCorto(h.fechaInicio)}, día ${harvestDuracion(h)})`).join(' · ')}. ${enCurso.map(h=>`<button class="btn small" style="margin:4px 4px 0 0" onclick="quickHarvestEnd('${h.id}')"><i data-lucide="check"></i>Cerrar ${h.variedad} hoy</button>`).join('')}</div></div>`:''}
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Temporadas</div><div class="kpi-icon"><i data-lucide="calendar-range"></i></div></div><div class="value">${temporadas.length}</div><div class="foot">${temporadas.length?temporadas[temporadas.length-1]+' → '+temporadas[0]:'sin registros'}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Registros</div><div class="kpi-icon"><i data-lucide="scissors"></i></div></div><div class="value">${harvests.length}</div><div class="foot">${nCos} cosecha${nCos===1?'':'s'} · ${nRef} referencial${nRef===1?'':'es'}</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Tallos última temporada</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${temporadas.length?harvests.filter(h=>!esRef(h)&&h.temporada===temporadas[0]).reduce((s,h)=>s+(Number(h.tallos)||0),0).toLocaleString('es-CL'):'—'}</div><div class="foot">${temporadas.length?'temporada '+temporadas[0]+' · solo cosechas':''}</div></div>
+      <div class="kpi warn"><div class="kpi-header"><div class="label">Duración promedio</div><div class="kpi-icon"><i data-lucide="timer"></i></div></div><div class="value">${(()=>{const d=harvests.filter(h=>!esRef(h)&&h.fechaFin).map(harvestDuracion).filter(Boolean);return d.length?Math.round(d.reduce((s,x)=>s+x,0)/d.length)+' d':'—'})()}</div><div class="foot">primer → último corte · solo cosechas</div></div>
+    </div>
+    ${estimaciones.length?`<div class="card">
+      <h3><i data-lucide="sparkles"></i>Próximo inicio estimado ${anoActual} <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">promedio histórico por variedad</span></h3>
+      <div class="hv-est-grid">${estimaciones.map(e=>`<div class="hv-est ${e.yaEsteAno?'done':''}"><div class="hv-est-var"><span class="hv-dot" style="background:${harvestColor(e.v)}"></span>${e.v}</div><div class="hv-est-fecha">${e.yaEsteAno?'✓ registrada':e.fechaEst.toLocaleDateString('es-CL',{day:'numeric',month:'long'})}</div><div class="hv-est-meta">${e.n} temporada${e.n===1?'':'s'}${e.nRef?` (${e.nRef} ref.)`:''}${e.avgDur?` · ~${e.avgDur} días de corte`:''}${!e.yaEsteAno?` · ${(()=>{const f=e.fechaEst;const iso=`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;const d=daysBetween(today(),iso);return d>=0?'en '+d+' días':'hace '+Math.abs(d)+' días'})()}`:''}</div></div>`).join('')}</div>
+      <div style="font-size:11px;color:var(--gris);margin-top:8px">La estimación usa cosechas reales y registros referenciales (fecha "lista para corte" sin cosechar). Referencia: en el Maule, Festiva Maxima abre la temporada, Bowl of Cream va al medio y Sarah Bernhardt cierra. Los años con otoño cálido (menos horas-frío) tienden a retrasar y acortar la ventana de corte.</div>
+    </div>`:''}
+    ${variedadesConDatos.length?`<div class="card">
+      <h3><i data-lucide="table-2"></i>Comparativa año a año</h3>
+      <div class="table-scroll"><table class="hv-tabla"><thead><tr><th>Variedad</th>${temporadas.map(t=>`<th>${t}</th>`).join('')}</tr></thead>
+      <tbody>${variedadesConDatos.map(v=>`<tr><td class="hv-var"><span class="hv-dot" style="background:${harvestColor(v)}"></span><strong>${v}</strong></td>${temporadas.map(t=>celda(v,t)).join('')}</tr>`).join('')}</tbody></table></div>
+      <div style="font-size:11px;color:var(--gris);margin-top:6px">Δ días = diferencia del primer corte respecto a la temporada anterior (+ más tarde, − más temprano). Toca una celda para editar.</div>
+    </div>`:''}
+    ${timelineHTML?`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="gantt-chart"></i>Línea de tiempo</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:4px"><span class="chip ${_harvestFiltroVar==='todas'?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHarvestFiltro('todas')">Todas</span>${variedadesConDatos.map(v=>`<span class="chip ${_harvestFiltroVar===v?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHarvestFiltro('${v.replace(/'/g,"\\'")}')">${v}</span>`).join('')}</div></div>
+      <div class="hv-tl-eje">${ejeTL}</div>
+      ${timelineHTML}
+      <div style="font-size:11px;color:var(--gris);margin-top:6px">Barra = primer a último corte · ◆ = peak · línea punteada = hoy</div>
+    </div>`:''}
+    <div class="card">
+      <h3><i data-lucide="list"></i>Detalle de registros</h3>
+      <div class="table-scroll"><table id="tbl-harvests"><thead><tr><th>Temporada</th><th>Variedad</th><th>Tipo</th><th>Cuarteles</th><th>Primer corte / lista</th><th>Peak</th><th>Último corte</th><th>Días</th><th>Estado al corte</th><th>Tallos</th><th></th></tr></thead>
+      <tbody>${filtList.length?filtList.map(h=>{const ref=esRef(h);const est=harvestEstado(h.estadoCorte);const dur=harvestDuracion(h);return `<tr class="${ref?'hv-row-ref':''}">
+        <td><strong>${h.temporada||'—'}</strong></td>
+        <td><span class="hv-dot" style="background:${harvestColor(h.variedad)}"></span>${h.variedad}</td>
+        <td>${ref?'<span class="tag" style="background:#f3f4f6;color:#4b5563;border:1px dashed #9ca3af">Referencial</span>':'<span class="tag ok">Cosecha</span>'}</td>
+        <td>${bloquesTags({bloques:h.cuarteles||[]})}</td>
+        <td>${fmt(h.fechaInicio)}${ref?'<div style="font-size:10.5px;color:var(--gris)">lista para corte</div>':''}</td>
+        <td>${h.fechaPeak?fmt(h.fechaPeak):'<span style="color:var(--gris-m)">—</span>'}</td>
+        <td>${h.fechaFin?fmt(h.fechaFin):(ref?'<span style="color:var(--gris-m)">—</span>':`<span class="tag warn">En curso</span> <button class="btn small ghost" onclick="quickHarvestEnd('${h.id}')" title="Cerrar cosecha hoy"><i data-lucide="check"></i></button>`)}</td>
+        <td>${(ref&&!h.fechaFin)?'—':(dur?dur:'—')}</td>
+        <td>${est?`<span class="tag ${est.key==='marshmallow'?'ok':'info'}">${est.label}</span>`:'<span style="color:var(--gris-m)">—</span>'}</td>
+        <td style="font-variant-numeric:tabular-nums">${ref?'<span style="color:var(--gris-m)">no cosechado</span>':(h.tallos?Number(h.tallos).toLocaleString('es-CL'):'—')}${(!ref&&h.pctExportable)?`<div style="font-size:10.5px;color:var(--gris)">${h.pctExportable}% export.</div>`:''}</td>
+        <td class="col-acciones"><button class="btn small ghost" onclick="editHarvest('${h.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delHarvest('${h.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td>
+      </tr>${h.notas?`<tr class="hv-notas-row"><td colspan="11"><i data-lucide="message-square" style="width:12px;height:12px;vertical-align:-2px"></i> ${h.notas}</td></tr>`:''}`}).join(''):`<tr><td colspan="11" class="empty"><i data-lucide="scissors"></i><div>Sin cosechas registradas</div><div style="font-size:12px;color:var(--gris);margin-top:4px">Registra el primer corte de cada variedad; el último corte lo cierras cuando termine. Si solo observaste la fecha sin cosechar, regístrala como <strong>Referencial</strong>.</div></td></tr>`}</tbody></table></div>
+    </div>`;
+  lucideInit();
+}
+async function editHarvest(id){
+  const blocks=await getAll('blocks');
+  const variedades=harvestVariedades(blocks);
+  const h=id?await get('harvests',id):{tipo:'cosecha',temporada:new Date().getFullYear(),variedad:variedades[0]||'',cuarteles:[],fechaInicio:today(),fechaPeak:'',fechaFin:'',estadoCorte:'marshmallow',tallos:'',pctExportable:'',notas:''};
+  const tipo=h.tipo||'cosecha';
+  /* Cuarteles sugeridos: los de la variedad elegida */
+  const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  openModal(`<h3><i data-lucide="scissors" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} cosecha</h3>
+    <div class="form-row"><label>Tipo de registro</label>
+      <div class="hv-tipo-switch">
+        <label class="hv-tipo-opt ${tipo==='cosecha'?'active':''}"><input type="radio" name="f-hv-tipo" value="cosecha" ${tipo==='cosecha'?'checked':''} onchange="_hvCambioTipo()"><strong>Cosecha real</strong><small>Se cortó y cosechó. Registra tallos y ventana completa.</small></label>
+        <label class="hv-tipo-opt ${tipo==='referencial'?'active':''}"><input type="radio" name="f-hv-tipo" value="referencial" ${tipo==='referencial'?'checked':''} onchange="_hvCambioTipo()"><strong>Referencial</strong><small>Solo se observó cuándo estaba lista para corte. No se cosechó (ej. hileras testigo, plantas jóvenes).</small></label>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Temporada (año) *</label><input id="f-hv-temp" type="number" min="2020" max="2100" value="${h.temporada||''}"></div>
+      <div class="form-row"><label>Variedad *</label><select id="f-hv-var" onchange="_hvSugerirCuarteles()">${variedades.map(v=>`<option value="${esc(v)}" ${h.variedad===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-row"><label id="f-hv-ini-lbl">Primer corte *</label><input id="f-hv-ini" type="date" value="${h.fechaInicio||''}"></div>
+      <div class="form-row hv-solo-cosecha"><label>Peak <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hv-peak" type="date" value="${h.fechaPeak||''}"></div>
+      <div class="form-row"><label id="f-hv-fin-lbl">Último corte <small style="color:var(--gris);font-weight:400">(vacío = en curso)</small></label><input id="f-hv-fin" type="date" value="${h.fechaFin||''}"></div>
+      <div class="form-row"><label>Estado del botón <span id="f-hv-est-ctx">al corte</span></label><select id="f-hv-est">${HARVEST_ESTADOS.map(e=>`<option value="${e.key}" ${h.estadoCorte===e.key?'selected':''}>${e.label}</option>`).join('')}</select><small id="f-hv-est-desc" style="color:var(--gris);font-size:11px">${harvestEstado(h.estadoCorte)?.desc||''}</small></div>
+      <div class="form-row hv-solo-cosecha"><label>Tallos cosechados</label><input id="f-hv-tallos" type="number" min="0" step="1" value="${h.tallos||''}" placeholder="total temporada"></div>
+      <div class="form-row hv-solo-cosecha"><label>% exportable</label><input id="f-hv-pct" type="number" min="0" max="100" step="1" value="${h.pctExportable||''}" placeholder="ej. 85"></div>
+    </div>
+    <div class="form-row"><label>Cuarteles <span style="color:var(--gris);font-weight:400;font-size:11px">(opcional)</span></label>
+      <div class="checkbox-grid" id="f-hv-cuarteles">${blocks.filter(b=>b.variedad!=='—').map(b=>`<div class="check-item"><input type="checkbox" id="cbhv-${b.id}" class="f-hv-chk" data-var="${esc(b.variedad)}" value="${esc(b.nombre)}" ${(h.cuarteles||[]).includes(b.nombre)?'checked':''}><label for="cbhv-${b.id}">${b.nombre}</label></div>`).join('')}</div>
+    </div>
+    <div class="form-row"><label>Notas <small style="color:var(--gris);font-weight:400">(clima, calidad, largo de tallo, problemas)</small></label><textarea id="f-hv-notas" rows="2" placeholder="ej. Tallos 70-80 cm, 2 días de lluvia en peak, botrytis puntual en sector 3">${h.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveHarvest(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  document.getElementById('f-hv-est').addEventListener('change',e=>{const d=document.getElementById('f-hv-est-desc');if(d)d.textContent=harvestEstado(e.target.value)?.desc||''});
+  if(!id)_hvSugerirCuarteles();
+  _hvCambioTipo();
+  lucideInit();
+}
+/* Adapta el formulario según tipo: referencial oculta peak/tallos/% y cambia etiquetas de fechas. */
+function _hvCambioTipo(){
+  const t=document.querySelector('input[name="f-hv-tipo"]:checked')?.value||'cosecha';
+  const ref=t==='referencial';
+  document.querySelectorAll('.hv-tipo-opt').forEach(l=>l.classList.toggle('active',l.querySelector('input').value===t));
+  document.querySelectorAll('.hv-solo-cosecha').forEach(el=>el.style.display=ref?'none':'');
+  const li=document.getElementById('f-hv-ini-lbl'),lf=document.getElementById('f-hv-fin-lbl'),ctx=document.getElementById('f-hv-est-ctx');
+  if(li)li.innerHTML=ref?'Fecha lista para corte *':'Primer corte *';
+  if(lf)lf.innerHTML=ref?'Fin de la ventana <small style="color:var(--gris);font-weight:400">(opcional: cuándo se pasó)</small>':'Último corte <small style="color:var(--gris);font-weight:400">(vacío = en curso)</small>';
+  if(ctx)ctx.textContent=ref?'al momento de la observación':'al corte';
+}
+/* Al elegir variedad en un registro nuevo, pre-marca los cuarteles de esa variedad. */
+function _hvSugerirCuarteles(){
+  const v=document.getElementById('f-hv-var')?.value;if(!v)return;
+  document.querySelectorAll('.f-hv-chk').forEach(c=>{c.checked=(c.getAttribute('data-var')===v)});
+}
+async function saveHarvest(id){
+  const data={
+    tipo:document.querySelector('input[name="f-hv-tipo"]:checked')?.value||'cosecha',
+    temporada:parseInt(document.getElementById('f-hv-temp').value,10)||null,
+    variedad:document.getElementById('f-hv-var').value,
+    cuarteles:Array.from(document.querySelectorAll('.f-hv-chk:checked')).map(c=>c.value),
+    fechaInicio:document.getElementById('f-hv-ini').value||null,
+    fechaPeak:document.getElementById('f-hv-peak').value||null,
+    fechaFin:document.getElementById('f-hv-fin').value||null,
+    estadoCorte:document.getElementById('f-hv-est').value,
+    tallos:parseInt(document.getElementById('f-hv-tallos').value,10)||null,
+    pctExportable:parseFloat(document.getElementById('f-hv-pct').value)||null,
+    notas:document.getElementById('f-hv-notas').value.trim()
+  };
+  const esRefNew=data.tipo==='referencial';
+  if(esRefNew){data.fechaPeak=null;data.tallos=null;data.pctExportable=null;}
+  if(!data.temporada){toast('Temporada requerida','warn');return}
+  if(!data.variedad){toast('Variedad requerida','warn');return}
+  if(!data.fechaInicio){toast(esRefNew?'Fecha "lista para corte" requerida':'Fecha de primer corte requerida','warn');return}
+  if(data.fechaFin&&data.fechaFin<data.fechaInicio){toast('La fecha final no puede ser antes de la inicial','warn');return}
+  if(data.fechaPeak&&(data.fechaPeak<data.fechaInicio||(data.fechaFin&&data.fechaPeak>data.fechaFin))){toast('El peak debe estar entre primer y último corte','warn');return}
+  /* Un registro por variedad × temporada × tipo (puede coexistir una cosecha y un referencial) */
+  const todos=await getAll('harvests');
+  const dup=todos.find(h=>h.variedad===data.variedad&&h.temporada===data.temporada&&(h.tipo||'cosecha')===data.tipo&&h.id!==id);
+  if(dup){toast(`Ya existe ${esRefNew?'un referencial':'una cosecha'} de ${data.variedad} ${data.temporada}. Edita ese registro.`,'warn');return}
+  try{
+    if(id){data.id=id;await put('harvests',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('harvests',data)}
+  }catch(e){console.error('saveHarvest falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  closeModal();toast('Cosecha guardada');renderHarvests();
+}
+async function quickHarvestEnd(id){
+  const h=await get('harvests',id);if(!h)return;
+  if(!confirm(`¿Cerrar cosecha de ${h.variedad} ${h.temporada} con último corte hoy (${fmt(today())})?`))return;
+  await put('harvests',{id,fechaFin:today()});
+  toast('Cosecha cerrada');renderHarvests();
+}
+async function delHarvest(id){if(!confirm('¿Eliminar este registro de cosecha?'))return;await del('harvests',id);toast('Eliminado');renderHarvests()}
+
+/* ============================================================================
+   COSECHA DIARIA — reporte día a día: tallos, cuadrilla, cuartel, observación.
+   Modelo tipo packing de flor de corte: 1 registro por día × variedad. Lo que se mira:
+   acumulado, ritmo diario y tallos/persona/día (para dimensionar cuadrilla y frío).
+   Se sincroniza con "Fecha de Cosecha" (primer corte + tallos de la temporada).
+   ============================================================================ */
+let _hlTemp=null,_hlVar='todas';
+function setHlTemp(t){_hlTemp=t;renderHarvestLog()}
+function setHlVar(v){_hlVar=v;renderHarvestLog()}
+let _hlChart=null;
+async function renderHarvestLog(){
+  const [logs,blocks]=await Promise.all([getAll('harvestlogs'),getAll('blocks')]);
+  const variedades=harvestVariedades(blocks);
+  const temporadas=[...new Set(logs.map(l=>parseLocalDate(l.fecha)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+  const anoActual=new Date().getFullYear();
+  if(_hlTemp==null)_hlTemp=temporadas.includes(anoActual)?anoActual:(temporadas[0]||anoActual);
+  const enTemp=logs.filter(l=>parseLocalDate(l.fecha)?.getFullYear()===_hlTemp);
+  const varsTemp=[...new Set(enTemp.map(l=>l.variedad))];
+  const filt=(_hlVar==='todas'?enTemp:enTemp.filter(l=>l.variedad===_hlVar)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  /* KPIs */
+  const total=filt.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  const totalExp=filt.reduce((s,l)=>s+(Number(l.tallosExport)||0),0);
+  const dias=[...new Set(filt.map(l=>l.fecha))].length;
+  const personasDia=filt.reduce((s,l)=>s+(Number(l.personas)||0),0);
+  const prodPersona=personasDia?Math.round(total/personasDia):null;
+  const ultimo=filt[0]||null;
+  const mejor=filt.reduce((m,l)=>(Number(l.tallos)||0)>(Number(m?.tallos)||0)?l:m,null);
+  const hoyStr=today();
+  const hoyLogs=filt.filter(l=>l.fecha===hoyStr);
+  const tallosHoy=hoyLogs.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  /* Serie diaria (asc) + acumulado */
+  const porDia={};filt.forEach(l=>{porDia[l.fecha]=(porDia[l.fecha]||0)+(Number(l.tallos)||0)});
+  const fechasAsc=Object.keys(porDia).sort();
+  let acum=0;const serieAcum=fechasAsc.map(f=>acum+=porDia[f]);
+  const n=v=>Number(v||0).toLocaleString('es-CL');
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Cosecha diaria</h2><div class="sub">Reporte día a día de corte · tallos, cuadrilla y observaciones</div></div>
+    <button class="btn" onclick="editHarvestLog()"><i data-lucide="plus"></i>Registrar día</button></div>
+    <div class="card" style="padding:12px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+        <div style="display:flex;gap:4px;align-items:center"><span class="hl-lbl">Temporada</span>${[...new Set([anoActual,...temporadas])].sort((a,b)=>b-a).map(t=>`<span class="chip ${_hlTemp===t?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlTemp(${t})">${t}</span>`).join('')}</div>
+        ${varsTemp.length>1?`<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="hl-lbl">Variedad</span><span class="chip ${_hlVar==='todas'?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlVar('todas')">Todas</span>${varsTemp.map(v=>`<span class="chip ${_hlVar===v?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlVar('${v.replace(/'/g,"\\'")}')">${v}</span>`).join('')}</div>`:''}
+      </div>
+    </div>
+    <div class="grid grid-4">
+      <div class="kpi"><div class="kpi-header"><div class="label">Acumulado ${_hlTemp}</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${n(total)}</div><div class="foot">tallos · ≈ ${n(Math.floor(total/10))} ramos de 10${totalExp?` · ${Math.round(totalExp/total*100)}% export.`:''}</div></div>
+      <div class="kpi ok"><div class="kpi-header"><div class="label">${hoyLogs.length?'Hoy':'Último día'}</div><div class="kpi-icon"><i data-lucide="calendar-check"></i></div></div><div class="value">${hoyLogs.length?n(tallosHoy):(ultimo?n(ultimo.tallos):'—')}</div><div class="foot">${hoyLogs.length?fmt(hoyStr):(ultimo?fmt(ultimo.fecha):'sin registros')}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Promedio diario</div><div class="kpi-icon"><i data-lucide="activity"></i></div></div><div class="value">${dias?n(Math.round(total/dias)):'—'}</div><div class="foot">${dias} día${dias===1?'':'s'} de corte${mejor?` · mejor ${n(mejor.tallos)} (${harvestFmtCorto(mejor.fecha)})`:''}</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Tallos / persona / día</div><div class="kpi-icon"><i data-lucide="users"></i></div></div><div class="value">${prodPersona!=null?n(prodPersona):'—'}</div><div class="foot">${personasDia?n(personasDia)+' jornadas-persona':'registra personas para medir'}</div></div>
+    </div>
+    ${fechasAsc.length?`<div class="card"><h3><i data-lucide="bar-chart-3"></i>Ritmo de cosecha</h3><div class="chart-container" style="height:220px"><canvas id="chart-hl"></canvas></div></div>`:''}
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <h3 style="margin:0"><i data-lucide="list"></i>Registros</h3>
+        ${total?`<button class="btn small secondary" onclick="syncHarvestLogToSeason(${_hlTemp})" title="Actualiza primer corte y tallos en Fecha de Cosecha"><i data-lucide="refresh-cw"></i>Actualizar Fecha de Cosecha</button>`:''}
+      </div>
+      <div class="table-scroll"><table id="tbl-hl"><thead><tr><th>Fecha</th><th>Variedad</th><th>Cuarteles</th><th style="text-align:right">Tallos</th><th style="text-align:right">Export.</th><th style="text-align:right">Personas</th><th style="text-align:right">Tallos/pers.</th><th>Observaciones</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(l=>{const t=Number(l.tallos)||0,p=Number(l.personas)||0;return `<tr>
+        <td><strong>${fmt(l.fecha)}</strong>${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}</td>
+        <td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${l.variedad}</td>
+        <td>${bloquesTags({bloques:l.cuarteles||[]})}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${n(t)}</strong></td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--gris-d)">${l.tallosExport?n(l.tallosExport)+` <small style="color:var(--gris)">(${Math.round(l.tallosExport/t*100)}%)</small>`:'—'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${p||'—'}${l.horas?`<div style="font-size:10.5px;color:var(--gris)">${l.horas} h</div>`:''}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${p?n(Math.round(t/p)):'—'}</td>
+        <td style="max-width:260px;font-size:12px;color:var(--gris-d)">${l.notas||'<span style="color:var(--gris-m)">—</span>'}</td>
+        <td class="col-acciones"><button class="btn small ghost" onclick="editHarvestLog('${l.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delHarvestLog('${l.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td>
+      </tr>`}).join(''):`<tr><td colspan="9" class="empty"><i data-lucide="flower-2"></i><div>Sin registros en ${_hlTemp}</div><div style="font-size:12px;color:var(--gris);margin-top:4px">Al final de cada día de corte, registra tallos y personas. Toma 20 segundos.</div></td></tr>`}</tbody></table></div>
+    </div>`;
+  lucideInit();
+  if(fechasAsc.length){
+    if(_hlChart){try{_hlChart.destroy()}catch(_){}}
+    _hlChart=new Chart(document.getElementById('chart-hl'),{type:'bar',data:{labels:fechasAsc.map(harvestFmtCorto),datasets:[
+      {label:'Tallos del día',data:fechasAsc.map(f=>porDia[f]),backgroundColor:'rgba(236,72,153,.75)',borderRadius:4,yAxisID:'y'},
+      {label:'Acumulado',data:serieAcum,type:'line',borderColor:'#3f7a52',backgroundColor:'rgba(63,122,82,.08)',fill:true,tension:.25,pointRadius:2,yAxisID:'y2'}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,title:{display:true,text:'tallos/día'}},y2:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'acumulado'}}}}});
+  }
+}
+async function editHarvestLog(id){
+  const [blocks,logs]=await Promise.all([getAll('blocks'),getAll('harvestlogs')]);
+  const variedades=harvestVariedades(blocks);
+  const ultimo=[...logs].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))[0];
+  const l=id?await get('harvestlogs',id):{fecha:today(),variedad:ultimo?.variedad||variedades[0]||'',cuarteles:ultimo?.cuarteles||[],tallos:'',tallosExport:'',personas:ultimo?.personas||'',horas:ultimo?.horas||'',notas:''};
+  const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  openModal(`<h3><i data-lucide="flower-2" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} día de cosecha</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha *</label><input id="f-hl-fecha" type="date" value="${l.fecha||''}"></div>
+      <div class="form-row"><label>Variedad *</label><select id="f-hl-var" onchange="_hlSugerirCuarteles()">${variedades.map(v=>`<option value="${esc(v)}" ${l.variedad===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Tallos cosechados *</label><input id="f-hl-tallos" type="number" min="0" step="1" inputmode="numeric" value="${l.tallos||''}" placeholder="ej. 1850" style="font-size:18px;font-weight:700"></div>
+      <div class="form-row"><label>De ellos exportables <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-exp" type="number" min="0" step="1" inputmode="numeric" value="${l.tallosExport||''}" placeholder="ej. 1600"></div>
+      <div class="form-row"><label>Personas en cuadrilla *</label><input id="f-hl-pers" type="number" min="0" step="1" inputmode="numeric" value="${l.personas||''}" placeholder="ej. 6"></div>
+      <div class="form-row"><label>Horas trabajadas <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-horas" type="number" min="0" step="0.5" inputmode="decimal" value="${l.horas||''}" placeholder="ej. 8"></div>
+    </div>
+    <div class="form-row"><label>Cuarteles</label>
+      <div class="checkbox-grid">${blocks.filter(b=>b.variedad!=='—').map(b=>`<div class="check-item"><input type="checkbox" id="cbhl-${b.id}" class="f-hl-chk" data-var="${esc(b.variedad)}" value="${esc(b.nombre)}" ${(l.cuarteles||[]).includes(b.nombre)?'checked':''}><label for="cbhl-${b.id}">${b.nombre}</label></div>`).join('')}</div>
+    </div>
+    <div class="form-row"><label>Observaciones <small style="color:var(--gris);font-weight:400">(clima, estado del botón, problemas)</small></label><textarea id="f-hl-notas" rows="2" placeholder="ej. Mañana fría, botón parejo en marshmallow. Sector 2 más adelantado.">${l.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveHarvestLog(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  if(!id&&!(l.cuarteles||[]).length)_hlSugerirCuarteles();
+  lucideInit();
+  setTimeout(()=>document.getElementById('f-hl-tallos')?.focus(),50);
+}
+function _hlSugerirCuarteles(){
+  const v=document.getElementById('f-hl-var')?.value;if(!v)return;
+  document.querySelectorAll('.f-hl-chk').forEach(c=>{c.checked=(c.getAttribute('data-var')===v)});
+}
+async function saveHarvestLog(id){
+  const data={
+    fecha:document.getElementById('f-hl-fecha').value||null,
+    variedad:document.getElementById('f-hl-var').value,
+    cuarteles:Array.from(document.querySelectorAll('.f-hl-chk:checked')).map(c=>c.value),
+    tallos:parseInt(document.getElementById('f-hl-tallos').value,10),
+    tallosExport:parseInt(document.getElementById('f-hl-exp').value,10)||null,
+    personas:parseInt(document.getElementById('f-hl-pers').value,10)||null,
+    horas:parseFloat(document.getElementById('f-hl-horas').value)||null,
+    notas:document.getElementById('f-hl-notas').value.trim()
+  };
+  if(!data.fecha){toast('Fecha requerida','warn');return}
+  if(!data.variedad){toast('Variedad requerida','warn');return}
+  if(isNaN(data.tallos)||data.tallos<0){toast('Tallos cosechados requerido','warn');return}
+  if(data.tallosExport!=null&&data.tallosExport>data.tallos){toast('Exportables no puede superar el total','warn');return}
+  /* 1 registro por día × variedad */
+  const todos=await getAll('harvestlogs');
+  const dup=todos.find(l=>l.fecha===data.fecha&&l.variedad===data.variedad&&l.id!==id);
+  if(dup){toast(`Ya hay registro de ${data.variedad} el ${fmt(data.fecha)}. Edítalo.`,'warn');return}
+  try{
+    if(id){data.id=id;await put('harvestlogs',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('harvestlogs',data)}
+  }catch(e){console.error('saveHarvestLog falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  closeModal();toast('Día registrado');renderHarvestLog();
+}
+async function delHarvestLog(id){if(!confirm('¿Eliminar este día de cosecha?'))return;await del('harvestlogs',id);toast('Eliminado');renderHarvestLog()}
+/* Sincroniza los totales del diario con "Fecha de Cosecha": por variedad de la temporada,
+   crea/actualiza el registro tipo cosecha con primer corte = min fecha, tallos = suma, % export si hay.
+   NO toca el último corte (lo cierra el usuario cuando termina). */
+async function syncHarvestLogToSeason(temporada){
+  const [logs,harvests]=await Promise.all([getAll('harvestlogs'),getAll('harvests')]);
+  const enTemp=logs.filter(l=>parseLocalDate(l.fecha)?.getFullYear()===temporada);
+  const vars=[...new Set(enTemp.map(l=>l.variedad))];
+  let creados=0,actualizados=0;
+  for(const v of vars){
+    const ls=enTemp.filter(l=>l.variedad===v);
+    const tallos=ls.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+    const exp=ls.reduce((s,l)=>s+(Number(l.tallosExport)||0),0);
+    const fechaMin=ls.map(l=>l.fecha).sort()[0];
+    const cuarteles=[...new Set(ls.flatMap(l=>l.cuarteles||[]))];
+    const existente=harvests.find(h=>h.variedad===v&&h.temporada===temporada&&(h.tipo||'cosecha')==='cosecha');
+    const patch={tipo:'cosecha',temporada,variedad:v,fechaInicio:fechaMin,tallos,pctExportable:exp?Math.round(exp/tallos*100):null,cuarteles};
+    if(existente){await put('harvests',{id:existente.id,...patch});actualizados++}
+    else{await add('harvests',{...patch,fechaPeak:null,fechaFin:null,estadoCorte:'marshmallow',notas:'Creado desde Cosecha diaria',createdBy:CURRENT_USER,createdAt:new Date().toISOString()});creados++}
+  }
+  toast(`Fecha de Cosecha actualizada (${creados} nuevo${creados===1?'':'s'}, ${actualizados} actualizado${actualizados===1?'':'s'})`);
+}
+
 async function renderStudies(){
   const [studies,blocks]=await Promise.all([getAll('studies'),getAll('blocks')]);
   const sorted=[...studies].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
