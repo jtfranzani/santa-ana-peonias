@@ -90,6 +90,22 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .kpi.ok::before{background:var(--ok)}
 .kpi.ok .kpi-icon{background:#d1fae5;color:#065f46}
 .hl-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-right:4px}
+/* === Exportar aplicaciones === */
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-block{margin-top:10px}
+.exp-block>label{display:flex;align-items:center;gap:8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-bottom:6px}
+.exp-block>label small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--gris-m)}
+.exp-clear{text-transform:none;letter-spacing:0;font-weight:600;color:var(--alerta);cursor:pointer;font-size:11px}
+.exp-prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;max-height:160px;overflow-y:auto;padding:6px;border:1px solid var(--gris-l);border-radius:8px;background:#fafafa}
+.exp-prod{display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 8px;border-radius:6px;cursor:pointer;background:#fff;border:1px solid transparent}
+.exp-prod:hover{border-color:var(--gris-l)}
+.exp-prod.on{background:var(--verde-l);border-color:var(--verde);font-weight:600}
+.exp-prod input{margin:0;accent-color:var(--verde)}
+.exp-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--gris-xl)}
+.exp-count{font-size:13px;color:var(--texto-m)}
+.exp-count strong{font-size:18px;color:var(--verde-d);font-family:'Playfair Display',serif}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+@media (max-width:640px){.exp-grid{grid-template-columns:1fr}.exp-prods{grid-template-columns:1fr}}
 .kpi .kpi-icon svg{width:18px;height:18px;stroke-width:2}
 .kpi .label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
 .kpi .value{font-size:28px;font-weight:700;color:var(--texto);margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
@@ -1113,7 +1129,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.56';
+const APP_VERSION='2026.05.18.59';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -3339,7 +3355,7 @@ async function renderApplications(){
   const chipApp=(k,lbl)=>`<span class="chip ${_appsFiltroEstado===k?'active':''}" onclick="setAppsFiltroEstado('${k}')">${lbl} <strong>${countsApp[k]||0}</strong></span>`;
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Registro de aplicaciones</h2><div class="sub">Programa, ejecuta y registra fitosanitarios, fertilizantes y bioestimulantes</div></div>
-    <button class="btn mobile-hide-new" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div>
+    <div class="actions"><button class="btn secondary" onclick="openExportApps()" title="Descargar registro de aplicaciones en Excel o PDF"><i data-lucide="download"></i>Exportar</button><button class="btn mobile-hide-new" onclick="editApp()"><i data-lucide="plus"></i>Nueva aplicación</button></div></div>
     <div class="alert-box warn"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Importante:</strong> Registra TODA aplicación incluyendo dosis, motivo, carencia y condiciones climáticas. Obligatorio para GlobalG.A.P. / MPS y trazabilidad de exportación.</div></div>
     <div class="card">
       <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">
@@ -3938,6 +3954,237 @@ async function saveApp(id){
   renderApplications();
 }
 async function delApp(id){if(!confirm('¿Eliminar aplicación?'))return;await del('applications',id);toast('Eliminada');renderApplications();}
+/* ============================================================================
+   EXPORTAR APLICACIONES — Excel (.xlsx) y PDF, con filtros simples.
+   Pensado para enviar trazabilidad a exportador / GlobalG.A.P. / asesor.
+   El modal parte con los filtros que ya están puestos en la lista.
+   ============================================================================ */
+window._exp=window._exp||null;
+window._scriptsLoaded=window._scriptsLoaded||new Set();
+function _loadScriptOnce(src){return new Promise((res,rej)=>{if(window._scriptsLoaded.has(src))return res();const s=document.createElement('script');s.src=src;s.onload=()=>{window._scriptsLoaded.add(src);res()};s.onerror=()=>rej(new Error('No se pudo cargar '+src));document.head.appendChild(s)})}
+async function openExportApps(){
+  const [apps,blocks]=await Promise.all([getAll('applications'),getAll('blocks')]);
+  /* Estado inicial desde los filtros de la lista */
+  const anoAct=new Date().getFullYear();
+  const fechasAll=apps.map(a=>a.fecha||a.fechaPlanificada).filter(Boolean).sort();
+  window._exp={
+    apps,
+    desde:_appsFiltroAno!=='todos'?`${_appsFiltroAno}-01-01`:(fechasAll[0]||`${anoAct}-01-01`),
+    hasta:_appsFiltroAno!=='todos'?`${_appsFiltroAno}-12-31`:today(),
+    estado:(_appsFiltroEstado==='programada'||_appsFiltroEstado==='atrasada')?'todas':'realizada',
+    cats:[..._appsFiltroCategoria],
+    cuart:[..._appsFiltroCuartel],
+    prods:[],
+    cuartelesAll:[...new Set(apps.flatMap(a=>getBloques(a)).map(x=>String(x).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')),
+    catsAll:[...new Set(apps.flatMap(a=>getCategorias(a).map(c=>(c||'').trim())).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')),
+    prodsAll:[...new Set(apps.map(a=>(a.producto||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'))
+  };
+  _renderExportApps();
+}
+function _expFiltered(){
+  const e=window._exp;if(!e)return [];
+  return e.apps.filter(a=>{
+    const f=a.fecha||a.fechaPlanificada;if(!f)return false;
+    if(e.desde&&f<e.desde)return false;
+    if(e.hasta&&f>e.hasta)return false;
+    if(e.estado==='realizada'&&estadoApp(a)!=='realizada')return false;
+    if(e.estado==='todas'&&estadoApp(a)==='cancelada')return false;
+    if(e.cats.length&&!getCategorias(a).map(x=>(x||'').trim()).some(c=>e.cats.includes(c)))return false;
+    if(e.cuart.length&&!getBloques(a).map(x=>String(x).trim()).some(c=>e.cuart.includes(c)))return false;
+    if(e.prods.length&&!e.prods.includes((a.producto||'').trim()))return false;
+    return true;
+  }).sort((a,b)=>(a.fecha||a.fechaPlanificada).localeCompare(b.fecha||b.fechaPlanificada));
+}
+function _expSet(k,v){window._exp[k]=v;_expRefreshCount()}
+function _expToggle(k,v){const arr=window._exp[k];const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);_renderExportApps()}
+function _expClear(k){window._exp[k]=[];_renderExportApps()}
+function _expPreset(p){
+  const e=window._exp;const y=new Date().getFullYear();
+  if(p==='todo'){e.desde=e.apps.map(a=>a.fecha||a.fechaPlanificada).filter(Boolean).sort()[0]||`${y}-01-01`;e.hasta=today()}
+  if(p==='ano'){e.desde=`${y}-01-01`;e.hasta=`${y}-12-31`}
+  if(p==='90'){const d=new Date();d.setDate(d.getDate()-90);e.desde=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;e.hasta=today()}
+  if(p==='temporada'){/* temporada productiva hemisferio sur: 1 jul → 30 jun */const m=new Date().getMonth();const y0=m>=6?y:y-1;e.desde=`${y0}-07-01`;e.hasta=`${y0+1}-06-30`}
+  _renderExportApps();
+}
+function _expRefreshCount(){const n=_expFiltered().length;const el=document.getElementById('exp-count');if(el)el.innerHTML=`<strong>${n}</strong> aplicación${n===1?'':'es'}`;const b1=document.getElementById('exp-btn-xlsx'),b2=document.getElementById('exp-btn-pdf');[b1,b2].forEach(b=>{if(b)b.disabled=!n})}
+function _renderExportApps(){
+  const e=window._exp;if(!e)return;
+  const chip=(k,v,cls='')=>`<span class="chip ${e[k].includes(v)?'active '+cls:''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="_expToggle('${k}',${JSON.stringify(v).replace(/"/g,'&quot;')})">${v}</span>`;
+  const n=_expFiltered().length;
+  openModal(`<h3><i data-lucide="download" style="width:18px;height:18px;vertical-align:-3px"></i> Exportar registro de aplicaciones</h3>
+    <div class="exp-grid">
+      <div class="exp-block">
+        <label>Período</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="date" value="${e.desde}" onchange="_expSet('desde',this.value)" style="padding:7px 9px;font-size:12.5px">
+          <span style="color:var(--gris)">→</span>
+          <input type="date" value="${e.hasta}" onchange="_expSet('hasta',this.value)" style="padding:7px 9px;font-size:12.5px">
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
+          <span class="chip" style="margin:0;padding:4px 10px;font-size:11px" onclick="_expPreset('temporada')">Temporada (jul–jun)</span>
+          <span class="chip" style="margin:0;padding:4px 10px;font-size:11px" onclick="_expPreset('ano')">Este año</span>
+          <span class="chip" style="margin:0;padding:4px 10px;font-size:11px" onclick="_expPreset('90')">Últimos 90 días</span>
+          <span class="chip" style="margin:0;padding:4px 10px;font-size:11px" onclick="_expPreset('todo')">Todo</span>
+        </div>
+      </div>
+      <div class="exp-block">
+        <label>Estado</label>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <span class="chip ${e.estado==='realizada'?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="_expSet('estado','realizada');_renderExportApps()">🟢 Solo realizadas</span>
+          <span class="chip ${e.estado==='todas'?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="_expSet('estado','todas');_renderExportApps()">Realizadas + programadas</span>
+        </div>
+      </div>
+    </div>
+    <div class="exp-block"><label>Categorías ${e.cats.length?`<a onclick="_expClear('cats')" class="exp-clear">quitar</a>`:'<small>(todas)</small>'}</label>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${e.catsAll.map(c=>chip('cats',c,catTagClass(c)+' cat-chip')).join('')||'<small style="color:var(--gris-m)">sin categorías</small>'}</div>
+    </div>
+    <div class="exp-block"><label>Cuarteles ${e.cuart.length?`<a onclick="_expClear('cuart')" class="exp-clear">quitar</a>`:'<small>(todos)</small>'}</label>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${e.cuartelesAll.map(c=>chip('cuart',c)).join('')||'<small style="color:var(--gris-m)">sin cuarteles</small>'}</div>
+    </div>
+    <div class="exp-block"><label>Productos ${e.prods.length?`<a onclick="_expClear('prods')" class="exp-clear">quitar (${e.prods.length})</a>`:'<small>(todos)</small>'}</label>
+      <div class="exp-prods">${e.prodsAll.map(p=>`<label class="exp-prod ${e.prods.includes(p)?'on':''}"><input type="checkbox" ${e.prods.includes(p)?'checked':''} onchange="_expToggle('prods',${JSON.stringify(p).replace(/"/g,'&quot;')})"><span>${p}</span></label>`).join('')||'<small style="color:var(--gris-m)">sin productos</small>'}</div>
+    </div>
+    <div class="exp-footer">
+      <div id="exp-count" class="exp-count"><strong>${n}</strong> aplicación${n===1?'':'es'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" onclick="closeModal()">Cerrar</button>
+        <button id="exp-btn-xlsx" class="btn secondary" ${n?'':'disabled'} onclick="exportAppsXLSX()"><i data-lucide="file-spreadsheet"></i>Excel</button>
+        <button id="exp-btn-pdf" class="btn" ${n?'':'disabled'} onclick="exportAppsPDF()"><i data-lucide="file-text"></i>PDF</button>
+      </div>
+    </div>`);
+  lucideInit();
+}
+/* Filas normalizadas para ambos formatos */
+function _expRows(){
+  return _expFiltered().map(a=>{
+    const fin=fechaFinCarencia(a);
+    const cd=parseCarenciaDias(a.carenciaDias!=null?a.carenciaDias:a.carencia);
+    return {
+      fecha:a.fecha||a.fechaPlanificada,hora:a.horaApp||'',estado:APP_ESTADO_LBL[estadoApp(a)]||estadoApp(a),
+      producto:a.producto||'',categorias:getCategorias(a).join(' + '),ingrediente:a.ingrediente||'',
+      cuarteles:getBloques(a).join(', ')||'General',dosis:a.dosis||'',volumen:a.volumen||'',metodo:a.metodoAplicacion||'',
+      motivo:a.motivo||'',comentarios:a.comentarios||'',carenciaDias:cd!=null?cd:'',aptoDesde:fin||'',
+      responsable:a.responsable||'',prestador:a.prestador||'',temp:a.tempC??'',hr:a.humedad??'',viento:a.viento??''
+    };
+  });
+}
+function _expNombreBase(){const e=window._exp;return `Aplicaciones_SantaAnaPeonias_${e.desde}_a_${e.hasta}`}
+function _expResumenFiltros(){
+  const e=window._exp;const p=[];
+  p.push(e.estado==='realizada'?'Solo realizadas':'Realizadas y programadas');
+  const sub=(sel,all)=>sel.length&&sel.length<all.length; /* solo si es un subconjunto real */
+  if(sub(e.cats,e.catsAll))p.push('Categorías: '+e.cats.join(', '));
+  if(sub(e.cuart,e.cuartelesAll))p.push('Cuarteles: '+e.cuart.join(', '));
+  if(sub(e.prods,e.prodsAll))p.push('Productos: '+e.prods.join(', '));
+  return p.join('  ·  ');
+}
+async function exportAppsXLSX(){
+  const rows=_expRows();if(!rows.length){toast('Nada que exportar','warn');return}
+  toast('Preparando Excel…');
+  try{await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(err){toast('Sin conexión para cargar el generador de Excel','warn');return}
+  const e=window._exp;
+  const head=['Fecha','Hora','Estado','Producto','Categorías','Ingrediente activo','Cuarteles','Dosis','Volumen','Método','Motivo / plaga','Comentarios','Carencia (días)','Apto cosecha desde','Responsable','Prestador','T° (°C)','HR (%)','Viento (km/h)'];
+  const aoa=[
+    ['Santa Ana Peonías — Registro de aplicaciones'],
+    [`Período: ${fmt(e.desde)} a ${fmt(e.hasta)} · ${_expResumenFiltros()} · Generado ${new Date().toLocaleString('es-CL')}`],
+    [],head,
+    ...rows.map(r=>[r.fecha,r.hora,r.estado,r.producto,r.categorias,r.ingrediente,r.cuarteles,r.dosis,r.volumen,r.metodo,r.motivo,r.comentarios,r.carenciaDias,r.aptoDesde,r.responsable,r.prestador,r.temp,r.hr,r.viento])
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[11,6,11,26,18,24,22,12,10,14,34,34,9,12,16,16,7,7,8].map(w=>({wch:w}));
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:head.length-1}},{s:{r:1,c:0},e:{r:1,c:head.length-1}}];
+  ws['!freeze']={xSplit:0,ySplit:4};
+  /* Hoja resumen por producto */
+  const porProd={};rows.forEach(r=>{const k=r.producto||'(sin producto)';porProd[k]=porProd[k]||{n:0,cats:new Set(),cu:new Set(),primera:r.fecha,ultima:r.fecha};const o=porProd[k];o.n++;if(r.categorias)o.cats.add(r.categorias);r.cuarteles.split(', ').forEach(c=>o.cu.add(c));if(r.fecha<o.primera)o.primera=r.fecha;if(r.fecha>o.ultima)o.ultima=r.fecha});
+  const resumen=[['Producto','N° aplicaciones','Categorías','Cuarteles','Primera','Última'],...Object.entries(porProd).sort((a,b)=>b[1].n-a[1].n).map(([k,o])=>[k,o.n,[...o.cats].join(' / '),[...o.cu].join(', '),o.primera,o.ultima])];
+  const ws2=XLSX.utils.aoa_to_sheet(resumen);ws2['!cols']=[28,14,24,30,11,11].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Aplicaciones');XLSX.utils.book_append_sheet(wb,ws2,'Resumen por producto');
+  XLSX.writeFile(wb,_expNombreBase()+'.xlsx');
+  toast(`Excel descargado (${rows.length} filas)`);
+}
+async function exportAppsPDF(){
+  const rows=_expRows();if(!rows.length){toast('Nada que exportar','warn');return}
+  toast('Generando PDF…');
+  try{
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  }catch(err){toast('Sin conexión para cargar el generador de PDF','warn');return}
+  const e=window._exp;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const M=12;
+  const verde=[47,93,58],verdeClaro=[238,245,239],gris=[110,110,110],linea=[201,216,204];
+  const conEstado=e.estado==='todas';
+  /* Cabecera de página (se repite). Altura dinámica según cuántas líneas ocupe el subtítulo. */
+  const metaW=W-2*M-62; /* deja espacio a la derecha para contador/fecha */
+  doc.setFont('helvetica','normal');doc.setFontSize(9);
+  const lineaPeriodo=`Período ${fmt(e.desde)} – ${fmt(e.hasta)}`;
+  const lineasFiltros=doc.splitTextToSize(_expResumenFiltros(),metaW);
+  const hTitulo=M+5, hMeta0=hTitulo+6, lh=4.2;
+  const yLinea=hMeta0+lh*(1+lineasFiltros.length)-1.5;
+  const tablaY=yLinea+4;
+  const header=()=>{
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...verde);
+    doc.text('Santa Ana Peonías · Registro de aplicaciones',M,hTitulo);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...gris);
+    doc.text(lineaPeriodo,M,hMeta0);
+    doc.text(lineasFiltros,M,hMeta0+lh);
+    doc.setFont('helvetica','bold');doc.setTextColor(...verde);
+    doc.text(`${rows.length} aplicación${rows.length===1?'':'es'}`,W-M,hTitulo,{align:'right'});
+    doc.setFont('helvetica','normal');doc.setTextColor(...gris);
+    doc.text(`Generado ${new Date().toLocaleDateString('es-CL')} ${new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}`,W-M,hMeta0,{align:'right'});
+    doc.setDrawColor(...verde);doc.setLineWidth(.6);doc.line(M,yLinea,W-M,yLinea);
+  };
+  const footer=(data)=>{
+    const n=doc.internal.getNumberOfPages();
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...gris);
+    doc.setDrawColor(...linea);doc.setLineWidth(.3);doc.line(M,H-M+2,W-M,H-M+2);
+    doc.text('San Clemente, Región del Maule, Chile · Registro para trazabilidad fitosanitaria (GlobalG.A.P. / MPS)',M,H-M+6);
+    doc.text(`Página ${data.pageNumber} de ${n}`,W-M,H-M+6,{align:'right'});
+  };
+  const head=[['Fecha','Producto','Cuarteles','Dosis / método','Motivo · comentarios'].concat(conEstado?['Estado']:[])];
+  const body=rows.map(r=>{
+    const prod=[r.producto,r.ingrediente,r.categorias?r.categorias.toUpperCase():''].filter(Boolean).join('\n');
+    const dosis=[r.dosis,r.volumen,r.metodo].filter(Boolean).join('\n');
+    const mot=[r.motivo,r.comentarios].filter(Boolean).join('\n');
+    const row=[fmt(r.fecha)+(r.hora?'\n'+r.hora:''),prod,r.cuarteles,dosis||'—',mot||'—'];
+    if(conEstado)row.push(r.estado);
+    return row;
+  });
+  const colW=conEstado?{0:24,1:62,2:46,3:40,4:'auto',5:22}:{0:24,1:66,2:50,3:44,4:'auto'};
+  doc.autoTable({
+    head,body,startY:tablaY,margin:{left:M,right:M,top:tablaY,bottom:M+4},
+    theme:'grid',
+    styles:{font:'helvetica',fontSize:8.5,cellPadding:{top:2.2,bottom:2.2,left:2,right:2},valign:'top',lineColor:linea,lineWidth:.2,textColor:[20,20,20],overflow:'linebreak'},
+    headStyles:{fillColor:verdeClaro,textColor:verde,fontStyle:'bold',fontSize:8,lineColor:linea},
+    alternateRowStyles:{fillColor:[250,251,250]},
+    columnStyles:Object.fromEntries(Object.entries(colW).map(([k,v])=>[k,{cellWidth:v}])),
+    rowPageBreak:'avoid',
+    didParseCell:(d)=>{
+      /* Producto en negrita solo la primera línea: autoTable no mezcla estilos por línea, así que usamos negrita en toda la celda producto */
+      if(d.section==='body'&&d.column.index===1)d.cell.styles.fontStyle='bold';
+    },
+    didDrawCell:(d)=>{
+      /* Re-dibujar ingrediente/categoría en normal/gris bajo el producto para jerarquía visual */
+      if(d.section==='body'&&d.column.index===1&&d.cell.raw&&String(d.cell.raw).includes('\n')){
+        const lines=String(d.cell.raw).split('\n');
+        const x=d.cell.x+2,y0=d.cell.y+2.2+2.8;
+        doc.setFillColor(...(d.row.index%2?[250,251,250]:[255,255,255]));
+        doc.rect(d.cell.x+.3,d.cell.y+.3,d.cell.width-.6,d.cell.height-.6,'F');
+        doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(20,20,20);
+        doc.text(doc.splitTextToSize(lines[0],d.cell.width-4),x,y0);
+        let y=y0+(doc.splitTextToSize(lines[0],d.cell.width-4).length*3.6);
+        doc.setFont('helvetica','normal');doc.setFontSize(7.8);doc.setTextColor(...gris);
+        for(let i=1;i<lines.length;i++){const t=doc.splitTextToSize(lines[i],d.cell.width-4);doc.text(t,x,y);y+=t.length*3.4}
+      }
+    },
+    didDrawPage:(d)=>{header();footer(d)}
+  });
+  doc.save(_expNombreBase()+'.pdf');
+  toast(`PDF descargado (${rows.length} aplicaciones)`);
+}
+
 /* === Duplicar aplicación === Crea una copia con los mismos datos (producto, dosis, cuarteles,
    categorías, comentarios, etc.) pero en estado "programada" y con una nueva fecha planificada.
    Útil para repetir una aplicación/fertilización en otra fecha sin volver a llenar el formulario. */
