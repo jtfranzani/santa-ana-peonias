@@ -740,8 +740,18 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 .adv-file-meta{font-size:10.5px;color:var(--gris);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .adv-file-tipo{background:var(--verde);color:#fff;padding:1px 7px;border-radius:8px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
 .adv-file-desc{font-size:11.5px;color:var(--gris-d);background:var(--gris-xl);padding:6px 8px;border-radius:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+/* Acciones secundarias (editar/eliminar) en la esquina superior derecha de la tarjeta */
+.adv-file-card{container-type:inline-size}
+.adv-file-head-actions{display:flex;gap:2px;flex-shrink:0;margin-left:auto;margin-top:-2px;margin-right:-4px}
+.adv-file-head-actions button{width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--gris);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:all .15s}
+.adv-file-head-actions button:hover{background:var(--gris-xl);color:var(--texto);border-color:var(--gris-l)}
+.adv-file-head-actions button.danger:hover{background:#fee2e2;color:var(--alerta);border-color:#fecaca}
+.adv-file-head-actions button svg{width:13px;height:13px}
+/* Acciones principales abajo: siempre caben (3 botones iguales); en tarjetas muy angostas quedan solo íconos */
 .adv-file-actions{display:flex;gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid var(--gris-xl)}
-.adv-file-actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 8px;font-size:11.5px;border:1px solid var(--gris-l);background:#fff;border-radius:6px;cursor:pointer;color:var(--texto-m);font-weight:500;transition:all .15s;min-height:34px}
+.adv-file-actions button{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 6px;font-size:11.5px;border:1px solid var(--gris-l);background:#fff;border-radius:6px;cursor:pointer;color:var(--texto-m);font-weight:500;transition:all .15s;min-height:34px;white-space:nowrap}
+.adv-file-actions button svg{flex-shrink:0}
+@container (max-width:250px){.adv-file-actions button span{display:none}.adv-file-actions button{padding:7px 4px}}
 .adv-file-actions button:hover{border-color:var(--verde);color:var(--verde-d);background:var(--verde-l)}
 .adv-file-actions button.danger:hover{border-color:var(--alerta);color:var(--alerta);background:#fee2e2}
 .adv-file-actions button.cotizar{background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);color:#065f46;border-color:#a7f3d0;font-weight:600}
@@ -1129,7 +1139,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.59';
+const APP_VERSION='2026.05.18.62';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -4617,13 +4627,16 @@ async function renderAdvisors(){
                       <span>${sizeStr}</span>
                     </div>
                   </div>
+                  <div class="adv-file-head-actions">
+                    <button onclick="editAdvisorFile('${f.id}')" title="Editar nombre, tipo, fecha o descripción" aria-label="Editar"><i data-lucide="pencil"></i></button>
+                    <button class="danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar" aria-label="Eliminar"><i data-lucide="trash-2"></i></button>
+                  </div>
                 </div>
                 ${f.descripcion?`<div class="adv-file-desc">${f.descripcion}</div>`:''}
                 <div class="adv-file-actions">
-                  <button onclick="viewAdvisorFile('${f.id}')" title="Visualizar"><i data-lucide="eye"></i>Ver</button>
-                  ${esPDF?`<button class="cotizar" onclick="cotizarAdvisorFile('${f.id}')" title="Analizar el PDF, elegir etapa y calcular cantidades por hectárea"><i data-lucide="calculator"></i>Cotizar</button>`:''}
-                  <button onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i>Descargar</button>
-                  <button class="danger" onclick="delAdvisorFile('${f.id}')" title="Eliminar" style="flex:0 0 auto;padding:7px 10px"><i data-lucide="trash-2"></i></button>
+                  <button onclick="viewAdvisorFile('${f.id}')" title="Visualizar"><i data-lucide="eye"></i><span>Ver</span></button>
+                  ${esPDF?`<button class="cotizar" onclick="cotizarAdvisorFile('${f.id}')" title="Analizar el PDF, elegir etapa y calcular cantidades por hectárea"><i data-lucide="calculator"></i><span>Cotizar</span></button>`:''}
+                  <button onclick="downloadAdvisorFile('${f.id}')" title="Descargar"><i data-lucide="download"></i><span>Descargar</span></button>
                 </div>
               </div>`;
             }).join('')}</div>`:`<div style="padding:20px;text-align:center;color:var(--gris-m);font-size:12.5px;background:var(--gris-xl);border-radius:6px">Sin archivos subidos aún</div>`}
@@ -5484,6 +5497,75 @@ function fileIconCategoria(name){
   return '';
 }
 async function delAdvisorFile(id){if(!confirm('¿Eliminar archivo?'))return;await del('advisorfiles',id);toast('Archivo eliminado');renderAdvisors();}
+/* === Editar metadatos de un archivo de asesor (nombre, tipo, fecha, descripción, asesor).
+   No re-sube el archivo salvo que el usuario elija uno de reemplazo. `put` hace merge, así que
+   NO reenviamos el base64 (data) si no cambia — ahorra ancho de banda y evita el límite de 1 MB. */
+async function editAdvisorFile(id){
+  const [f,advisors]=await Promise.all([get('advisorfiles',id),getAll('advisors')]);
+  if(!f){toast('Archivo no encontrado','warn');return}
+  const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  const ext=(f.nombre||f.nombreOriginal||'').split('.').pop().toLowerCase();
+  const sizeKB=((f.data||'').length*0.75/1024);
+  const sizeStr=sizeKB>=1024?(sizeKB/1024).toFixed(1)+' MB':sizeKB.toFixed(0)+' KB';
+  openModal(`<h3><i data-lucide="pencil" style="width:18px;height:18px;vertical-align:-3px"></i> Editar archivo</h3>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gris-xl);border-radius:8px;margin-bottom:10px;font-size:12.5px">
+      <div class="adv-file-icon ${fileIconCategoria(f.nombre)}" style="flex-shrink:0"><i data-lucide="${fileIcon(f.nombre)}"></i></div>
+      <div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nombre||'(sin nombre)'}</div><div style="color:var(--gris);font-size:11px">${ext.toUpperCase()||'archivo'} · ${sizeStr}${f.nombreOriginal&&f.nombreOriginal!==f.nombre?` · original: ${f.nombreOriginal}`:''}</div></div>
+      <button class="btn small ghost" style="margin-left:auto;flex-shrink:0" onclick="viewAdvisorFile('${id}')"><i data-lucide="eye"></i>Ver</button>
+    </div>
+    <div class="form-row"><label>Nombre del archivo *</label><input id="f-adve-nombre" value="${esc(f.nombre)}" placeholder="ej. 2026-08-14 · Plan fitosanitario · Inés Espinoza.pdf"><small style="color:var(--gris);font-size:11px">Si omites la extensión se conserva <strong>.${ext}</strong> automáticamente.</small></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Tipo de documento</label><select id="f-adve-tipo">${ADV_TIPOS.map(t=>`<option value="${t.key}" ${f.tipoDoc===t.key?'selected':''}>${t.label}</option>`).join('')}</select></div>
+      <div class="form-row"><label>Fecha del documento</label><input id="f-adve-fecha" type="date" value="${f.fecha||''}"></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Asesor</label><select id="f-adve-asesor">${advisors.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(a=>`<option value="${a.id}" ${f.advisorId===a.id?'selected':''}>${a.nombre}${a.especialidad?' · '+a.especialidad:''}</option>`).join('')}</select><small style="color:var(--gris);font-size:11px">Cámbialo si el archivo quedó bajo el asesor equivocado.</small></div>
+    </div>
+    <div class="form-row"><label>Descripción breve</label><textarea id="f-adve-desc" rows="3" placeholder="De qué trata el documento, para encontrarlo después">${f.descripcion||''}</textarea></div>
+    <div class="form-row"><label>Reemplazar archivo <small style="color:var(--gris);font-weight:400">(opcional — mantiene nombre, tipo, fecha y descripción)</small></label><input id="f-adve-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"><small style="color:var(--gris);font-size:11px">Máx 8 MB. Útil cuando el asesor manda una versión corregida.</small></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAdvisorFileMeta('${id}')"><i data-lucide="check"></i>Guardar cambios</button></div>`);
+  lucideInit();
+}
+async function saveAdvisorFileMeta(id){
+  const prev=await get('advisorfiles',id);
+  if(!prev){toast('Archivo no encontrado','warn');return}
+  const extPrev=(prev.nombre||prev.nombreOriginal||'').split('.').pop().toLowerCase();
+  let nombre=(document.getElementById('f-adve-nombre').value||'').trim();
+  if(!nombre){toast('Nombre requerido','warn');return}
+  const tipoKey=document.getElementById('f-adve-tipo').value;
+  const tipoLabel=(ADV_TIPOS.find(t=>t.key===tipoKey)||{}).label||'';
+  const patch={
+    id,nombre,tipoDoc:tipoKey,tipoDocLabel:tipoLabel,
+    fecha:document.getElementById('f-adve-fecha').value||prev.fecha||today(),
+    advisorId:document.getElementById('f-adve-asesor').value||prev.advisorId,
+    descripcion:(document.getElementById('f-adve-desc').value||'').trim(),
+    updatedBy:CURRENT_USER,updatedAt:new Date().toISOString()
+  };
+  const fi=document.getElementById('f-adve-file');
+  const file=fi&&fi.files&&fi.files[0];
+  const persist=async()=>{
+    /* Conservar extensión: si el nombre nuevo no trae una, usamos la del archivo (nuevo o anterior) */
+    const extNueva=file?file.name.split('.').pop().toLowerCase():extPrev;
+    if(extNueva&&!patch.nombre.toLowerCase().endsWith('.'+extNueva)){
+      const conocidas=/\.(pdf|docx?|xlsx?|csv|pptx?|txt|jpe?g|png|webp|gif|zip|rar|7z|mp4|mov)$/i;
+      patch.nombre=patch.nombre.replace(conocidas,'')+'.'+extNueva; /* corrige una extensión equivocada o la agrega si falta */
+    }
+    try{await put('advisorfiles',patch);}
+    catch(err){console.error('saveAdvisorFileMeta falló:',err);toast('Error al guardar: '+(err.message||err.code||'ver consola'),'warn');return}
+    closeModal();toast('Archivo actualizado');renderAdvisors();
+  };
+  if(file){
+    if(file.size>8*1024*1024){toast('Archivo demasiado grande (máx 8 MB)','warn');return}
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      patch.data=e.target.result;patch.tipo=file.type;patch.nombreOriginal=file.name;
+      const sz=approxDocSize(patch);
+      if(sz>950000){toast('Archivo muy grande tras base64 ('+(sz/1024).toFixed(0)+' KB). Firestore limita a 1 MB. Comprime antes de subir.','warn');return}
+      await persist();
+    };
+    reader.readAsDataURL(file);
+  }else{
+    await persist();
+  }
+}
 
 /* ============ CALENDARIO ============
  * Vista de "recordatorio" que consolida labores (estado pendiente/en_curso) y
@@ -7258,7 +7340,19 @@ function dismissUpdateBanner(remoteVer){
     }
   });
 })();
-document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+/* Cierre del modal al hacer clic en el fondo — SOLO si el clic empieza Y termina en el fondo.
+   Evita que se cierre (y se pierda lo editado) cuando uno selecciona texto dentro del formulario
+   y suelta el mouse fuera del recuadro: en ese caso el navegador dispara el click en el fondo. */
+(function(){
+  const bg=document.getElementById('modal');
+  let downEnFondo=false;
+  bg.addEventListener('pointerdown',e=>{downEnFondo=(e.target===bg)});
+  bg.addEventListener('click',e=>{
+    const cerrar=(e.target===bg)&&downEnFondo;
+    downEnFondo=false;
+    if(cerrar)closeModal();
+  });
+})();
 </script>
 </body>
 </html>
