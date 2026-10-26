@@ -90,6 +90,129 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .kpi.ok::before{background:var(--ok)}
 .kpi.ok .kpi-icon{background:#d1fae5;color:#065f46}
 .hl-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-right:4px}
+/* Parte diario: secciones del formulario, cuadrilla por puesto, bins */
+.hl-sec{margin-top:12px;padding:10px 12px;border:1px solid var(--gris-xl);border-radius:8px;background:#fafafa}
+.hl-sec-t{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-bottom:8px;flex-wrap:wrap}
+.hl-sec-t svg{width:14px;height:14px}
+.hl-sec-t small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--gris-m)}
+.hl-link{margin-left:4px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--verde-d);cursor:pointer;text-decoration:underline;font-size:11px}
+.hl-total{margin-left:auto;background:var(--verde-l);color:var(--verde-d);padding:2px 9px;border-radius:10px;font-size:11px;text-transform:none;letter-spacing:0;font-weight:700}
+.hl-big{font-size:18px!important;font-weight:700}
+.hl-puestos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.hl-puesto label{display:block;font-size:11.5px;color:var(--texto-m);margin-bottom:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hl-puesto input{width:100%;padding:8px 10px;font-size:16px;font-weight:700;text-align:center}
+.hl-puesto-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.hl-puesto-row input{flex:1}
+.hl-bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.hl-bin{padding:10px 12px;border:1px solid var(--gris-l);border-radius:8px;background:#fff}
+.hl-bin-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700}
+.hl-bin-val{font-family:'Playfair Display',serif;font-size:22px;color:var(--texto);margin:2px 0}
+.hl-bin-val small{font-family:inherit;font-size:12px;color:var(--gris);font-weight:600}
+.hl-bin-sub{font-size:11px;color:var(--gris)}
+.hl-bin.warn .hl-bin-val{color:#b45309}
+.hl-bin.neg .hl-bin-val{color:var(--alerta)}
+.hl-bins-tabla td,.hl-bins-tabla th{padding:6px 8px;font-size:12px}
+.hl-puestos-resumen{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:10px}
+.hl-pr{padding:8px 10px;border:1px solid var(--gris-xl);border-radius:8px;background:#fafafa;min-width:0}
+.hl-pr-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12px}
+.hl-pr-nom{font-weight:600;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hl-pr-val{font-weight:700;color:var(--verde-d);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hl-pr-val small{font-weight:500;color:var(--gris);font-size:10.5px}
+.hl-pr-bar{height:6px;background:var(--gris-xl);border-radius:3px;margin:5px 0 4px;overflow:hidden}
+.hl-pr-bar div{height:100%;background:linear-gradient(90deg,var(--verde),var(--verde-d));border-radius:3px}
+.hl-pr-sub{font-size:10.5px;color:var(--gris)}
+.hl-pr{cursor:pointer;transition:all .15s}
+.hl-pr:hover{border-color:var(--verde);background:#fff;box-shadow:var(--sombra-sm)}
+.hl-bin.hl-click-card{cursor:pointer;transition:all .15s}
+.hl-bin.hl-click-card:hover{border-color:var(--verde);box-shadow:var(--sombra-sm)}
+.hl-res-dias th.bar,.hl-res-dias td.bar{width:22%}
+.hl-res-dias th{white-space:nowrap}
+.hl-row-click{cursor:pointer}
+.hl-row-click:hover td{background:var(--verde-l)}
+.hl-res-total td{border-top:2px solid var(--gris-l);background:#fafafa}
+/* Stepper − / + (formulario de cosecha) */
+.hl-stepper{display:flex;align-items:stretch;border:1px solid var(--gris-l);border-radius:10px;overflow:hidden;background:#fff}
+.hl-stepper button{width:46px;flex-shrink:0;border:none;background:var(--gris-xl);color:var(--verde-d);font-size:22px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1;transition:background .12s}
+.hl-stepper button:active{background:var(--verde-l)}
+.hl-stepper input{flex:1;min-width:0;border:none!important;border-radius:0!important;text-align:center;box-shadow:none!important}
+.hl-stepper input:focus{outline:none}
+.hl-stepper.sm button{width:40px;font-size:19px}
+.hl-puesto .hl-stepper input{font-size:17px;font-weight:700;padding:8px 4px}
+/* Tarjetas móviles de partes (ocultas en desktop) */
+.hl-cards{display:none}
+.hl-card{background:#fff;border:1px solid var(--gris-l);border-radius:12px;padding:12px 14px;box-shadow:var(--sombra-sm);cursor:pointer}
+.hl-card:active{background:var(--gris-xl)}
+.hl-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.hl-card-date{font-size:15px;font-weight:700;color:var(--texto)}
+.hl-card-var{font-size:12.5px;color:var(--texto-m);display:flex;align-items:center}
+.hl-card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.hl-card-stats>div{background:#fafafa;border:1px solid var(--gris-xl);border-radius:8px;padding:8px 6px;text-align:center;min-width:0}
+.hl-card-stats .v{font-family:'Playfair Display',serif;font-size:20px;color:var(--texto);line-height:1.1}
+.hl-card-stats .l{font-size:10.5px;color:var(--gris);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hl-card-line{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--gris);margin-top:8px}
+.hl-card-prod{font-weight:700;color:var(--verde-d);white-space:nowrap}
+.hl-card-note{font-size:12.5px;color:var(--texto-m);background:var(--gris-xl);padding:7px 9px;border-radius:7px;margin-top:8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hl-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--gris-xl)}
+.hl-card-actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:8px;border:1px solid var(--gris-l);background:#fff;border-radius:8px;font-size:13px;font-weight:600;color:var(--texto-m);cursor:pointer;font-family:inherit}
+.hl-card-actions button.danger{flex:0 0 48px;color:var(--alerta);border-color:#fecaca}
+.hl-card-actions button svg{width:15px;height:15px}
+.hl-card-empty{text-align:center;padding:30px 16px;color:var(--gris)}
+.hl-card-empty svg{width:36px;height:36px;color:var(--gris-l)}
+.hl-card-empty div{font-weight:600;color:var(--texto-m);margin-top:8px}
+@media (max-width:768px){
+  /* Acciones: Registrar día grande y primero; Puestos / Bins en una fila */
+  .page-header .actions.hl-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:visible;padding-bottom:0}
+  .hl-actions .hl-btn-new{grid-column:1/-1;order:-1;min-height:50px;font-size:15px;justify-content:center}
+  .hl-actions .hl-btn-sec{justify-content:center;min-height:44px}
+  /* Lista: tarjetas en vez de tabla */
+  .hl-table-wrap{display:none!important}
+  .hl-cards{display:grid;gap:10px}
+  /* Tarjetas de bins / cuadrilla más compactas */
+  .hl-bin{padding:9px 10px}
+  .hl-bin-val{font-size:20px}
+  .hl-puestos-resumen{grid-template-columns:1fr 1fr}
+  .hl-puestos{grid-template-columns:1fr}
+  .kpi .value small{font-size:11px}
+  /* Gráfico más bajo */
+  #chart-hl{max-height:180px}
+  /* Fichas: tablas compactas y scroll horizontal */
+  .hl-res-tabla{font-size:12px}
+  .hl-res-tabla td,.hl-res-tabla th{padding:5px 4px}
+  /* Bottom nav con 6 ítems */
+  .mbn-item{font-size:10px;padding:8px 2px;letter-spacing:0}
+  .mbn-item svg{width:21px;height:21px}
+}
+.kpi .value small{font-size:12px;font-weight:600;color:var(--gris);font-family:inherit;letter-spacing:0}
+@media (max-width:640px){.hl-bins{grid-template-columns:1fr 1fr}.hl-bin:last-child{grid-column:1/-1}.hl-puestos{grid-template-columns:1fr 1fr}}
+/* Fichas de cosecha: parte del día y resumen de temporada */
+.hl-click{cursor:pointer}
+.hl-click:hover strong{color:var(--verde-d);text-decoration:underline}
+.kpi.hl-kpi-click{cursor:pointer}
+.kpi.hl-kpi-click:hover{border-color:var(--verde);box-shadow:var(--sombra-sm)}
+.hl-res-head{margin-bottom:12px}
+.hl-res-meta{font-size:12.5px;color:var(--gris);margin-top:4px}
+.hl-res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hl-res{padding:10px 8px;border:1px solid var(--gris-l);border-radius:8px;background:#fafafa;text-align:center;min-width:0}
+.hl-res-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700}
+.hl-res-val{font-family:'Playfair Display',serif;font-size:24px;color:var(--texto);margin:2px 0;line-height:1.1}
+.hl-res-sub{font-size:11px;color:var(--gris)}
+.hl-res-sec{margin-top:12px}
+.hl-res-sec-t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gris);font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--gris-xl)}
+.hl-res-sec-t span{text-transform:none;letter-spacing:0;color:var(--verde-d)}
+.hl-res-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.hl-res-tabla td,.hl-res-tabla th{padding:5px 6px;border-bottom:1px solid #f3f4f6;text-align:left}
+.hl-res-tabla tr:last-child td{border-bottom:none}
+.hl-res-tabla th{font-size:10px;text-transform:uppercase;color:var(--gris);letter-spacing:.3px;font-weight:700}
+.hl-res-vars th:not(:first-child){text-align:right}
+.hl-res-tabla td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.hl-res-tabla td.bar{width:38%}
+.hl-res-tabla td.bar div{height:7px;border-radius:4px;background:linear-gradient(90deg,var(--verde),var(--verde-d));min-width:3px}
+.hl-res-tabla td.pct{text-align:right;color:var(--gris);font-size:11px;white-space:nowrap}
+.hl-res-nota{font-size:12.5px;color:var(--texto-m);background:var(--gris-xl);padding:8px 10px;border-radius:6px;white-space:pre-wrap;line-height:1.45}
+.hl-res-line{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--gris-d)}
+.hl-res-line strong{color:var(--texto)}
+.hl-res-line strong.neg{color:var(--alerta)}
+@media (max-width:640px){.hl-res-grid{grid-template-columns:1fr 1fr}.hl-res:last-child{grid-column:1/-1}.hl-res-val{font-size:20px}}
 /* === Exportar aplicaciones === */
 .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .exp-block{margin-top:10px}
@@ -1093,6 +1216,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
   <a class="mbn-item" data-page="calendar" onclick="nav('calendar')"><i data-lucide="calendar-days"></i><span>Agenda</span></a>
   <a class="mbn-item" data-page="tasks" onclick="nav('tasks')"><i data-lucide="clipboard-list"></i><span>Labores</span></a>
   <a class="mbn-item" data-page="applications" onclick="nav('applications')"><i data-lucide="droplet"></i><span>Aplicac.</span></a>
+  <a class="mbn-item" data-page="harvestlog" onclick="nav('harvestlog')"><i data-lucide="flower-2"></i><span>Cosecha</span></a>
   <a class="mbn-item" onclick="toggleSidebar()" aria-label="Más opciones"><i data-lucide="menu"></i><span>Menú</span></a>
 </nav>
 <!-- === FAB de acción rápida (mobile) + Bottom Sheet === -->
@@ -1101,6 +1225,10 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
 <div class="fab-sheet" id="fab-sheet" role="dialog" aria-label="Registro rápido">
   <div class="fab-sheet-handle"></div>
   <div class="fab-sheet-title">Registro rápido</div>
+  <button class="fab-action" onclick="closeFabSheet();editHarvestLog()">
+    <span class="fab-action-icon" style="background:#fce7f3;color:#be185d">🌸</span>
+    <div class="fab-action-body"><strong>Día de cosecha</strong><small>Bines, varas y cuadrilla</small></div>
+  </button>
   <button class="fab-action" onclick="closeFabSheet();editApp()">
     <span class="fab-action-icon" style="background:#fce7f3;color:#9d174d">💧</span>
     <div class="fab-action-body"><strong>Nueva aplicación</strong><small>Producto + dosis + foto</small></div>
@@ -1139,7 +1267,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.62';
+const APP_VERSION='2026.05.18.68';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -1159,7 +1287,7 @@ function userBadgeFull(id){if(!id)return '';const u=userById(id);return `<span c
 /* ============ FIREBASE ============ */
 let FB_APP=null, FB_DB=null, FB_AUTH=null;
 let CONN_STATUS='offline';
-const STORES=['blocks','photopoints','photos','tasks','applications','inventory','invmoves','advisors','advisorfiles','weather','studies','prices','hitos','harvests','harvestlogs','config'];
+const STORES=['blocks','photopoints','photos','tasks','applications','inventory','invmoves','advisors','advisorfiles','weather','studies','prices','hitos','harvests','harvestlogs','binlogs','config'];
 const LISTENERS={}; /* onSnapshot unsubscribers */
 
 function fbInit(){
@@ -6330,7 +6458,7 @@ async function renderHarvests(){
     }
     return `<td class="hv-cell" onclick="editHarvest('${h.id}')" title="Editar">
       <div class="hv-cell-fechas"><strong>${harvestFmtCorto(h.fechaInicio)}</strong> → <strong>${h.fechaFin?harvestFmtCorto(h.fechaFin):'<span class="hv-encurso">en curso</span>'}</strong>${delta}</div>
-      <div class="hv-cell-meta">${dur?`${dur} días`:''}${h.fechaPeak?` · peak ${harvestFmtCorto(h.fechaPeak)}`:''}${h.tallos?` · ${Number(h.tallos).toLocaleString('es-CL')} tallos`:''}</div>
+      <div class="hv-cell-meta">${dur?`${dur} días`:''}${h.fechaPeak?` · peak ${harvestFmtCorto(h.fechaPeak)}`:''}${h.tallos?` · ${Number(h.tallos).toLocaleString('es-CL')} varas`:''}${h.bines?` · ${Number(h.bines).toLocaleString('es-CL',{maximumFractionDigits:1})} bines`:''}</div>
       ${est?`<div class="hv-cell-estado">${est.label}</div>`:''}
       ${refExtra?`<div class="hv-cell-meta" onclick="event.stopPropagation();editHarvest('${refExtra.id}')" style="margin-top:4px"><span class="hv-ref-badge">REF</span>lista ${harvestFmtCorto(refExtra.fechaInicio)}</div>`:''}
     </td>`;
@@ -6368,7 +6496,7 @@ async function renderHarvests(){
     <div class="grid grid-4">
       <div class="kpi"><div class="kpi-header"><div class="label">Temporadas</div><div class="kpi-icon"><i data-lucide="calendar-range"></i></div></div><div class="value">${temporadas.length}</div><div class="foot">${temporadas.length?temporadas[temporadas.length-1]+' → '+temporadas[0]:'sin registros'}</div></div>
       <div class="kpi info"><div class="kpi-header"><div class="label">Registros</div><div class="kpi-icon"><i data-lucide="scissors"></i></div></div><div class="value">${harvests.length}</div><div class="foot">${nCos} cosecha${nCos===1?'':'s'} · ${nRef} referencial${nRef===1?'':'es'}</div></div>
-      <div class="kpi rosa"><div class="kpi-header"><div class="label">Tallos última temporada</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${temporadas.length?harvests.filter(h=>!esRef(h)&&h.temporada===temporadas[0]).reduce((s,h)=>s+(Number(h.tallos)||0),0).toLocaleString('es-CL'):'—'}</div><div class="foot">${temporadas.length?'temporada '+temporadas[0]+' · solo cosechas':''}</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">Varas última temporada</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${temporadas.length?harvests.filter(h=>!esRef(h)&&h.temporada===temporadas[0]).reduce((s,h)=>s+(Number(h.tallos)||0),0).toLocaleString('es-CL'):'—'}</div><div class="foot">${temporadas.length?'temporada '+temporadas[0]+' · solo cosechas':''}</div></div>
       <div class="kpi warn"><div class="kpi-header"><div class="label">Duración promedio</div><div class="kpi-icon"><i data-lucide="timer"></i></div></div><div class="value">${(()=>{const d=harvests.filter(h=>!esRef(h)&&h.fechaFin).map(harvestDuracion).filter(Boolean);return d.length?Math.round(d.reduce((s,x)=>s+x,0)/d.length)+' d':'—'})()}</div><div class="foot">primer → último corte · solo cosechas</div></div>
     </div>
     ${estimaciones.length?`<div class="card">
@@ -6391,7 +6519,7 @@ async function renderHarvests(){
     </div>`:''}
     <div class="card">
       <h3><i data-lucide="list"></i>Detalle de registros</h3>
-      <div class="table-scroll"><table id="tbl-harvests"><thead><tr><th>Temporada</th><th>Variedad</th><th>Tipo</th><th>Cuarteles</th><th>Primer corte / lista</th><th>Peak</th><th>Último corte</th><th>Días</th><th>Estado al corte</th><th>Tallos</th><th></th></tr></thead>
+      <div class="table-scroll"><table id="tbl-harvests"><thead><tr><th>Temporada</th><th>Variedad</th><th>Tipo</th><th>Cuarteles</th><th>Primer corte / lista</th><th>Peak</th><th>Último corte</th><th>Días</th><th>Estado al corte</th><th>Varas</th><th></th></tr></thead>
       <tbody>${filtList.length?filtList.map(h=>{const ref=esRef(h);const est=harvestEstado(h.estadoCorte);const dur=harvestDuracion(h);return `<tr class="${ref?'hv-row-ref':''}">
         <td><strong>${h.temporada||'—'}</strong></td>
         <td><span class="hv-dot" style="background:${harvestColor(h.variedad)}"></span>${h.variedad}</td>
@@ -6402,7 +6530,7 @@ async function renderHarvests(){
         <td>${h.fechaFin?fmt(h.fechaFin):(ref?'<span style="color:var(--gris-m)">—</span>':`<span class="tag warn">En curso</span> <button class="btn small ghost" onclick="quickHarvestEnd('${h.id}')" title="Cerrar cosecha hoy"><i data-lucide="check"></i></button>`)}</td>
         <td>${(ref&&!h.fechaFin)?'—':(dur?dur:'—')}</td>
         <td>${est?`<span class="tag ${est.key==='marshmallow'?'ok':'info'}">${est.label}</span>`:'<span style="color:var(--gris-m)">—</span>'}</td>
-        <td style="font-variant-numeric:tabular-nums">${ref?'<span style="color:var(--gris-m)">no cosechado</span>':(h.tallos?Number(h.tallos).toLocaleString('es-CL'):'—')}${(!ref&&h.pctExportable)?`<div style="font-size:10.5px;color:var(--gris)">${h.pctExportable}% export.</div>`:''}</td>
+        <td style="font-variant-numeric:tabular-nums">${ref?'<span style="color:var(--gris-m)">no cosechado</span>':(h.tallos?Number(h.tallos).toLocaleString('es-CL'):'—')}${(!ref&&h.bines)?`<div style="font-size:10.5px;color:var(--gris)">${Number(h.bines).toLocaleString('es-CL',{maximumFractionDigits:1})} bines</div>`:''}${(!ref&&h.pctExportable)?`<div style="font-size:10.5px;color:var(--gris)">${h.pctExportable}% export.</div>`:''}</td>
         <td class="col-acciones"><button class="btn small ghost" onclick="editHarvest('${h.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delHarvest('${h.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td>
       </tr>${h.notas?`<tr class="hv-notas-row"><td colspan="11"><i data-lucide="message-square" style="width:12px;height:12px;vertical-align:-2px"></i> ${h.notas}</td></tr>`:''}`}).join(''):`<tr><td colspan="11" class="empty"><i data-lucide="scissors"></i><div>Sin cosechas registradas</div><div style="font-size:12px;color:var(--gris);margin-top:4px">Registra el primer corte de cada variedad; el último corte lo cierras cuando termine. Si solo observaste la fecha sin cosechar, regístrala como <strong>Referencial</strong>.</div></td></tr>`}</tbody></table></div>
     </div>`;
@@ -6429,7 +6557,7 @@ async function editHarvest(id){
       <div class="form-row hv-solo-cosecha"><label>Peak <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hv-peak" type="date" value="${h.fechaPeak||''}"></div>
       <div class="form-row"><label id="f-hv-fin-lbl">Último corte <small style="color:var(--gris);font-weight:400">(vacío = en curso)</small></label><input id="f-hv-fin" type="date" value="${h.fechaFin||''}"></div>
       <div class="form-row"><label>Estado del botón <span id="f-hv-est-ctx">al corte</span></label><select id="f-hv-est">${HARVEST_ESTADOS.map(e=>`<option value="${e.key}" ${h.estadoCorte===e.key?'selected':''}>${e.label}</option>`).join('')}</select><small id="f-hv-est-desc" style="color:var(--gris);font-size:11px">${harvestEstado(h.estadoCorte)?.desc||''}</small></div>
-      <div class="form-row hv-solo-cosecha"><label>Tallos cosechados</label><input id="f-hv-tallos" type="number" min="0" step="1" value="${h.tallos||''}" placeholder="total temporada"></div>
+      <div class="form-row hv-solo-cosecha"><label>Varas cosechadas</label><input id="f-hv-tallos" type="number" min="0" step="1" value="${h.tallos||''}" placeholder="total temporada"></div>
       <div class="form-row hv-solo-cosecha"><label>% exportable</label><input id="f-hv-pct" type="number" min="0" max="100" step="1" value="${h.pctExportable||''}" placeholder="ej. 85"></div>
     </div>
     <div class="form-row"><label>Cuarteles <span style="color:var(--gris);font-weight:400;font-size:11px">(opcional)</span></label>
@@ -6498,153 +6626,448 @@ async function quickHarvestEnd(id){
 async function delHarvest(id){if(!confirm('¿Eliminar este registro de cosecha?'))return;await del('harvests',id);toast('Eliminado');renderHarvests()}
 
 /* ============================================================================
-   COSECHA DIARIA — reporte día a día: tallos, cuadrilla, cuartel, observación.
-   Modelo tipo packing de flor de corte: 1 registro por día × variedad. Lo que se mira:
-   acumulado, ritmo diario y tallos/persona/día (para dimensionar cuadrilla y frío).
-   Se sincroniza con "Fecha de Cosecha" (primer corte + tallos de la temporada).
+   COSECHA DIARIA — parte diario de cosecha.
+   Modelo tomado de plataformas de cosecha (Hectre, FieldClock, Croptracker): un parte por día × variedad
+   con (1) producción en BINES y VARAS, (2) cuadrilla por PUESTO configurable, (3) cuarteles y observación;
+   además logística de BINS (vacíos recibidos − cosechados = saldo en huerto) y productividad por cortador.
+   Se sincroniza con "Fecha de Cosecha".
    ============================================================================ */
-let _hlTemp=null,_hlVar='todas';
+let _hlTemp=null,_hlVar='todas',_hlChart=null;
 function setHlTemp(t){_hlTemp=t;renderHarvestLog()}
 function setHlVar(v){_hlVar=v;renderHarvestLog()}
-let _hlChart=null;
+const HL_PUESTOS_DEFAULT=['Cortadores','Acarreo','Packing','Supervisor'];
+async function getHarvestPuestos(){try{const c=await get('config','harvest');if(c&&Array.isArray(c.puestos)&&c.puestos.length)return c.puestos.slice()}catch(_){}return HL_PUESTOS_DEFAULT.slice()}
+const _hlNum=(v,d=0)=>Number(v||0).toLocaleString('es-CL',{maximumFractionDigits:d});
+const _hlAnio=f=>parseLocalDate(f)?.getFullYear();
+/* Personas del parte: suma de puestos; si no hay desglose, el campo antiguo `personas`. */
+const _hlPersonas=l=>{if(l.puestos&&typeof l.puestos==='object'){const s=Object.values(l.puestos).reduce((a,b)=>a+(Number(b)||0),0);if(s>0)return s}return Number(l.personas)||0};
+/* Cortadores: el puesto cuyo nombre contenga "cort". */
+const _hlCortadores=l=>{if(l.puestos&&typeof l.puestos==='object'){const k=Object.keys(l.puestos).find(k=>/cort/i.test(k));if(k&&Number(l.puestos[k])>0)return Number(l.puestos[k])}return 0};
+/* Bins físicos que salen con un parte: un bin parcial cuenta como unidad (3,5 → 4). */
+const _hlUnidades=l=>{const b=Number(l.bines)||0;return b>0?Math.ceil(b-1e-9):0};
+
 async function renderHarvestLog(){
-  const [logs,blocks]=await Promise.all([getAll('harvestlogs'),getAll('blocks')]);
-  const variedades=harvestVariedades(blocks);
-  const temporadas=[...new Set(logs.map(l=>parseLocalDate(l.fecha)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+  const [logs,blocks,bins]=await Promise.all([getAll('harvestlogs'),getAll('blocks'),getAll('binlogs')]);
   const anoActual=new Date().getFullYear();
+  const temporadas=[...new Set([...logs.map(l=>_hlAnio(l.fecha)),...bins.map(b=>_hlAnio(b.fecha))].filter(Boolean))].sort((a,b)=>b-a);
   if(_hlTemp==null)_hlTemp=temporadas.includes(anoActual)?anoActual:(temporadas[0]||anoActual);
-  const enTemp=logs.filter(l=>parseLocalDate(l.fecha)?.getFullYear()===_hlTemp);
+  const enTemp=logs.filter(l=>_hlAnio(l.fecha)===_hlTemp);
   const varsTemp=[...new Set(enTemp.map(l=>l.variedad))];
   const filt=(_hlVar==='todas'?enTemp:enTemp.filter(l=>l.variedad===_hlVar)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  /* KPIs */
-  const total=filt.reduce((s,l)=>s+(Number(l.tallos)||0),0);
-  const totalExp=filt.reduce((s,l)=>s+(Number(l.tallosExport)||0),0);
+  const binsTemp=bins.filter(b=>_hlAnio(b.fecha)===_hlTemp).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  /* Totales */
+  const totBines=filt.reduce((s,l)=>s+(Number(l.bines)||0),0);
+  const totVaras=filt.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  const totExp=filt.reduce((s,l)=>s+(Number(l.tallosExport)||0),0);
   const dias=[...new Set(filt.map(l=>l.fecha))].length;
-  const personasDia=filt.reduce((s,l)=>s+(Number(l.personas)||0),0);
-  const prodPersona=personasDia?Math.round(total/personasDia):null;
-  const ultimo=filt[0]||null;
-  const mejor=filt.reduce((m,l)=>(Number(l.tallos)||0)>(Number(m?.tallos)||0)?l:m,null);
   const hoyStr=today();
   const hoyLogs=filt.filter(l=>l.fecha===hoyStr);
-  const tallosHoy=hoyLogs.reduce((s,l)=>s+(Number(l.tallos)||0),0);
-  /* Serie diaria (asc) + acumulado */
-  const porDia={};filt.forEach(l=>{porDia[l.fecha]=(porDia[l.fecha]||0)+(Number(l.tallos)||0)});
+  const ultimoDia=filt[0]?filt.filter(l=>l.fecha===filt[0].fecha):[];
+  const diaRef=hoyLogs.length?hoyLogs:ultimoDia;
+  const diaRefBines=diaRef.reduce((s,l)=>s+(Number(l.bines)||0),0),diaRefVaras=diaRef.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  /* Productividad: varas (si se cuentan) o bines, por cortador-día; si no hay puesto cortadores, por persona-día */
+  const usaCort=filt.some(l=>_hlCortadores(l)>0);
+  const denomDe=l=>usaCort?_hlCortadores(l):_hlPersonas(l);
+  const metricaVaras=totVaras>0;
+  const numProd=filt.reduce((s,l)=>denomDe(l)>0?s+(metricaVaras?(Number(l.tallos)||0):(Number(l.bines)||0)):s,0);
+  const denProd=filt.reduce((s,l)=>denomDe(l)>0?s+denomDe(l):s,0);
+  const prod=denProd?numProd/denProd:null;
+  /* Varas por bin observadas (días con ambos datos) */
+  const ambos=filt.filter(l=>Number(l.bines)>0&&Number(l.tallos)>0);
+  const varasPorBin=ambos.length?Math.round(ambos.reduce((s,l)=>s+Number(l.tallos),0)/ambos.reduce((s,l)=>s+Number(l.bines),0)):null;
+  /* Bins: un bin a medio llenar igual sale del huerto → unidades físicas = ceil(bines) por parte.
+     El stock es de todo el huerto, así que se calcula sobre la temporada completa (no sobre el filtro de variedad). */
+  const unidadesDe=_hlUnidades;
+  const binsRecibidos=binsTemp.reduce((s,b)=>s+(Number(b.cantidad)||0),0);
+  const binsLlenadosTemp=enTemp.reduce((s,l)=>s+(Number(l.bines)||0),0);
+  const binsDespachados=enTemp.reduce((s,l)=>s+unidadesDe(l),0);
+  const diasTemp=[...new Set(enTemp.map(l=>l.fecha))].length;
+  const binsSaldo=binsRecibidos-binsDespachados;
+  /* Cuadrilla acumulada: jornadas-persona (suma de personas de cada parte), por puesto y por día */
+  const jornadas=filt.reduce((s,l)=>s+_hlPersonas(l),0);
+  const porFechaPers={};filt.forEach(l=>{const p=_hlPersonas(l);if(p>0)porFechaPers[l.fecha]=(porFechaPers[l.fecha]||0)+p});
+  const diasCuad=Object.keys(porFechaPers).length;
+  const persDiaVals=Object.values(porFechaPers);
+  const persMax=persDiaVals.length?Math.max(...persDiaVals):0,persMin=persDiaVals.length?Math.min(...persDiaVals):0;
+  const porPuesto={};filt.forEach(l=>{if(l.puestos&&typeof l.puestos==='object')Object.entries(l.puestos).forEach(([k,v])=>{if(Number(v)>0)porPuesto[k]=(porPuesto[k]||0)+Number(v)})});
+  const puestosArr=Object.entries(porPuesto).sort((a,b)=>b[1]-a[1]);
+  const jCort=filt.reduce((s,l)=>s+_hlCortadores(l),0);
+  /* Serie diaria para el gráfico: bines si se registran, si no varas */
+  const metricaChart=totBines>0?'bines':'varas';
+  const porDia={};filt.forEach(l=>{porDia[l.fecha]=(porDia[l.fecha]||0)+(metricaChart==='bines'?(Number(l.bines)||0):(Number(l.tallos)||0))});
   const fechasAsc=Object.keys(porDia).sort();
   let acum=0;const serieAcum=fechasAsc.map(f=>acum+=porDia[f]);
-  const n=v=>Number(v||0).toLocaleString('es-CL');
+  const chipT=t=>`<span class="chip ${_hlTemp===t?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlTemp(${t})">${t}</span>`;
   document.getElementById('main').innerHTML=`
-    <div class="page-header"><div><h2>Cosecha diaria</h2><div class="sub">Reporte día a día de corte · tallos, cuadrilla y observaciones</div></div>
-    <button class="btn" onclick="editHarvestLog()"><i data-lucide="plus"></i>Registrar día</button></div>
+    <div class="page-header"><div><h2>Cosecha diaria</h2><div class="sub">Parte diario de cosecha · bines, varas, cuadrilla por puesto y bins</div></div>
+    <div class="actions hl-actions"><button class="btn ghost hl-btn-sec" onclick="editHarvestPuestos()" title="Definir los puestos de la cuadrilla"><i data-lucide="users"></i>Puestos</button><button class="btn secondary hl-btn-sec" onclick="editBinLog()"><i data-lucide="package-plus"></i>Bins recibidos</button><button class="btn hl-btn-new" onclick="editHarvestLog()"><i data-lucide="plus"></i>Registrar día</button></div></div>
     <div class="card" style="padding:12px 16px">
       <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
-        <div style="display:flex;gap:4px;align-items:center"><span class="hl-lbl">Temporada</span>${[...new Set([anoActual,...temporadas])].sort((a,b)=>b-a).map(t=>`<span class="chip ${_hlTemp===t?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlTemp(${t})">${t}</span>`).join('')}</div>
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="hl-lbl">Temporada</span>${[...new Set([anoActual,...temporadas])].sort((a,b)=>b-a).map(chipT).join('')}</div>
         ${varsTemp.length>1?`<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="hl-lbl">Variedad</span><span class="chip ${_hlVar==='todas'?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlVar('todas')">Todas</span>${varsTemp.map(v=>`<span class="chip ${_hlVar===v?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setHlVar('${v.replace(/'/g,"\\'")}')">${v}</span>`).join('')}</div>`:''}
       </div>
     </div>
     <div class="grid grid-4">
-      <div class="kpi"><div class="kpi-header"><div class="label">Acumulado ${_hlTemp}</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${n(total)}</div><div class="foot">tallos · ≈ ${n(Math.floor(total/10))} ramos de 10${totalExp?` · ${Math.round(totalExp/total*100)}% export.`:''}</div></div>
-      <div class="kpi ok"><div class="kpi-header"><div class="label">${hoyLogs.length?'Hoy':'Último día'}</div><div class="kpi-icon"><i data-lucide="calendar-check"></i></div></div><div class="value">${hoyLogs.length?n(tallosHoy):(ultimo?n(ultimo.tallos):'—')}</div><div class="foot">${hoyLogs.length?fmt(hoyStr):(ultimo?fmt(ultimo.fecha):'sin registros')}</div></div>
-      <div class="kpi info"><div class="kpi-header"><div class="label">Promedio diario</div><div class="kpi-icon"><i data-lucide="activity"></i></div></div><div class="value">${dias?n(Math.round(total/dias)):'—'}</div><div class="foot">${dias} día${dias===1?'':'s'} de corte${mejor?` · mejor ${n(mejor.tallos)} (${harvestFmtCorto(mejor.fecha)})`:''}</div></div>
-      <div class="kpi rosa"><div class="kpi-header"><div class="label">Tallos / persona / día</div><div class="kpi-icon"><i data-lucide="users"></i></div></div><div class="value">${prodPersona!=null?n(prodPersona):'—'}</div><div class="foot">${personasDia?n(personasDia)+' jornadas-persona':'registra personas para medir'}</div></div>
+      <div class="kpi hl-kpi-click" onclick="verResumenCosecha(_hlTemp,_hlVar)" title="Ver resumen de la temporada"><div class="kpi-header"><div class="label">Cosechado ${_hlTemp}</div><div class="kpi-icon"><i data-lucide="flower-2"></i></div></div><div class="value">${_hlNum(totBines,1)} <small>bines</small></div><div class="foot">${totVaras?`${_hlNum(totVaras)} varas${varasPorBin?` · ~${_hlNum(varasPorBin)} varas/bin`:''}`:'sin conteo de varas'}${totExp&&totVaras?` · ${Math.round(totExp/totVaras*100)}% export.`:''}</div></div>
+      <div class="kpi ok"><div class="kpi-header"><div class="label">${hoyLogs.length?'Hoy':'Último día'}</div><div class="kpi-icon"><i data-lucide="calendar-check"></i></div></div><div class="value">${diaRef.length?`${_hlNum(diaRefBines,1)} <small>bines</small>`:'—'}</div><div class="foot">${diaRef.length?`${fmt(diaRef[0].fecha)}${diaRefVaras?` · ${_hlNum(diaRefVaras)} varas`:''} · ${_hlNum(diaRef.reduce((s,l)=>s+_hlPersonas(l),0))} personas`:'sin registros'}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">Promedio diario</div><div class="kpi-icon"><i data-lucide="activity"></i></div></div><div class="value">${dias?`${_hlNum(totBines/dias,1)} <small>bines</small>`:'—'}</div><div class="foot">${dias} día${dias===1?'':'s'} de corte${dias&&totVaras?` · ${_hlNum(totVaras/dias)} varas/día`:''}</div></div>
+      <div class="kpi rosa"><div class="kpi-header"><div class="label">${metricaVaras?'Varas':'Bines'} / ${usaCort?'cortador':'persona'} / día</div><div class="kpi-icon"><i data-lucide="users"></i></div></div><div class="value">${prod!=null?_hlNum(prod,metricaVaras?0:2):'—'}</div><div class="foot">${denProd?`${_hlNum(denProd)} jornadas${usaCort?' de cortador':'-persona'}`:'registra la cuadrilla para medir'}</div></div>
     </div>
-    ${fechasAsc.length?`<div class="card"><h3><i data-lucide="bar-chart-3"></i>Ritmo de cosecha</h3><div class="chart-container" style="height:220px"><canvas id="chart-hl"></canvas></div></div>`:''}
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="package"></i>Bins ${_hlTemp}</h3><button class="btn small secondary" onclick="editBinLog()"><i data-lucide="plus"></i>Registrar recepción</button></div>
+      <div class="hl-bins">
+        <div class="hl-bin"><div class="hl-bin-lbl">Vacíos recibidos</div><div class="hl-bin-val">${_hlNum(binsRecibidos)}</div><div class="hl-bin-sub">${binsTemp.length} recepci${binsTemp.length===1?'ón':'ones'}</div></div>
+        <div class="hl-bin"><div class="hl-bin-lbl">Despachados</div><div class="hl-bin-val">${_hlNum(binsDespachados)} <small>bins</small></div><div class="hl-bin-sub">${_hlNum(binsLlenadosTemp,1)} bines llenados en ${diasTemp} día${diasTemp===1?'':'s'}${binsDespachados>binsLlenadosTemp?' · el bin parcial cuenta como unidad':''}</div></div>
+        <div class="hl-bin ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}"><div class="hl-bin-lbl">Saldo en huerto</div><div class="hl-bin-val">${_hlNum(binsSaldo)} <small>bins</small></div><div class="hl-bin-sub">${binsSaldo<0?'faltan recepciones por registrar':(binsRecibidos?'recibidos − despachados':'registra las recepciones')}</div></div>
+      </div>
+      ${binsTemp.length?`<div class="table-scroll" style="margin-top:10px"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th style="text-align:right">Bins</th><th>Origen</th><th>Notas</th><th></th></tr></thead><tbody>${binsTemp.slice(0,8).map(b=>`<tr><td>${fmt(b.fecha)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'—'}</td><td style="font-size:12px;color:var(--gris-d)">${b.notas||'—'}</td><td class="col-acciones"><button class="btn small ghost" onclick="editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`).join('')}</tbody></table>${binsTemp.length>8?`<div style="font-size:11px;color:var(--gris);margin-top:4px">Mostrando las 8 recepciones más recientes de ${binsTemp.length}.</div>`:''}</div>`:''}
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="users"></i>Cuadrilla ${_hlTemp}${_hlVar!=='todas'?` · ${_hlVar}`:''}</h3><button class="btn small ghost" onclick="editHarvestPuestos()" title="Definir puestos"><i data-lucide="settings-2"></i>Puestos</button></div>
+      <div class="hl-bins">
+        <div class="hl-bin hl-click-card" onclick="verDetalleCuadrilla(_hlTemp,_hlVar)" title="Ver cuadrilla día a día"><div class="hl-bin-lbl">Jornadas-persona</div><div class="hl-bin-val">${_hlNum(jornadas)}</div><div class="hl-bin-sub">${diasCuad?`en ${diasCuad} día${diasCuad===1?'':'s'} de corte`:'registra la cuadrilla en cada parte'}</div></div>
+        <div class="hl-bin hl-click-card" onclick="verDetalleCuadrilla(_hlTemp,_hlVar)" title="Ver cuadrilla día a día"><div class="hl-bin-lbl">Personas por día</div><div class="hl-bin-val">${diasCuad?_hlNum(jornadas/diasCuad,1):'—'}</div><div class="hl-bin-sub">${diasCuad?`máx ${persMax} · mín ${persMin}`:'—'}</div></div>
+        ${jCort?`<div class="hl-bin hl-click-card" onclick="verDetallePuesto(_hlTemp,_hlVar,${JSON.stringify((puestosArr.find(([k])=>/cort/i.test(k))||[''])[0]).replace(/"/g,'&quot;')})" title="Ver detalle de cortadores"><div class="hl-bin-lbl">Cortadores</div><div class="hl-bin-val">${_hlNum(jCort)} <small>jorn.</small></div><div class="hl-bin-sub">${_hlNum(jCort/diasCuad,1)} por día${prod!=null?` · ${_hlNum(prod,metricaVaras?0:2)} ${metricaVaras?'varas':'bines'}/cortador/día`:''}</div></div>`:`<div class="hl-bin"><div class="hl-bin-lbl">Puestos</div><div class="hl-bin-val">${puestosArr.length}</div><div class="hl-bin-sub">${puestosArr.length?'con personas registradas':'sin desglose por puesto'}</div></div>`}
+      </div>
+      ${puestosArr.length?`<div class="hl-puestos-resumen">${puestosArr.map(([k,v])=>{const pct=jornadas?Math.round(v/jornadas*100):0;return `<div class="hl-pr" onclick="verDetallePuesto(_hlTemp,_hlVar,${JSON.stringify(k).replace(/"/g,'&quot;')})" title="Ver detalle de ${k}"><div class="hl-pr-top"><span class="hl-pr-nom">${k}</span><span class="hl-pr-val">${_hlNum(v)} <small>jorn.</small></span></div><div class="hl-pr-bar"><div style="width:${pct}%"></div></div><div class="hl-pr-sub">${diasCuad?_hlNum(v/diasCuad,1):0} por día · ${pct}% de la cuadrilla</div></div>`}).join('')}</div>`:''}
+    </div>
+    ${fechasAsc.length?`<div class="card"><h3><i data-lucide="bar-chart-3"></i>Ritmo de cosecha <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${metricaChart==='bines'?'bines por día':'varas por día'} y acumulado</span></h3><div class="chart-container" style="height:220px"><canvas id="chart-hl"></canvas></div></div>`:''}
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-        <h3 style="margin:0"><i data-lucide="list"></i>Registros</h3>
-        ${total?`<button class="btn small secondary" onclick="syncHarvestLogToSeason(${_hlTemp})" title="Actualiza primer corte y tallos en Fecha de Cosecha"><i data-lucide="refresh-cw"></i>Actualizar Fecha de Cosecha</button>`:''}
+        <h3 style="margin:0"><i data-lucide="list"></i>Partes diarios</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${(totBines||totVaras)?`<button class="btn small" onclick="verResumenCosecha(_hlTemp,_hlVar)" title="Resumen de la temporada"><i data-lucide="clipboard-list"></i>Resumen</button><button class="btn small secondary" onclick="syncHarvestLogToSeason(${_hlTemp})" title="Actualiza primer corte, varas y bines en Fecha de Cosecha"><i data-lucide="refresh-cw"></i>Actualizar Fecha de Cosecha</button>`:''}</div>
       </div>
-      <div class="table-scroll"><table id="tbl-hl"><thead><tr><th>Fecha</th><th>Variedad</th><th>Cuarteles</th><th style="text-align:right">Tallos</th><th style="text-align:right">Export.</th><th style="text-align:right">Personas</th><th style="text-align:right">Tallos/pers.</th><th>Observaciones</th><th></th></tr></thead>
-      <tbody>${filt.length?filt.map(l=>{const t=Number(l.tallos)||0,p=Number(l.personas)||0;return `<tr>
-        <td><strong>${fmt(l.fecha)}</strong>${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}</td>
+      <div class="hl-cards">${filt.length?filt.map(l=>{const b=Number(l.bines)||0,t=Number(l.tallos)||0,p=_hlPersonas(l),d=denomDe(l),u=_hlUnidades(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<div class="hl-card" onclick="verParteCosecha('${l.id}')">
+        <div class="hl-card-head"><div class="hl-card-date">${fmt(l.fecha)}${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}</div><div class="hl-card-var"><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${l.variedad}</div></div>
+        <div class="hl-card-stats">
+          <div><div class="v">${b?_hlNum(b,1):'—'}</div><div class="l">bines${(u&&u!==b)?` · ${u} desp.`:''}</div></div>
+          <div><div class="v">${t?_hlNum(t):'—'}</div><div class="l">varas</div></div>
+          <div><div class="v">${p||'—'}</div><div class="l">personas</div></div>
+        </div>
+        ${(desglose||pr!=null)?`<div class="hl-card-line">${desglose?`<span>${desglose}</span>`:''}${pr!=null?`<span class="hl-card-prod">${_hlNum(pr,metricaVaras?0:2)} ${metricaVaras?'varas':'bines'}/${usaCort?'cortador':'pers.'}</span>`:''}</div>`:''}
+        ${l.notas?`<div class="hl-card-note">${l.notas}</div>`:''}
+        <div class="hl-card-actions"><button onclick="event.stopPropagation();verParteCosecha('${l.id}')"><i data-lucide="clipboard-list"></i>Ficha</button><button onclick="event.stopPropagation();editHarvestLog('${l.id}')"><i data-lucide="pencil"></i>Editar</button><button class="danger" onclick="event.stopPropagation();delHarvestLog('${l.id}')" aria-label="Eliminar"><i data-lucide="trash-2"></i></button></div>
+      </div>`}).join(''):`<div class="hl-card-empty"><i data-lucide="flower-2"></i><div>Sin partes en ${_hlTemp}</div><small>Al terminar el día: bines, varas y personas por puesto.</small></div>`}</div>
+      <div class="table-scroll hl-table-wrap"><table id="tbl-hl"><thead><tr><th>Fecha</th><th>Variedad</th><th>Cuarteles</th><th style="text-align:right">Bines</th><th style="text-align:right">Varas</th><th>Cuadrilla</th><th style="text-align:right">${metricaVaras?'Varas':'Bines'}/${usaCort?'cort.':'pers.'}</th><th>Observaciones</th><th></th></tr></thead>
+      <tbody>${filt.length?filt.map(l=>{const b=Number(l.bines)||0,t=Number(l.tallos)||0,p=_hlPersonas(l),d=denomDe(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<tr>
+        <td class="hl-click" onclick="verParteCosecha('${l.id}')" title="Ver ficha del día"><strong>${fmt(l.fecha)}</strong>${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}</td>
         <td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${l.variedad}</td>
         <td>${bloquesTags({bloques:l.cuarteles||[]})}</td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${n(t)}</strong></td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--gris-d)">${l.tallosExport?n(l.tallosExport)+` <small style="color:var(--gris)">(${Math.round(l.tallosExport/t*100)}%)</small>`:'—'}</td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums">${p||'—'}${l.horas?`<div style="font-size:10.5px;color:var(--gris)">${l.horas} h</div>`:''}</td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums">${p?n(Math.round(t/p)):'—'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${b?_hlNum(b,1):'—'}</strong>${b&&Math.ceil(b-1e-9)!==b?`<div style="font-size:10.5px;color:var(--gris)">${Math.ceil(b-1e-9)} bins despachados</div>`:''}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${t?_hlNum(t):'—'}${l.tallosExport&&t?`<div style="font-size:10.5px;color:var(--gris)">${Math.round(l.tallosExport/t*100)}% export.</div>`:''}</td>
+        <td class="hl-click" onclick="verParteCosecha('${l.id}')" title="Ver ficha del día">${p?`<strong>${p}</strong> pers.${desglose?`<div style="font-size:10.5px;color:var(--gris)">${desglose}</div>`:''}${l.horas?`<div style="font-size:10.5px;color:var(--gris)">${l.horas} h</div>`:''}`:'—'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums">${pr!=null?_hlNum(pr,metricaVaras?0:2):'—'}</td>
         <td style="max-width:260px;font-size:12px;color:var(--gris-d)">${l.notas||'<span style="color:var(--gris-m)">—</span>'}</td>
         <td class="col-acciones"><button class="btn small ghost" onclick="editHarvestLog('${l.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="delHarvestLog('${l.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td>
-      </tr>`}).join(''):`<tr><td colspan="9" class="empty"><i data-lucide="flower-2"></i><div>Sin registros en ${_hlTemp}</div><div style="font-size:12px;color:var(--gris);margin-top:4px">Al final de cada día de corte, registra tallos y personas. Toma 20 segundos.</div></td></tr>`}</tbody></table></div>
+      </tr>`}).join(''):`<tr><td colspan="9" class="empty"><i data-lucide="flower-2"></i><div>Sin partes en ${_hlTemp}</div><div style="font-size:12px;color:var(--gris);margin-top:4px">Al final de cada día de corte: bines (ej. 3,5), varas si las contaste y cuántas personas por puesto.</div></td></tr>`}</tbody></table></div>
     </div>`;
   lucideInit();
   if(fechasAsc.length){
     if(_hlChart){try{_hlChart.destroy()}catch(_){}}
     _hlChart=new Chart(document.getElementById('chart-hl'),{type:'bar',data:{labels:fechasAsc.map(harvestFmtCorto),datasets:[
-      {label:'Tallos del día',data:fechasAsc.map(f=>porDia[f]),backgroundColor:'rgba(236,72,153,.75)',borderRadius:4,yAxisID:'y'},
+      {label:metricaChart==='bines'?'Bines del día':'Varas del día',data:fechasAsc.map(f=>porDia[f]),backgroundColor:'rgba(236,72,153,.75)',borderRadius:4,yAxisID:'y'},
       {label:'Acumulado',data:serieAcum,type:'line',borderColor:'#3f7a52',backgroundColor:'rgba(63,122,82,.08)',fill:true,tension:.25,pointRadius:2,yAxisID:'y2'}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,title:{display:true,text:'tallos/día'}},y2:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'acumulado'}}}}});
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,title:{display:true,text:metricaChart==='bines'?'bines/día':'varas/día'}},y2:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'acumulado'}}}}});
   }
 }
-async function editHarvestLog(id){
-  const [blocks,logs]=await Promise.all([getAll('blocks'),getAll('harvestlogs')]);
+/* Lee el formulario actual (sin validar) para "pausarlo" mientras se editan los puestos y restaurarlo después. */
+function _hlCollectForm(){
+  const g=k=>document.getElementById(k);
+  if(!g('f-hl-fecha'))return null;
+  const puestos={};document.querySelectorAll('.f-hl-puesto').forEach(i=>{puestos[i.getAttribute('data-puesto')]=i.value});
+  return {fecha:g('f-hl-fecha').value,variedad:g('f-hl-var').value,cuarteles:Array.from(document.querySelectorAll('.f-hl-chk:checked')).map(c=>c.value),bines:g('f-hl-bines').value,tallos:g('f-hl-tallos').value,tallosExport:g('f-hl-exp').value,horas:g('f-hl-horas').value,puestos,notas:g('f-hl-notas').value};
+}
+async function editHarvestLog(id,draft){
+  const [blocks,logs,puestos]=await Promise.all([getAll('blocks'),getAll('harvestlogs'),getHarvestPuestos()]);
   const variedades=harvestVariedades(blocks);
   const ultimo=[...logs].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))[0];
-  const l=id?await get('harvestlogs',id):{fecha:today(),variedad:ultimo?.variedad||variedades[0]||'',cuarteles:ultimo?.cuarteles||[],tallos:'',tallosExport:'',personas:ultimo?.personas||'',horas:ultimo?.horas||'',notas:''};
+  let l;
+  if(draft)l=draft;
+  else if(id)l=await get('harvestlogs',id);
+  else l={fecha:today(),variedad:ultimo?.variedad||variedades[0]||'',cuarteles:ultimo?.cuarteles||[],bines:'',tallos:'',tallosExport:'',horas:ultimo?.horas||'',puestos:ultimo?.puestos||{},notas:''};
+  if(!l){toast('Parte no encontrado','warn');return}
   const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  const pv=l.puestos||{};
+  /* Puestos a mostrar: los configurados + los que tenga el parte (por si alguno se renombró) */
+  const lista=[...puestos,...Object.keys(pv).filter(k=>!puestos.includes(k))];
+  const totalPers=lista.reduce((s,k)=>s+(parseInt(pv[k],10)||0),0)||(Number(l.personas)||0);
+  const val=v=>(v==null?'':v);
   openModal(`<h3><i data-lucide="flower-2" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} día de cosecha</h3>
     <div class="form-grid">
       <div class="form-row"><label>Fecha *</label><input id="f-hl-fecha" type="date" value="${l.fecha||''}"></div>
       <div class="form-row"><label>Variedad *</label><select id="f-hl-var" onchange="_hlSugerirCuarteles()">${variedades.map(v=>`<option value="${esc(v)}" ${l.variedad===v?'selected':''}>${v}</option>`).join('')}</select></div>
-      <div class="form-row"><label>Tallos cosechados *</label><input id="f-hl-tallos" type="number" min="0" step="1" inputmode="numeric" value="${l.tallos||''}" placeholder="ej. 1850" style="font-size:18px;font-weight:700"></div>
-      <div class="form-row"><label>De ellos exportables <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-exp" type="number" min="0" step="1" inputmode="numeric" value="${l.tallosExport||''}" placeholder="ej. 1600"></div>
-      <div class="form-row"><label>Personas en cuadrilla *</label><input id="f-hl-pers" type="number" min="0" step="1" inputmode="numeric" value="${l.personas||''}" placeholder="ej. 6"></div>
-      <div class="form-row"><label>Horas trabajadas <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-horas" type="number" min="0" step="0.5" inputmode="decimal" value="${l.horas||''}" placeholder="ej. 8"></div>
     </div>
-    <div class="form-row"><label>Cuarteles</label>
+    <div class="hl-sec"><div class="hl-sec-t"><i data-lucide="package"></i>Cosechado <small>bines y/o varas — llena lo que midas</small></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Bines <small style="color:var(--gris);font-weight:400">(3,5 = 3 llenos + 1 a la mitad → salen 4)</small></label><div class="hl-stepper"><button type="button" onclick="_hlStep('f-hl-bines',-0.5)" aria-label="menos medio bin">−</button><input id="f-hl-bines" type="number" min="0" step="any" inputmode="decimal" value="${val(l.bines)}" placeholder="ej. 3,5" class="hl-big"><button type="button" onclick="_hlStep('f-hl-bines',0.5)" aria-label="más medio bin">+</button></div></div>
+        <div class="form-row"><label>Varas</label><input id="f-hl-tallos" type="number" min="0" step="1" inputmode="numeric" value="${val(l.tallos)}" placeholder="ej. 1850" class="hl-big"></div>
+        <div class="form-row"><label>Varas exportables <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-exp" type="number" min="0" step="1" inputmode="numeric" value="${val(l.tallosExport)}" placeholder="ej. 1600"></div>
+        <div class="form-row"><label>Horas trabajadas <small style="color:var(--gris);font-weight:400">(opcional)</small></label><input id="f-hl-horas" type="number" min="0" step="0.5" inputmode="decimal" value="${val(l.horas)}" placeholder="ej. 8"></div>
+      </div>
+    </div>
+    <div class="hl-sec"><div class="hl-sec-t"><i data-lucide="users"></i>Cuadrilla por puesto <a class="hl-link" onclick="_hlEditarPuestosDesdeForm(${id?`'${id}'`:'null'})">editar puestos</a><span class="hl-total" id="f-hl-pers-total">${totalPers} persona${totalPers===1?'':'s'}</span></div>
+      <div class="hl-puestos">${lista.map((k,i)=>`<div class="hl-puesto"><label for="f-hl-p-${i}">${esc(k)}</label><div class="hl-stepper sm"><button type="button" onclick="_hlStep('f-hl-p-${i}',-1)" aria-label="menos">−</button><input id="f-hl-p-${i}" class="f-hl-puesto" data-puesto="${esc(k)}" type="number" min="0" step="1" inputmode="numeric" value="${val(pv[k])}" placeholder="0" oninput="_hlSumPuestos()"><button type="button" onclick="_hlStep('f-hl-p-${i}',1)" aria-label="más">+</button></div></div>`).join('')}</div>
+    </div>
+    <div class="form-row" style="margin-top:12px"><label>Cuarteles</label>
       <div class="checkbox-grid">${blocks.filter(b=>b.variedad!=='—').map(b=>`<div class="check-item"><input type="checkbox" id="cbhl-${b.id}" class="f-hl-chk" data-var="${esc(b.variedad)}" value="${esc(b.nombre)}" ${(l.cuarteles||[]).includes(b.nombre)?'checked':''}><label for="cbhl-${b.id}">${b.nombre}</label></div>`).join('')}</div>
     </div>
     <div class="form-row"><label>Observaciones <small style="color:var(--gris);font-weight:400">(clima, estado del botón, problemas)</small></label><textarea id="f-hl-notas" rows="2" placeholder="ej. Mañana fría, botón parejo en marshmallow. Sector 2 más adelantado.">${l.notas||''}</textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveHarvestLog(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
-  if(!id&&!(l.cuarteles||[]).length)_hlSugerirCuarteles();
+  if(!id&&!draft&&!(l.cuarteles||[]).length)_hlSugerirCuarteles();
   lucideInit();
-  setTimeout(()=>document.getElementById('f-hl-tallos')?.focus(),50);
+  setTimeout(()=>document.getElementById('f-hl-bines')?.focus(),50);
 }
+/* Stepper − / + para bines (0,5) y personas por puesto (1). Nunca baja de 0. */
+function _hlStep(id,delta){const i=document.getElementById(id);if(!i)return;const cur=parseFloat(String(i.value||'0').replace(',','.'))||0;let v=Math.max(0,cur+delta);v=Math.round(v*100)/100;i.value=(Number.isInteger(v)?String(v):String(v));if(i.classList.contains('f-hl-puesto'))_hlSumPuestos();if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}}
+function _hlSumPuestos(){let s=0;document.querySelectorAll('.f-hl-puesto').forEach(i=>{s+=parseInt(i.value,10)||0});const el=document.getElementById('f-hl-pers-total');if(el)el.textContent=`${s} persona${s===1?'':'s'}`}
+function _hlEditarPuestosDesdeForm(id){window._hlDraft={id,data:_hlCollectForm()};editHarvestPuestos()}
 function _hlSugerirCuarteles(){
   const v=document.getElementById('f-hl-var')?.value;if(!v)return;
   document.querySelectorAll('.f-hl-chk').forEach(c=>{c.checked=(c.getAttribute('data-var')===v)});
 }
 async function saveHarvestLog(id){
+  const g=k=>document.getElementById(k);
+  /* Puestos: guardamos TODOS los del formulario (incluido 0) para que el merge de Firestore sobreescriba valores antiguos */
+  const puestos={};document.querySelectorAll('.f-hl-puesto').forEach(i=>{puestos[i.getAttribute('data-puesto')]=parseInt(i.value,10)||0});
+  const personas=Object.values(puestos).reduce((a,b)=>a+b,0);
+  const binesRaw=String(g('f-hl-bines').value||'').replace(',','.');
   const data={
-    fecha:document.getElementById('f-hl-fecha').value||null,
-    variedad:document.getElementById('f-hl-var').value,
+    fecha:g('f-hl-fecha').value||null,
+    variedad:g('f-hl-var').value,
     cuarteles:Array.from(document.querySelectorAll('.f-hl-chk:checked')).map(c=>c.value),
-    tallos:parseInt(document.getElementById('f-hl-tallos').value,10),
-    tallosExport:parseInt(document.getElementById('f-hl-exp').value,10)||null,
-    personas:parseInt(document.getElementById('f-hl-pers').value,10)||null,
-    horas:parseFloat(document.getElementById('f-hl-horas').value)||null,
-    notas:document.getElementById('f-hl-notas').value.trim()
+    bines:binesRaw!==''?parseFloat(binesRaw):null,
+    tallos:g('f-hl-tallos').value!==''?parseInt(g('f-hl-tallos').value,10):null,
+    tallosExport:parseInt(g('f-hl-exp').value,10)||null,
+    horas:parseFloat(g('f-hl-horas').value)||null,
+    puestos,personas:personas||null,
+    notas:g('f-hl-notas').value.trim()
   };
   if(!data.fecha){toast('Fecha requerida','warn');return}
   if(!data.variedad){toast('Variedad requerida','warn');return}
-  if(isNaN(data.tallos)||data.tallos<0){toast('Tallos cosechados requerido','warn');return}
-  if(data.tallosExport!=null&&data.tallosExport>data.tallos){toast('Exportables no puede superar el total','warn');return}
-  /* 1 registro por día × variedad */
+  const hayBines=data.bines!=null&&!isNaN(data.bines)&&data.bines>=0;
+  const hayVaras=data.tallos!=null&&!isNaN(data.tallos)&&data.tallos>=0;
+  if(!hayBines&&!hayVaras){toast('Anota los bines o las varas cosechadas','warn');return}
+  if(!hayBines)data.bines=null;
+  if(!hayVaras)data.tallos=null;
+  if(data.tallosExport!=null&&hayVaras&&data.tallosExport>data.tallos){toast('Exportables no puede superar las varas','warn');return}
   const todos=await getAll('harvestlogs');
   const dup=todos.find(l=>l.fecha===data.fecha&&l.variedad===data.variedad&&l.id!==id);
-  if(dup){toast(`Ya hay registro de ${data.variedad} el ${fmt(data.fecha)}. Edítalo.`,'warn');return}
+  if(dup){toast(`Ya hay un parte de ${data.variedad} el ${fmt(data.fecha)}. Edítalo.`,'warn');return}
   try{
     if(id){data.id=id;await put('harvestlogs',data)}
     else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('harvestlogs',data)}
   }catch(e){console.error('saveHarvestLog falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
-  closeModal();toast('Día registrado');renderHarvestLog();
+  closeModal();toast('Parte guardado');renderHarvestLog();
 }
-async function delHarvestLog(id){if(!confirm('¿Eliminar este día de cosecha?'))return;await del('harvestlogs',id);toast('Eliminado');renderHarvestLog()}
+async function delHarvestLog(id){if(!confirm('¿Eliminar este parte de cosecha?'))return;await del('harvestlogs',id);toast('Eliminado');renderHarvestLog()}
+
+/* ---- Ficha del parte del día (clic en fecha o cuadrilla) ---- */
+async function verParteCosecha(id){
+  const l=await get('harvestlogs',id);if(!l){toast('Parte no encontrado','warn');return}
+  const b=Number(l.bines)||0,t=Number(l.tallos)||0,p=_hlPersonas(l),c=_hlCortadores(l),u=_hlUnidades(l);
+  const puestos=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).sort((a,b)=>Number(b[1])-Number(a[1])):[];
+  const denom=c||p;
+  const prodVal=denom?(t?t/denom:(b?b/denom:null)):null;
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px"></i> Parte de cosecha</h3>
+      <div class="hl-res-meta"><strong>${fmt(l.fecha)}</strong> · <span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${esc(l.variedad)}${(l.cuarteles||[]).length?' · '+esc(l.cuarteles.join(', ')):''}${l.horas?` · ${l.horas} h`:''}</div></div>
+    <div class="hl-res-grid">
+      <div class="hl-res"><div class="hl-res-lbl">Bines</div><div class="hl-res-val">${b?_hlNum(b,1):'—'}</div><div class="hl-res-sub">${u?`${u} bin${u===1?'':'s'} despachado${u===1?'':'s'}`:'—'}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Varas</div><div class="hl-res-val">${t?_hlNum(t):'—'}</div><div class="hl-res-sub">${[(t&&b)?`~${_hlNum(t/b)} por bin`:'',(l.tallosExport&&t)?`${Math.round(l.tallosExport/t*100)}% export.`:''].filter(Boolean).join(' · ')||'—'}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">${t?'Varas':'Bines'} / ${c?'cortador':'persona'}</div><div class="hl-res-val">${prodVal!=null?_hlNum(prodVal,t?0:2):'—'}</div><div class="hl-res-sub">${denom?`${denom} ${c?'cortadores':'personas'}`:'sin cuadrilla'}</div></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Cuadrilla <span>${p} persona${p===1?'':'s'}</span></div>
+      ${puestos.length?`<table class="hl-res-tabla">${puestos.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${v}</td><td class="bar"><div style="width:${Math.round(Number(v)/p*100)}%"></div></td><td class="pct">${Math.round(Number(v)/p*100)}%</td></tr>`).join('')}</table>`:`<div class="hl-res-sub">Sin desglose por puesto${p?` · ${p} personas en total`:''}</div>`}
+    </div>
+    ${l.notas?`<div class="hl-res-sec"><div class="hl-res-sec-t">Observaciones</div><div class="hl-res-nota">${esc(l.notas)}</div></div>`:''}
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button><button class="btn" onclick="editHarvestLog('${id}')"><i data-lucide="pencil"></i>Editar</button></div>`);
+  lucideInit();
+}
+/* ---- Resumen de la temporada (clic en KPI Cosechado o botón Resumen) ---- */
+function _hlComputeResumen(logs,bins,temporada,variedad){
+  const enTemp=logs.filter(l=>_hlAnio(l.fecha)===temporada);
+  const sel=(variedad&&variedad!=='todas')?enTemp.filter(l=>l.variedad===variedad):enTemp;
+  if(!sel.length)return null;
+  const sum=(arr,f)=>arr.reduce((s,l)=>s+(Number(f(l))||0),0);
+  const fechas=[...new Set(sel.map(l=>l.fecha))].sort();const dias=fechas.length;
+  const totB=sum(sel,l=>l.bines),totV=sum(sel,l=>l.tallos),totU=sum(sel,_hlUnidades),totExp=sum(sel,l=>l.tallosExport);
+  const jornadas=sum(sel,_hlPersonas),jCort=sum(sel,_hlCortadores);
+  const usaCort=jCort>0;const denom=usaCort?jCort:jornadas;
+  const prod=denom?(totV?totV/denom:(totB?totB/denom:null)):null;
+  const porPuesto={};sel.forEach(l=>{if(l.puestos)Object.entries(l.puestos).forEach(([k,v])=>{if(Number(v)>0)porPuesto[k]=(porPuesto[k]||0)+Number(v)})});
+  const puestos=Object.entries(porPuesto).sort((a,b)=>b[1]-a[1]);
+  const vars=[...new Set(sel.map(l=>l.variedad))].map(v=>{const ls=sel.filter(l=>l.variedad===v);return {v,dias:new Set(ls.map(l=>l.fecha)).size,bines:sum(ls,l=>l.bines),varas:sum(ls,l=>l.tallos),jornadas:sum(ls,_hlPersonas)}});
+  const binsRec=sum(bins.filter(b=>_hlAnio(b.fecha)===temporada),b=>b.cantidad);
+  const binsDesp=sum(enTemp,_hlUnidades);
+  const mejor=sel.reduce((m,l)=>((Number(l.bines)||0)>(Number(m?.bines)||0)||(!Number(m?.bines)&&(Number(l.tallos)||0)>(Number(m?.tallos)||0)))?l:m,null);
+  return {temporada,variedad,fechas,dias,totB,totV,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDesp,mejor};
+}
+async function verResumenCosecha(temporada,variedad){
+  const [logs,bins]=await Promise.all([getAll('harvestlogs'),getAll('binlogs')]);
+  const r=_hlComputeResumen(logs,bins,temporada,variedad);
+  if(!r){toast('Sin partes en esta temporada','warn');return}
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const saldo=r.binsRec-r.binsDesp;
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px"></i> Resumen de cosecha ${r.temporada}</h3>
+      <div class="hl-res-meta">${(r.variedad&&r.variedad!=='todas')?esc(r.variedad)+' · ':''}${fmt(r.fechas[0])} → ${fmt(r.fechas[r.dias-1])} · ${r.dias} día${r.dias===1?'':'s'} de corte${r.mejor?` · mejor día ${harvestFmtCorto(r.mejor.fecha)}`:''}</div></div>
+    <div class="hl-res-grid">
+      <div class="hl-res"><div class="hl-res-lbl">Bines</div><div class="hl-res-val">${_hlNum(r.totB,1)}</div><div class="hl-res-sub">${r.totU} despachados · ${_hlNum(r.totB/r.dias,1)}/día</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Varas</div><div class="hl-res-val">${r.totV?_hlNum(r.totV):'—'}</div><div class="hl-res-sub">${r.totV?`${_hlNum(r.totV/r.dias)}/día${r.totB?` · ~${_hlNum(r.totV/r.totB)} por bin`:''}${r.totExp?` · ${Math.round(r.totExp/r.totV*100)}% export.`:''}`:'sin conteo'}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">${r.totV?'Varas':'Bines'} / ${r.usaCort?'cortador':'persona'} / día</div><div class="hl-res-val">${r.prod!=null?_hlNum(r.prod,r.totV?0:2):'—'}</div><div class="hl-res-sub">${_hlNum(r.jornadas)} jornadas-persona</div></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Cuadrilla <span>${_hlNum(r.jornadas)} jornadas · ${_hlNum(r.jornadas/r.dias,1)}/día</span></div>
+      ${r.puestos.length?`<table class="hl-res-tabla">${r.puestos.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${_hlNum(v)}</td><td class="bar"><div style="width:${Math.round(v/r.jornadas*100)}%"></div></td><td class="pct">${_hlNum(v/r.dias,1)}/día</td></tr>`).join('')}</table>`:'<div class="hl-res-sub">Sin desglose por puesto.</div>'}
+    </div>
+    ${r.vars.length>1?`<div class="hl-res-sec"><div class="hl-res-sec-t">Por variedad</div><table class="hl-res-tabla hl-res-vars"><tr><th></th><th>Días</th><th>Bines</th><th>Varas</th><th>Jornadas</th></tr>${r.vars.map(x=>`<tr><td><span class="hv-dot" style="background:${harvestColor(x.v)}"></span>${esc(x.v)}</td><td class="n">${x.dias}</td><td class="n">${_hlNum(x.bines,1)}</td><td class="n">${x.varas?_hlNum(x.varas):'—'}</td><td class="n">${_hlNum(x.jornadas)}</td></tr>`).join('')}</table></div>`:''}
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Bins del huerto</div><div class="hl-res-line"><span>Recibidos <strong>${_hlNum(r.binsRec)}</strong></span><span>Despachados <strong>${_hlNum(r.binsDesp)}</strong></span><span>Saldo <strong class="${saldo<0?'neg':''}">${_hlNum(saldo)}</strong></span></div></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button><button class="btn secondary" onclick="_hlCopiarResumen(${r.temporada},${JSON.stringify(r.variedad||'todas').replace(/"/g,'&quot;')})"><i data-lucide="copy"></i>Copiar</button></div>`);
+  lucideInit();
+}
+/* Texto breve para WhatsApp / correo */
+async function _hlCopiarResumen(temporada,variedad){
+  const [logs,bins]=await Promise.all([getAll('harvestlogs'),getAll('binlogs')]);
+  const r=_hlComputeResumen(logs,bins,temporada,variedad);if(!r)return;
+  let t=`*Cosecha ${r.temporada}${(r.variedad&&r.variedad!=='todas')?' · '+r.variedad:''}*\n`;
+  t+=`${fmt(r.fechas[0])} → ${fmt(r.fechas[r.dias-1])} · ${r.dias} día${r.dias===1?'':'s'}\n`;
+  t+=`Bines: ${_hlNum(r.totB,1)} (${r.totU} despachados)`+(r.totV?` · Varas: ${_hlNum(r.totV)}`:'')+'\n';
+  if(r.prod!=null)t+=`${r.totV?'Varas':'Bines'}/${r.usaCort?'cortador':'persona'}/día: ${_hlNum(r.prod,r.totV?0:2)}\n`;
+  t+=`Cuadrilla: ${_hlNum(r.jornadas)} jornadas`+(r.puestos.length?` (${r.puestos.map(([k,v])=>`${_hlNum(v)} ${k.toLowerCase()}`).join(', ')})`:'')+'\n';
+  t+=`Bins: ${_hlNum(r.binsRec)} recibidos · ${_hlNum(r.binsDesp)} despachados · saldo ${_hlNum(r.binsRec-r.binsDesp)}\n`;
+  t+=`_Santa Ana Peonías_`;
+  navigator.clipboard.writeText(t).then(()=>toast('Resumen copiado ✓')).catch(()=>toast('No se pudo copiar','warn'));
+}
+
+/* ---- Detalle de cuadrilla (día a día, todos los puestos) ---- */
+function _hlSelTemp(logs,temporada,variedad){const enTemp=logs.filter(l=>_hlAnio(l.fecha)===temporada);return (variedad&&variedad!=='todas')?enTemp.filter(l=>l.variedad===variedad):enTemp}
+async function verDetalleCuadrilla(temporada,variedad){
+  const logs=await getAll('harvestlogs');
+  const sel=_hlSelTemp(logs,temporada,variedad).filter(l=>_hlPersonas(l)>0).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!sel.length){toast('Sin cuadrilla registrada en esta temporada','warn');return}
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const tot={};sel.forEach(l=>{if(l.puestos)Object.entries(l.puestos).forEach(([k,v])=>{if(Number(v)>0)tot[k]=(tot[k]||0)+Number(v)})});
+  const puestos=Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+  const jornadas=sel.reduce((s,l)=>s+_hlPersonas(l),0);
+  const porFecha={};sel.forEach(l=>{porFecha[l.fecha]=(porFecha[l.fecha]||0)+_hlPersonas(l)});
+  const dias=Object.keys(porFecha).length,vals=Object.values(porFecha);
+  const fechas=Object.keys(porFecha).sort();
+  const totB=sel.reduce((s,l)=>s+(Number(l.bines)||0),0),totV=sel.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="users" style="width:18px;height:18px;vertical-align:-3px"></i> Cuadrilla ${temporada}</h3>
+      <div class="hl-res-meta">${(variedad&&variedad!=='todas')?esc(variedad)+' · ':''}${fmt(fechas[0])} → ${fmt(fechas[fechas.length-1])} · ${dias} día${dias===1?'':'s'} de corte</div></div>
+    <div class="hl-res-grid">
+      <div class="hl-res"><div class="hl-res-lbl">Jornadas-persona</div><div class="hl-res-val">${_hlNum(jornadas)}</div><div class="hl-res-sub">${puestos.length} puesto${puestos.length===1?'':'s'}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Personas por día</div><div class="hl-res-val">${_hlNum(jornadas/dias,1)}</div><div class="hl-res-sub">máx ${Math.max(...vals)} · mín ${Math.min(...vals)}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">${totV?'Varas':'Bines'} / persona / día</div><div class="hl-res-val">${jornadas?_hlNum((totV||totB)/jornadas,totV?0:2):'—'}</div><div class="hl-res-sub">${_hlNum(totB,1)} bines${totV?` · ${_hlNum(totV)} varas`:''}</div></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Día a día <span>toca una fila para ver el parte</span></div>
+      <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th>${(variedad&&variedad!=='todas')?'':'<th>Variedad</th>'}<th class="n">Total</th>${puestos.map(k=>`<th class="n">${esc(k)}</th>`).join('')}<th class="n">Bines</th><th class="n">Varas</th></tr>
+      ${sel.map(l=>`<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong></td>${(variedad&&variedad!=='todas')?'':`<td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${esc(l.variedad)}</td>`}<td class="n">${_hlPersonas(l)}</td>${puestos.map(k=>`<td class="n">${(l.puestos&&Number(l.puestos[k])>0)?Number(l.puestos[k]):'<span style="color:var(--gris-m);font-weight:400">—</span>'}</td>`).join('')}<td class="n">${Number(l.bines)?_hlNum(l.bines,1):'—'}</td><td class="n">${Number(l.tallos)?_hlNum(l.tallos):'—'}</td></tr>`).join('')}
+      <tr class="hl-res-total"><td><strong>Total</strong></td>${(variedad&&variedad!=='todas')?'':'<td></td>'}<td class="n">${_hlNum(jornadas)}</td>${puestos.map(k=>`<td class="n">${_hlNum(tot[k])}</td>`).join('')}<td class="n">${_hlNum(totB,1)}</td><td class="n">${totV?_hlNum(totV):'—'}</td></tr>
+      </table></div>
+    </div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+  lucideInit();
+}
+/* ---- Detalle de un puesto (jornadas, promedio, producción por persona, día a día) ---- */
+async function verDetallePuesto(temporada,variedad,puesto){
+  if(!puesto){toast('Puesto no definido','warn');return}
+  const logs=await getAll('harvestlogs');
+  const selTodos=_hlSelTemp(logs,temporada,variedad).filter(l=>_hlPersonas(l)>0).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const pers=l=>(l.puestos&&Number(l.puestos[puesto])>0)?Number(l.puestos[puesto]):0;
+  const sel=selTodos.filter(l=>pers(l)>0);
+  if(!sel.length){toast(`Sin jornadas de ${puesto} en esta temporada`,'warn');return}
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const jorn=sel.reduce((s,l)=>s+pers(l),0);
+  const jornTotal=selTodos.reduce((s,l)=>s+_hlPersonas(l),0);
+  const porFecha={};sel.forEach(l=>{porFecha[l.fecha]=(porFecha[l.fecha]||0)+pers(l)});
+  const dias=Object.keys(porFecha).length,vals=Object.values(porFecha),fechas=Object.keys(porFecha).sort();
+  const maxPers=Math.max(...sel.map(pers));
+  const totB=sel.reduce((s,l)=>s+(Number(l.bines)||0),0),totV=sel.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+  const usaVaras=totV>0;
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="user-round" style="width:18px;height:18px;vertical-align:-3px"></i> ${esc(puesto)} · ${temporada}</h3>
+      <div class="hl-res-meta">${(variedad&&variedad!=='todas')?esc(variedad)+' · ':''}${fmt(fechas[0])} → ${fmt(fechas[fechas.length-1])} · ${dias} día${dias===1?'':'s'} con ${esc(puesto.toLowerCase())}${selTodos.length>sel.length?` (${selTodos.length-sel.length} sin)`:''}</div></div>
+    <div class="hl-res-grid">
+      <div class="hl-res"><div class="hl-res-lbl">Jornadas</div><div class="hl-res-val">${_hlNum(jorn)}</div><div class="hl-res-sub">${jornTotal?Math.round(jorn/jornTotal*100):0}% de la cuadrilla</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Por día</div><div class="hl-res-val">${_hlNum(jorn/dias,1)}</div><div class="hl-res-sub">máx ${Math.max(...vals)} · mín ${Math.min(...vals)}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">${usaVaras?'Varas':'Bines'} / persona / día</div><div class="hl-res-val">${_hlNum((usaVaras?totV:totB)/jorn,usaVaras?0:2)}</div><div class="hl-res-sub">${usaVaras?`${_hlNum(totV)} varas`:`${_hlNum(totB,1)} bines`} en ${_hlNum(jorn)} jornadas</div></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Día a día <span>toca una fila para ver el parte</span></div>
+      <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th>${(variedad&&variedad!=='todas')?'':'<th>Variedad</th>'}<th class="n">${esc(puesto)}</th><th class="bar"></th><th class="n">% cuadrilla</th><th class="n">Bines</th><th class="n">Varas</th><th class="n">${usaVaras?'Varas':'Bines'}/pers.</th></tr>
+      ${sel.map(l=>{const n=pers(l),tp=_hlPersonas(l),b=Number(l.bines)||0,t=Number(l.tallos)||0;const pr=usaVaras?(t?t/n:null):(b?b/n:null);return `<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong></td>${(variedad&&variedad!=='todas')?'':`<td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${esc(l.variedad)}</td>`}<td class="n">${n}</td><td class="bar"><div style="width:${Math.round(n/maxPers*100)}%"></div></td><td class="n" style="font-weight:400;color:var(--gris)">${tp?Math.round(n/tp*100):0}%</td><td class="n">${b?_hlNum(b,1):'—'}</td><td class="n">${t?_hlNum(t):'—'}</td><td class="n">${pr!=null?_hlNum(pr,usaVaras?0:2):'—'}</td></tr>`}).join('')}
+      <tr class="hl-res-total"><td><strong>Total</strong></td>${(variedad&&variedad!=='todas')?'':'<td></td>'}<td class="n">${_hlNum(jorn)}</td><td></td><td class="n" style="font-weight:400;color:var(--gris)">${jornTotal?Math.round(jorn/jornTotal*100):0}%</td><td class="n">${_hlNum(totB,1)}</td><td class="n">${totV?_hlNum(totV):'—'}</td><td class="n">${_hlNum((usaVaras?totV:totB)/jorn,usaVaras?0:2)}</td></tr>
+      </table></div>
+    </div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button><button class="btn secondary" onclick="verDetalleCuadrilla(${temporada},${JSON.stringify(variedad||'todas').replace(/"/g,'&quot;')})"><i data-lucide="users"></i>Toda la cuadrilla</button></div>`);
+  lucideInit();
+}
+
+/* ---- Puestos de la cuadrilla (configurables) ---- */
+async function editHarvestPuestos(){
+  const puestos=await getHarvestPuestos();
+  openModal(`<h3><i data-lucide="users" style="width:18px;height:18px;vertical-align:-3px"></i> Puestos de la cuadrilla</h3>
+    <div style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Define los puestos que usas en cosecha. En cada parte diario anotas cuántas personas hubo por puesto. El puesto cuyo nombre contenga <strong>"cort"</strong> se usa para la productividad por cortador.</div>
+    <div id="hl-puestos-list">${puestos.map(p=>_hlPuestoRow(p)).join('')}</div>
+    <button class="btn small ghost" style="margin-top:6px" onclick="_hlAgregarPuestoRow()"><i data-lucide="plus"></i>Agregar puesto</button>
+    <div class="modal-actions"><button class="btn ghost" onclick="_hlVolverDePuestos()">Cancelar</button><button class="btn" onclick="saveHarvestPuestos()"><i data-lucide="check"></i>Guardar</button></div>`);
+  lucideInit();
+}
+function _hlPuestoRow(v){return `<div class="hl-puesto-row"><input value="${String(v||'').replace(/"/g,'&quot;')}" placeholder="Nombre del puesto (ej. Cortadores)"><button class="btn small danger" title="Quitar" onclick="this.closest('.hl-puesto-row').remove()"><i data-lucide="x"></i></button></div>`}
+function _hlAgregarPuestoRow(){const list=document.getElementById('hl-puestos-list');list.insertAdjacentHTML('beforeend',_hlPuestoRow(''));lucideInit();const inp=list.querySelector('.hl-puesto-row:last-child input');if(inp)inp.focus()}
+async function saveHarvestPuestos(){
+  const arr=[...new Set(Array.from(document.querySelectorAll('#hl-puestos-list input')).map(i=>i.value.trim()).filter(Boolean))];
+  if(!arr.length){toast('Agrega al menos un puesto','warn');return}
+  try{await put('config',{id:'harvest',puestos:arr})}catch(e){console.error(e);toast('Error al guardar: '+(e.message||e.code||''),'warn');return}
+  toast('Puestos guardados');
+  _hlVolverDePuestos();
+}
+function _hlVolverDePuestos(){const d=window._hlDraft;window._hlDraft=null;if(d){editHarvestLog(d.id,d.data)}else{closeModal();if(typeof currentPage!=='undefined'&&currentPage==='harvestlog')renderHarvestLog()}}
+
+/* ---- Bins vacíos recibidos en el huerto ---- */
+async function editBinLog(id){
+  const bins=await getAll('binlogs');
+  const ultimo=[...bins].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))[0];
+  const b=id?await get('binlogs',id):{fecha:today(),cantidad:'',origen:ultimo?.origen||'',notas:''};
+  if(!b){toast('Recepción no encontrada','warn');return}
+  const esc=s=>String(s||'').replace(/"/g,'&quot;');
+  openModal(`<h3><i data-lucide="package-plus" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} bins vacíos recibidos</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha *</label><input id="f-bl-fecha" type="date" value="${b.fecha||''}"></div>
+      <div class="form-row"><label>Cantidad de bins *</label><input id="f-bl-cant" type="number" min="0" step="1" inputmode="numeric" value="${b.cantidad==null?'':b.cantidad}" placeholder="ej. 20" class="hl-big"></div>
+      <div class="form-row" style="grid-column:1/-1"><label>Origen <small style="color:var(--gris);font-weight:400">(exportador / transporte)</small></label><input id="f-bl-origen" value="${esc(b.origen)}" placeholder="ej. South Peonies · camión 2"></div>
+    </div>
+    <div class="form-row"><label>Notas</label><textarea id="f-bl-notas" rows="2" placeholder="ej. 2 bins con daño · guía N° 1234">${b.notas||''}</textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveBinLog(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
+  lucideInit();
+  setTimeout(()=>document.getElementById('f-bl-cant')?.focus(),50);
+}
+async function saveBinLog(id){
+  const data={fecha:document.getElementById('f-bl-fecha').value||null,cantidad:parseInt(document.getElementById('f-bl-cant').value,10),origen:document.getElementById('f-bl-origen').value.trim(),notas:document.getElementById('f-bl-notas').value.trim()};
+  if(!data.fecha){toast('Fecha requerida','warn');return}
+  if(isNaN(data.cantidad)||data.cantidad<=0){toast('Cantidad de bins requerida','warn');return}
+  try{
+    if(id){data.id=id;await put('binlogs',data)}
+    else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('binlogs',data)}
+  }catch(e){console.error('saveBinLog falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
+  closeModal();toast('Recepción de bins guardada');if(typeof currentPage!=='undefined'&&currentPage==='harvestlog')renderHarvestLog();
+}
+async function delBinLog(id){if(!confirm('¿Eliminar esta recepción de bins?'))return;await del('binlogs',id);toast('Eliminado');renderHarvestLog()}
+
 /* Sincroniza los totales del diario con "Fecha de Cosecha": por variedad de la temporada,
-   crea/actualiza el registro tipo cosecha con primer corte = min fecha, tallos = suma, % export si hay.
+   crea/actualiza el registro tipo cosecha con primer corte = min fecha, varas = suma, bines = suma, % export si hay.
    NO toca el último corte (lo cierra el usuario cuando termina). */
 async function syncHarvestLogToSeason(temporada){
   const [logs,harvests]=await Promise.all([getAll('harvestlogs'),getAll('harvests')]);
-  const enTemp=logs.filter(l=>parseLocalDate(l.fecha)?.getFullYear()===temporada);
+  const enTemp=logs.filter(l=>_hlAnio(l.fecha)===temporada);
   const vars=[...new Set(enTemp.map(l=>l.variedad))];
   let creados=0,actualizados=0;
   for(const v of vars){
     const ls=enTemp.filter(l=>l.variedad===v);
     const tallos=ls.reduce((s,l)=>s+(Number(l.tallos)||0),0);
+    const bines=ls.reduce((s,l)=>s+(Number(l.bines)||0),0);
     const exp=ls.reduce((s,l)=>s+(Number(l.tallosExport)||0),0);
     const fechaMin=ls.map(l=>l.fecha).sort()[0];
     const cuarteles=[...new Set(ls.flatMap(l=>l.cuarteles||[]))];
     const existente=harvests.find(h=>h.variedad===v&&h.temporada===temporada&&(h.tipo||'cosecha')==='cosecha');
-    const patch={tipo:'cosecha',temporada,variedad:v,fechaInicio:fechaMin,tallos,pctExportable:exp?Math.round(exp/tallos*100):null,cuarteles};
+    const patch={tipo:'cosecha',temporada,variedad:v,fechaInicio:fechaMin,tallos:tallos||null,bines:bines||null,pctExportable:(exp&&tallos)?Math.round(exp/tallos*100):null,cuarteles};
     if(existente){await put('harvests',{id:existente.id,...patch});actualizados++}
     else{await add('harvests',{...patch,fechaPeak:null,fechaFin:null,estadoCorte:'marshmallow',notas:'Creado desde Cosecha diaria',createdBy:CURRENT_USER,createdAt:new Date().toISOString()});creados++}
   }
