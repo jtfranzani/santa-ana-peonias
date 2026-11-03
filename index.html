@@ -101,6 +101,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .hl-puestos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .hl-puesto label{display:block;font-size:11.5px;color:var(--texto-m);margin-bottom:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl-puesto input{width:100%;padding:8px 10px;font-size:16px;font-weight:700;text-align:center}
+.hl-pers-total2{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1px dashed var(--gris-l);font-size:13px;color:var(--texto-m);text-align:right}
+.hl-pers-total2 strong{font-size:16px;color:var(--verde-d)}
 .hl-puesto-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .hl-puesto-row input{flex:1}
 .hl-bins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
@@ -1378,7 +1380,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.87';
+const APP_VERSION='2026.05.18.89';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -6895,15 +6897,15 @@ async function renderHarvestLog(){
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="package"></i>Bins ${_hlTemp} <span class="hl-key ${binsEnCamara<0?'neg':''}">${_hlNum(binsEnCamara)} en cámara</span>${binsEnHuerto>0?`<span class="hl-key" style="background:#fef3c7;color:#b45309">${_hlNum(binsEnHuerto)} en huerto</span>`:''}</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small secondary" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Recepción</button><button class="btn small ghost" onclick="quickBinsCosechados()" title="Bins cosechados"><i data-lucide="scissors"></i>Cosechados</button><button class="btn small ghost" onclick="quickEntregaCamara()" title="Bins que van a cámara"><i data-lucide="snowflake"></i>Entrega</button><button class="btn small" onclick="editBinLog(null,'despacho')"><i data-lucide="truck"></i>Despacho</button></div></div>
         <div class="hl-flow2">
-          <div class="hl-st ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsSaldo<0?' · faltan recepciones':''}</i></div>
+          <div class="hl-st hl-click-card ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}" onclick="verTrazabilidadBins('vacios')" title="Ver trazabilidad"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsSaldo<0?' · faltan recepciones':''}</i></div>
           <div class="hl-arr"><i data-lucide="scissors"></i></div>
-          <div class="hl-st hl-click-card" onclick="verResumenCosecha(_hlTemp,'todas')" title="Suma de los partes diarios"><span>Cosechados</span><b>${_hlNum(binsLlenados)} <small>bins</small></b><i>${diasTemp} día${diasTemp===1?'':'s'}${binsLlenados!==binsLlenadosTemp?` · ${_hlNum(binsLlenadosTemp,1)} bines`:''}</i></div>
+          <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('cosechados')" title="Ver trazabilidad"><span>Cosechados</span><b>${_hlNum(binsLlenados)} <small>bins</small></b><i>${diasTemp} día${diasTemp===1?'':'s'}${binsLlenados!==binsLlenadosTemp?` · ${_hlNum(binsLlenadosTemp,1)} bines`:''}</i></div>
           <div class="hl-arr"><i data-lucide="arrow-right"></i></div>
-          <div class="hl-st ${binsEnHuerto>0?'warn hl-click-card':''}" ${binsEnHuerto>0?'onclick="quickEntregaCamara()" title="Registrar entrega a cámara"':''}><span>Llenos en huerto</span><b>${_hlNum(binsEnHuerto)} <small>bins</small></b><i>${binsEnHuerto>0?'por trasladar a cámara':'todo trasladado'}</i></div>
+          <div class="hl-st hl-click-card ${binsEnHuerto>0?'warn':''}" onclick="verTrazabilidadBins('huerto')" title="Ver trazabilidad"><span>Llenos en huerto</span><b>${_hlNum(binsEnHuerto)} <small>bins</small></b><i>${binsEnHuerto>0?'por trasladar a cámara':'todo trasladado'}</i></div>
           <div class="hl-arr"><i data-lucide="snowflake"></i></div>
-          <div class="hl-st ${binsEnCamara<0?'neg':''}"><span>En cámara de frío</span><b>${_hlNum(binsEnCamara)} <small>bins</small></b><i>${binsEnCamara<0?'revisa despachos':`${_hlNum(binsEntregados)} entregados − packing`}</i></div>
+          <div class="hl-st hl-click-card ${binsEnCamara<0?'neg':''}" onclick="verTrazabilidadBins('camara')" title="Ver trazabilidad"><span>En cámara de frío</span><b>${_hlNum(binsEnCamara)} <small>bins</small></b><i>${binsEnCamara<0?'revisa despachos':`${_hlNum(binsEntregados)} entregados − packing`}</i></div>
           <div class="hl-arr"><i data-lucide="truck"></i></div>
-          <div class="hl-st"><span>Packing</span><b>${_hlNum(binsDespachados)} <small>bins</small></b><i>${despachos.length} despacho${despachos.length===1?'':'s'}</i></div>
+          <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')" title="Ver trazabilidad"><span>Packing</span><b>${_hlNum(binsDespachados)} <small>bins</small></b><i>${despachos.length} despacho${despachos.length===1?'':'s'}</i></div>
         </div>
         ${binsTemp.length?fold('bins',`${binsTemp.length} movimiento${binsTemp.length===1?'':'s'}`)+foldBody('bins',`<div class="hl-mov-list">${binsTemp.map(movCard).join('')}</div><div class="table-scroll hl-mov-table"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th>Movimiento</th><th style="text-align:right">Bins</th><th>Origen / destino</th><th>Notas</th><th>Guía</th><th></th></tr></thead><tbody>${binsTemp.map(b=>{const desp=b.tipo==='despacho';return `<tr class="hl-row-click" onclick="verBinLog('${b.id}')" title="Ver detalle del movimiento"><td><strong>${fmt(b.fecha)}</strong></td><td>${desp?'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Packing</span>':'<span class="tag ok">Vacíos recibidos</span>'}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'—'}</td><td style="font-size:12px;color:var(--gris-d);max-width:220px">${b.notas||'—'}</td><td>${b.archivo?`<button class="btn small ghost" onclick="event.stopPropagation();verBinArchivo('${b.id}')" title="${(b.archivoNombre||'Ver guía').replace(/"/g,'&quot;')}"><i data-lucide="${b.archivoTipo==='application/pdf'?'file-text':'image'}"></i>Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join('')}</tbody></table></div>`):`<div class="hl-foot-note">Registra la recepción de bins vacíos para llevar el saldo del huerto.</div>`}
       </div>
@@ -6977,6 +6979,7 @@ async function editHarvestLog(id,draft){
     </div>
     <div class="hl-sec"><div class="hl-sec-t"><i data-lucide="users"></i>Cuadrilla por puesto <a class="hl-link" onclick="_hlEditarPuestosDesdeForm(${id?`'${id}'`:'null'})">editar puestos</a><span class="hl-total" id="f-hl-pers-total">${totalPers} persona${totalPers===1?'':'s'}</span></div>
       <div class="hl-puestos">${lista.map((k,i)=>`<div class="hl-puesto"><label for="f-hl-p-${i}">${esc(k)}</label><div class="hl-stepper sm"><button type="button" onclick="_hlStep('f-hl-p-${i}',-1)" aria-label="menos">−</button><input id="f-hl-p-${i}" class="f-hl-puesto" data-puesto="${esc(k)}" type="number" min="0" step="1" inputmode="numeric" value="${val(pv[k])}" placeholder="0" oninput="_hlSumPuestos()"><button type="button" onclick="_hlStep('f-hl-p-${i}',1)" aria-label="más">+</button></div></div>`).join('')}</div>
+      <div class="hl-pers-total2" id="f-hl-pers-total2">Total cuadrilla: <strong>${totalPers}</strong> persona${totalPers===1?'':'s'}</div>
     </div>
     <div class="form-row" style="margin-top:12px"><label>Cuarteles</label>
       <div class="checkbox-grid">${blocks.filter(b=>b.variedad!=='—').map(b=>`<div class="check-item"><input type="checkbox" id="cbhl-${b.id}" class="f-hl-chk" data-var="${esc(b.variedad)}" value="${esc(b.nombre)}" ${(l.cuarteles||[]).includes(b.nombre)?'checked':''}><label for="cbhl-${b.id}">${b.nombre}</label></div>`).join('')}</div>
@@ -6984,7 +6987,7 @@ async function editHarvestLog(id,draft){
     <div class="form-row"><label>Observaciones <small style="color:var(--gris);font-weight:400">(clima, estado del botón, problemas)</small></label><textarea id="f-hl-notas" rows="2" placeholder="ej. Mañana fría, botón parejo en marshmallow. Sector 2 más adelantado.">${l.notas||''}</textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveHarvestLog(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
   window._hlListas={cortes:(Array.isArray(l.cortes)?l.cortes:[]).map(v=>({hora:v.hora||'',bines:v.bines??'',nota:v.nota||''})),viajes:(Array.isArray(l.viajes)?l.viajes:[]).map(v=>({hora:v.hora||'',bines:v.bines??'',nota:v.nota||''}))};
-  _hlListaRender('cortes');_hlListaRender('viajes');
+  _hlListaRender('cortes');_hlListaRender('viajes');_hlSumPuestos();
   if(!id&&!draft&&!(l.cuarteles||[]).length)_hlSugerirCuarteles();
   lucideInit();
   setTimeout(()=>document.getElementById(window._hlListas.cortes.length?'f-hl-tallos':'f-hl-bines')?.focus(),50);
@@ -7058,6 +7061,60 @@ async function saveMovimientoDia(){
   toast(esCorte?`Cosecha registrada · ${_hlNum(bines,1)} bins`:`Entrega registrada · ${_hlNum(bines,1)} bins a cámara${autoCosecha>0?` (${_hlNum(autoCosecha,1)} anotados como cosechados)`:''}`);
   if(typeof currentPage!=='undefined'&&currentPage==='harvestlog')renderHarvestLog();
 }
+/* ---- Trazabilidad de bins por etapa: libro de movimientos con saldo ----
+   Eventos: recepción (+vacíos), cosecha (−vacíos, +cosechados, +llenos en huerto), entrega (−huerto, +cámara),
+   despacho (−cámara, +packing). Cada fila abre el parte o el movimiento de origen. */
+function _hlEventosBins(logs,bins,temporada){
+  const ev=[];
+  bins.filter(b=>_hlAnio(b.fecha)===temporada).forEach(b=>{
+    const desp=b.tipo==='despacho';
+    ev.push({fecha:b.fecha,hora:'',orden:desp?'23:59':'00:00',k:desp?'despacho':'recepcion',n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
+  });
+  logs.filter(l=>_hlAnio(l.fecha)===temporada).forEach(l=>{
+    const cortes=(l.cortes||[]).filter(c=>Number(c.bines)>0),viajes=(l.viajes||[]).filter(v=>Number(v.bines)>0);
+    if(cortes.length)cortes.forEach(c=>ev.push({fecha:l.fecha,hora:c.hora||'',orden:c.hora||'12:00',k:'cosecha',n:Math.ceil(Number(c.bines)-1e-9),bines:Number(c.bines),txt:`${l.variedad}${c.nota?' · '+c.nota:''}`,ref:['parte',l.id]}));
+    else if(Number(l.bines)>0)ev.push({fecha:l.fecha,hora:'',orden:'12:00',k:'cosecha',n:_hlUnidades(l),bines:Number(l.bines),txt:`${l.variedad} · total del día`,ref:['parte',l.id]});
+    if(viajes.length)viajes.forEach(v=>ev.push({fecha:l.fecha,hora:v.hora||'',orden:v.hora||'12:30',k:'entrega',n:Math.ceil(Number(v.bines)-1e-9),bines:Number(v.bines),txt:`${l.variedad}${v.nota?' · '+v.nota:''}`,ref:['parte',l.id]}));
+    else if(!cortes.length&&Number(l.bines)>0)ev.push({fecha:l.fecha,hora:'',orden:'23:00',k:'entrega',n:_hlUnidades(l),bines:Number(l.bines),txt:`${l.variedad} · parte simple (se asume entregado el mismo día)`,ref:['parte',l.id]});
+  });
+  ev.sort((a,b)=>(a.fecha+a.orden).localeCompare(b.fecha+b.orden));
+  return ev;
+}
+const HL_ETAPAS_BINS={
+  vacios:{t:'Vacíos en huerto',icon:'package',d:'Bins vacíos disponibles en el huerto: entran con las recepciones y salen cuando se llenan en la cosecha.',mas:['recepcion'],menos:['cosecha']},
+  cosechados:{t:'Cosechados',icon:'scissors',d:'Bins llenados según los partes diarios. Un bin parcial cuenta como unidad física.',mas:['cosecha'],menos:[]},
+  huerto:{t:'Llenos en huerto',icon:'arrow-right',d:'Bins cosechados que aún no se trasladan a la cámara de frío.',mas:['cosecha'],menos:['entrega']},
+  camara:{t:'En cámara de frío',icon:'snowflake',d:'Entran con las entregas desde el huerto y salen con los despachos a packing.',mas:['entrega'],menos:['despacho']},
+  packing:{t:'Despachados a packing',icon:'truck',d:'Bins enviados al packing según los despachos registrados, con su guía.',mas:['despacho'],menos:[]}
+};
+async function verTrazabilidadBins(etapa){
+  const cfg=HL_ETAPAS_BINS[etapa];if(!cfg)return;
+  const [logs,bins]=await Promise.all([getAll('harvestlogs'),getAll('binlogs')]);
+  const temporada=_hlTemp||new Date().getFullYear();
+  const ev=_hlEventosBins(logs,bins,temporada).filter(e=>cfg.mas.includes(e.k)||cfg.menos.includes(e.k));
+  let saldo=0;const rows=ev.map(e=>{const signo=cfg.mas.includes(e.k)?1:-1;saldo+=signo*e.n;return {...e,signo,saldo}});
+  const totMas=rows.filter(r=>r.signo>0).reduce((s,r)=>s+r.n,0),totMenos=rows.filter(r=>r.signo<0).reduce((s,r)=>s+r.n,0);
+  const lbl={recepcion:'recepciones',cosecha:'cosechas',entrega:'entregas a cámara',despacho:'despachos a packing'};
+  const tag={recepcion:'<span class="tag ok">Recepción</span>',cosecha:'<span class="tag" style="background:#fce7f3;color:#9d174d">Cosecha</span>',entrega:'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Cámara</span>',despacho:'<span class="tag" style="background:#ede9fe;color:#5b21b6">→ Packing</span>'};
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const abrir=r=>r.ref[0]==='bin'?`verBinLog('${r.ref[1]}')`:`verParteCosecha('${r.ref[1]}')`;
+  const nMas=rows.filter(r=>r.signo>0).length,nMenos=rows.filter(r=>r.signo<0).length;
+  const otros=Object.keys(HL_ETAPAS_BINS).filter(k=>k!==etapa);
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="${cfg.icon}" style="width:18px;height:18px;vertical-align:-3px"></i> ${cfg.t} · ${temporada}</h3><div class="hl-res-meta">${cfg.d}</div></div>
+    <div class="hl-res-grid">
+      <div class="hl-res"><div class="hl-res-lbl">Entradas</div><div class="hl-res-val" style="color:var(--verde-d)">+${_hlNum(totMas)}</div><div class="hl-res-sub">${nMas} ${cfg.mas.map(k=>lbl[k]).join(' / ')}</div></div>
+      ${cfg.menos.length?`<div class="hl-res"><div class="hl-res-lbl">Salidas</div><div class="hl-res-val" style="color:var(--alerta)">−${_hlNum(totMenos)}</div><div class="hl-res-sub">${nMenos} ${cfg.menos.map(k=>lbl[k]).join(' / ')}</div></div>`:''}
+      <div class="hl-res" ${cfg.menos.length?'':'style="grid-column:span 2"'}><div class="hl-res-lbl">${cfg.menos.length?'Saldo actual':'Total'}</div><div class="hl-res-val">${_hlNum(saldo)} <small style="font-size:12px;color:var(--gris)">bins</small></div><div class="hl-res-sub">${rows.length} movimiento${rows.length===1?'':'s'}</div></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Movimientos <span>más reciente primero · toca una fila para ver el origen</span></div>
+      <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th><th>Hora</th><th>Movimiento</th><th class="n">Bins</th><th class="n">${cfg.menos.length?'Saldo':'Acumulado'}</th><th>Detalle</th></tr>
+      ${rows.length?rows.slice().reverse().map(r=>`<tr class="hl-row-click" onclick="${abrir(r)}"><td style="white-space:nowrap"><strong>${fmt(r.fecha)}</strong></td><td>${r.hora||'<span style="color:var(--gris-m)">—</span>'}</td><td>${tag[r.k]}</td><td class="n" style="color:${r.signo>0?'var(--verde-d)':'var(--alerta)'}">${r.signo>0?'+':'−'}${_hlNum(r.n)}${(r.bines&&r.bines!==r.n)?` <small style="color:var(--gris);font-weight:400">(${_hlNum(r.bines,1)})</small>`:''}</td><td class="n">${_hlNum(r.saldo)}</td><td style="color:var(--gris-d)">${esc(r.txt)}${r.guia?' <span title="Con guía adjunta">📎</span>':''}</td></tr>`).join(''):'<tr><td colspan="6" style="color:var(--gris);padding:14px 6px">Sin movimientos en esta temporada.</td></tr>'}
+      </table></div>
+    </div>
+    <div class="hl-res-sec"><div class="hl-res-sec-t">Otras etapas</div><div style="display:flex;gap:6px;flex-wrap:wrap">${otros.map(k=>`<span class="chip" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="verTrazabilidadBins('${k}')">${HL_ETAPAS_BINS[k].t}</span>`).join('')}</div></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+  lucideInit();
+}
 /* ---- Editor de listas del parte (cortes y entregas) ---- */
 function _hlListaRender(k){
   const box=document.getElementById(k==='cortes'?'f-hl-cortes':'f-hl-viajes');if(!box)return;
@@ -7086,6 +7143,11 @@ function _hlListaAdd(k){const L=window._hlListas||(window._hlListas={cortes:[],v
 function _hlListaSet(k,i,f,v){const arr=(window._hlListas||{})[k]||[];if(!arr[i])return;arr[i][f]=v;if(f==='bines')_hlListasSync()}
 function _hlListaStep(k,i,d){const arr=(window._hlListas||{})[k]||[];if(!arr[i])return;const cur=parseFloat(String(arr[i].bines||'0').replace(',','.'))||0;arr[i].bines=Math.max(0,Math.round((cur+d)*100)/100);_hlListaRender(k)}
 function _hlListaDel(k,i){const arr=(window._hlListas||{})[k]||[];arr.splice(i,1);_hlListaRender(k)}
+/* Stepper − / + para bines (0,5), personas por puesto (1) y otros campos numéricos. Nunca baja de 0. */
+function _hlStep(id,delta){const i=document.getElementById(id);if(!i)return;const cur=parseFloat(String(i.value||'0').replace(',','.'))||0;let v=Math.max(0,cur+delta);v=Math.round(v*100)/100;i.value=String(v);if(i.classList.contains('f-hl-puesto'))_hlSumPuestos();if(id==='f-hl-bines'&&typeof _hlListasSync==='function')_hlListasSync();if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}}
+/* Suma en vivo de la cuadrilla (cabecera de la sección y línea de total al pie de los puestos) */
+function _hlSumPuestos(){let s=0;document.querySelectorAll('.f-hl-puesto').forEach(i=>{s+=parseInt(i.value,10)||0});const txt=`${s} persona${s===1?'':'s'}`;const el=document.getElementById('f-hl-pers-total');if(el)el.textContent=txt;const el2=document.getElementById('f-hl-pers-total2');if(el2)el2.innerHTML=`Total cuadrilla: <strong>${s}</strong> persona${s===1?'':'s'}`}
+function _hlEditarPuestosDesdeForm(id){window._hlDraft={id,data:_hlCollectForm()};editHarvestPuestos()}
 function _hlSugerirCuarteles(){
   const v=document.getElementById('f-hl-var')?.value;if(!v)return;
   document.querySelectorAll('.f-hl-chk').forEach(c=>{c.checked=(c.getAttribute('data-var')===v)});
