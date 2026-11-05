@@ -102,6 +102,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .hl-puesto label{display:block;font-size:11.5px;color:var(--texto-m);margin-bottom:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl-puesto input{width:100%;padding:8px 10px;font-size:16px;font-weight:700;text-align:center}
 .hl-pers-total2{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1px dashed var(--gris-l);font-size:13px;color:var(--texto-m);text-align:right}
+.card .rt-switch{min-height:36px;padding:6px 10px}
+.card .rt-switch input{width:16px;height:16px}
 .hl-pers-total2 strong{font-size:16px;color:var(--verde-d)}
 .hl-puesto-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .hl-puesto-row input{flex:1}
@@ -1286,6 +1288,7 @@ tr.fila-carencia{background:linear-gradient(90deg,#fffbeb,transparent)}
       <div class="nav-section">Cosecha</div>
       <a onclick="nav('harvestlog')" id="nav-harvestlog"><i data-lucide="flower-2"></i><span>Cosecha diaria</span></a>
       <a onclick="nav('harvests')" id="nav-harvests"><i data-lucide="calendar-range"></i><span>Fecha de Cosecha</span></a>
+      <a onclick="nav('bins')" id="nav-bins"><i data-lucide="package"></i><span>Bins</span></a>
       <a onclick="nav('rentals')" id="nav-rentals"><i data-lucide="truck"></i><span>Arriendos y servicios</span></a>
       <div class="nav-section">Huerto</div>
       <a onclick="nav('blocks')" id="nav-blocks"><i data-lucide="grid-3x3"></i><span>Cuarteles</span></a>
@@ -1380,7 +1383,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.89';
+const APP_VERSION='2026.05.18.90';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -2026,7 +2029,7 @@ async function testEmailNotify(){
   toast(`Prueba enviada a ${total} usuario${total===1?'':'s'} (incluido tú) ✓`);
 }
 /* ============ NAVIGATION ============ */
-const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,calendar:renderCalendar,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,harvests:renderHarvests,harvestlog:renderHarvestLog,rentals:renderRentals,prices:renderPrices,reports:renderReports,settings:renderSettings};
+const PAGES={dashboard:renderDashboard,blocks:renderBlocks,weather:renderWeather,photopoints:renderPhotoPoints,photos:renderPhotos,compare:renderCompare,calendar:renderCalendar,tasks:renderTasks,applications:renderApplications,inventory:renderInventory,studies:renderStudies,advisors:renderAdvisors,harvests:renderHarvests,harvestlog:renderHarvestLog,bins:renderBins,rentals:renderRentals,prices:renderPrices,reports:renderReports,settings:renderSettings};
 let currentPage='dashboard';
 function lucideInit(){try{if(window.lucide)window.lucide.createIcons();}catch(e){}}
 /* Sidebar móvil */
@@ -6769,6 +6772,9 @@ const _hlUnidades=l=>{if(Array.isArray(l.cortes)&&l.cortes.length)return _hlUnid
 const _hlEntregadosUnid=l=>{if(Array.isArray(l.viajes)&&l.viajes.length)return _hlUnidLista(l.viajes);if(Array.isArray(l.cortes)&&l.cortes.length)return 0;return _hlUnidades(l)};
 const _hlEntregadosBines=l=>{if(Array.isArray(l.viajes)&&l.viajes.length)return _hlViajesSum(l.viajes);if(Array.isArray(l.cortes)&&l.cortes.length)return 0;return _hlBinesDia(l)};
 const _hlPendienteUnid=l=>Math.max(0,_hlUnidades(l)-_hlEntregadosUnid(l));
+/* Tipos de movimiento de bins: recepcion (vacíos que llegan del arrendador), devolucion (vacíos que vuelven al arrendador), despacho (llenos a packing) */
+const _hlMovTag=(b,ml)=>{const st=ml?'margin-left:8px;':'';const t=b.tipo||'recepcion';return t==='despacho'?`<span class="tag" style="background:#dbeafe;color:#1e40af;${st}">→ Packing</span>`:(t==='devolucion'?`<span class="tag" style="background:#fef3c7;color:#92400e;${st}">↩ Devolución</span>`:`<span class="tag ok" style="${st}">Vacíos recibidos</span>`)};
+const _hlMovNombre=b=>{const t=b.tipo||'recepcion';return t==='despacho'?'Despacho a packing':(t==='devolucion'?'Devolución de bins vacíos':'Recepción de bins vacíos')};
 
 async function renderHarvestLog(){
   const [logs,blocks,bins]=await Promise.all([getAll('harvestlogs'),getAll('blocks'),getAll('binlogs')]);
@@ -6817,7 +6823,9 @@ async function renderHarvestLog(){
   const binsDespachados=despachos.reduce((s,b)=>s+(Number(b.cantidad)||0),0); /* unidades que salieron de cámara a packing */
   const binsEnCamara=binsEntregados-binsDespachados;
   const diasTemp=[...new Set(enTemp.map(l=>l.fecha))].length;
-  const binsSaldo=binsRecibidos-binsLlenados;                             /* vacíos disponibles en el huerto */
+  const devoluciones=binsTemp.filter(b=>b.tipo==='devolucion');
+  const binsDevueltos=devoluciones.reduce((s,b)=>s+(Number(b.cantidad)||0),0);
+  const binsSaldo=binsRecibidos-binsLlenados-binsDevueltos;               /* vacíos disponibles en el huerto */
   /* Cuadrilla acumulada: jornadas-persona (suma de personas de cada parte), por puesto y por día */
   const jornadas=filt.reduce((s,l)=>s+_hlPersonas(l),0);
   const porFechaPers={};filt.forEach(l=>{const p=_hlPersonas(l);if(p>0)porFechaPers[l.fecha]=(porFechaPers[l.fecha]||0)+p});
@@ -6863,7 +6871,7 @@ async function renderHarvestLog(){
       </div>`};
   const puestosCols=puestosArr.map(([k])=>k);
   /* Movimientos de bins en formato lista (móvil) */
-  const movCard=b=>{const desp=b.tipo==='despacho';return `<div class="hl-mov" onclick="verBinLog('${b.id}')"><div class="hl-mov-l"><strong>${fmt(b.fecha)}</strong><div>${desp?'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Packing</span>':'<span class="tag ok">Vacíos recibidos</span>'}</div></div><div class="hl-mov-m"><div>${b.origen||'—'}</div>${b.notas?`<small>${b.notas}</small>`:''}</div><div class="hl-mov-r"><b>${_hlNum(b.cantidad)}</b><small>bins</small>${b.archivo?'<span title="Con guía">📎</span>':''}</div></div>`};
+  const movCard=b=>{const desp=b.tipo==='despacho';return `<div class="hl-mov" onclick="verBinLog('${b.id}')"><div class="hl-mov-l"><strong>${fmt(b.fecha)}</strong><div>${_hlMovTag(b)}</div></div><div class="hl-mov-m"><div>${b.origen||'—'}</div>${b.notas?`<small>${b.notas}</small>`:''}</div><div class="hl-mov-r"><b>${_hlNum(b.cantidad)}</b><small>bins</small>${b.archivo?'<span title="Con guía">📎</span>':''}</div></div>`};
   document.getElementById('main').innerHTML=`
     <div class="page-header"><div><h2>Cosecha diaria</h2><div class="sub">Parte diario de cosecha · bines, varas, cuadrilla por puesto y bins · <a onclick="nav('harvests')" style="color:var(--verde-d);cursor:pointer;font-weight:600">ver fechas por temporada →</a></div></div>
     <div class="actions hl-actions"><button class="btn secondary hl-btn-sec" onclick="quickBinsCosechados()" title="Anotar bins cosechados a cualquier hora del día"><i data-lucide="scissors"></i>Bins cosechados</button><button class="btn secondary hl-btn-sec" onclick="quickEntregaCamara()" title="Registrar bins que van a la cámara"><i data-lucide="snowflake"></i>Entrega a cámara</button><button class="btn ghost hl-btn-sec" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Bins recibidos</button><button class="btn hl-btn-new" onclick="editHarvestLog()"><i data-lucide="plus"></i>Registrar día</button></div></div>
@@ -6897,7 +6905,7 @@ async function renderHarvestLog(){
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="package"></i>Bins ${_hlTemp} <span class="hl-key ${binsEnCamara<0?'neg':''}">${_hlNum(binsEnCamara)} en cámara</span>${binsEnHuerto>0?`<span class="hl-key" style="background:#fef3c7;color:#b45309">${_hlNum(binsEnHuerto)} en huerto</span>`:''}</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small secondary" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Recepción</button><button class="btn small ghost" onclick="quickBinsCosechados()" title="Bins cosechados"><i data-lucide="scissors"></i>Cosechados</button><button class="btn small ghost" onclick="quickEntregaCamara()" title="Bins que van a cámara"><i data-lucide="snowflake"></i>Entrega</button><button class="btn small" onclick="editBinLog(null,'despacho')"><i data-lucide="truck"></i>Despacho</button></div></div>
         <div class="hl-flow2">
-          <div class="hl-st hl-click-card ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}" onclick="verTrazabilidadBins('vacios')" title="Ver trazabilidad"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsSaldo<0?' · faltan recepciones':''}</i></div>
+          <div class="hl-st hl-click-card ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}" onclick="verTrazabilidadBins('vacios')" title="Ver trazabilidad"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsDevueltos?` · ${_hlNum(binsDevueltos)} devueltos`:''}${binsSaldo<0?' · faltan recepciones':''}</i></div>
           <div class="hl-arr"><i data-lucide="scissors"></i></div>
           <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('cosechados')" title="Ver trazabilidad"><span>Cosechados</span><b>${_hlNum(binsLlenados)} <small>bins</small></b><i>${diasTemp} día${diasTemp===1?'':'s'}${binsLlenados!==binsLlenadosTemp?` · ${_hlNum(binsLlenadosTemp,1)} bines`:''}</i></div>
           <div class="hl-arr"><i data-lucide="arrow-right"></i></div>
@@ -6907,7 +6915,7 @@ async function renderHarvestLog(){
           <div class="hl-arr"><i data-lucide="truck"></i></div>
           <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')" title="Ver trazabilidad"><span>Packing</span><b>${_hlNum(binsDespachados)} <small>bins</small></b><i>${despachos.length} despacho${despachos.length===1?'':'s'}</i></div>
         </div>
-        ${binsTemp.length?fold('bins',`${binsTemp.length} movimiento${binsTemp.length===1?'':'s'}`)+foldBody('bins',`<div class="hl-mov-list">${binsTemp.map(movCard).join('')}</div><div class="table-scroll hl-mov-table"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th>Movimiento</th><th style="text-align:right">Bins</th><th>Origen / destino</th><th>Notas</th><th>Guía</th><th></th></tr></thead><tbody>${binsTemp.map(b=>{const desp=b.tipo==='despacho';return `<tr class="hl-row-click" onclick="verBinLog('${b.id}')" title="Ver detalle del movimiento"><td><strong>${fmt(b.fecha)}</strong></td><td>${desp?'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Packing</span>':'<span class="tag ok">Vacíos recibidos</span>'}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'—'}</td><td style="font-size:12px;color:var(--gris-d);max-width:220px">${b.notas||'—'}</td><td>${b.archivo?`<button class="btn small ghost" onclick="event.stopPropagation();verBinArchivo('${b.id}')" title="${(b.archivoNombre||'Ver guía').replace(/"/g,'&quot;')}"><i data-lucide="${b.archivoTipo==='application/pdf'?'file-text':'image'}"></i>Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join('')}</tbody></table></div>`):`<div class="hl-foot-note">Registra la recepción de bins vacíos para llevar el saldo del huerto.</div>`}
+        ${binsTemp.length?fold('bins',`${binsTemp.length} movimiento${binsTemp.length===1?'':'s'}`)+foldBody('bins',`<div class="hl-mov-list">${binsTemp.map(movCard).join('')}</div><div class="table-scroll hl-mov-table"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th>Movimiento</th><th style="text-align:right">Bins</th><th>Origen / destino</th><th>Notas</th><th>Guía</th><th></th></tr></thead><tbody>${binsTemp.map(b=>{const desp=b.tipo==='despacho';return `<tr class="hl-row-click" onclick="verBinLog('${b.id}')" title="Ver detalle del movimiento"><td><strong>${fmt(b.fecha)}</strong></td><td>${_hlMovTag(b)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'—'}</td><td style="font-size:12px;color:var(--gris-d);max-width:220px">${b.notas||'—'}</td><td>${b.archivo?`<button class="btn small ghost" onclick="event.stopPropagation();verBinArchivo('${b.id}')" title="${(b.archivoNombre||'Ver guía').replace(/"/g,'&quot;')}"><i data-lucide="${b.archivoTipo==='application/pdf'?'file-text':'image'}"></i>Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join('')}</tbody></table></div>`):`<div class="hl-foot-note">Registra la recepción de bins vacíos para llevar el saldo del huerto.</div>`}
       </div>
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0;cursor:pointer" onclick="verDetalleCuadrilla(_hlTemp,_hlVar)" title="Ver cuadrilla día a día"><i data-lucide="users"></i>Cuadrilla ${_hlTemp}${_hlVar!=='todas'?` · ${_hlVar}`:''} <span class="hl-key">${diasCuad?_hlNum(jornadas/diasCuad,1):'—'} personas/día</span><span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${_hlNum(jornadas)} jornadas en ${diasCuad} día${diasCuad===1?'':'s'}${diasCuad?` · máx ${persMax} · mín ${persMin}`:''}</span></h3><button class="btn small ghost" onclick="editHarvestPuestos()" title="Definir puestos"><i data-lucide="settings-2"></i>Puestos</button></div>
@@ -7067,8 +7075,8 @@ async function saveMovimientoDia(){
 function _hlEventosBins(logs,bins,temporada){
   const ev=[];
   bins.filter(b=>_hlAnio(b.fecha)===temporada).forEach(b=>{
-    const desp=b.tipo==='despacho';
-    ev.push({fecha:b.fecha,hora:'',orden:desp?'23:59':'00:00',k:desp?'despacho':'recepcion',n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
+    const t=b.tipo||'recepcion';
+    ev.push({fecha:b.fecha,hora:'',orden:t==='despacho'?'23:59':(t==='devolucion'?'23:30':'00:00'),k:t,n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
   });
   logs.filter(l=>_hlAnio(l.fecha)===temporada).forEach(l=>{
     const cortes=(l.cortes||[]).filter(c=>Number(c.bines)>0),viajes=(l.viajes||[]).filter(v=>Number(v.bines)>0);
@@ -7081,7 +7089,8 @@ function _hlEventosBins(logs,bins,temporada){
   return ev;
 }
 const HL_ETAPAS_BINS={
-  vacios:{t:'Vacíos en huerto',icon:'package',d:'Bins vacíos disponibles en el huerto: entran con las recepciones y salen cuando se llenan en la cosecha.',mas:['recepcion'],menos:['cosecha']},
+  vacios:{t:'Vacíos en huerto',icon:'package',d:'Bins vacíos disponibles en el huerto: entran con las recepciones y salen cuando se llenan en la cosecha o se devuelven al arrendador.',mas:['recepcion'],menos:['cosecha','devolucion']},
+  devueltos:{t:'Devueltos al arrendador',icon:'undo-2',d:'Bins vacíos devueltos a la empresa que los presta.',mas:['devolucion'],menos:[]},
   cosechados:{t:'Cosechados',icon:'scissors',d:'Bins llenados según los partes diarios. Un bin parcial cuenta como unidad física.',mas:['cosecha'],menos:[]},
   huerto:{t:'Llenos en huerto',icon:'arrow-right',d:'Bins cosechados que aún no se trasladan a la cámara de frío.',mas:['cosecha'],menos:['entrega']},
   camara:{t:'En cámara de frío',icon:'snowflake',d:'Entran con las entregas desde el huerto y salen con los despachos a packing.',mas:['entrega'],menos:['despacho']},
@@ -7094,8 +7103,8 @@ async function verTrazabilidadBins(etapa){
   const ev=_hlEventosBins(logs,bins,temporada).filter(e=>cfg.mas.includes(e.k)||cfg.menos.includes(e.k));
   let saldo=0;const rows=ev.map(e=>{const signo=cfg.mas.includes(e.k)?1:-1;saldo+=signo*e.n;return {...e,signo,saldo}});
   const totMas=rows.filter(r=>r.signo>0).reduce((s,r)=>s+r.n,0),totMenos=rows.filter(r=>r.signo<0).reduce((s,r)=>s+r.n,0);
-  const lbl={recepcion:'recepciones',cosecha:'cosechas',entrega:'entregas a cámara',despacho:'despachos a packing'};
-  const tag={recepcion:'<span class="tag ok">Recepción</span>',cosecha:'<span class="tag" style="background:#fce7f3;color:#9d174d">Cosecha</span>',entrega:'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Cámara</span>',despacho:'<span class="tag" style="background:#ede9fe;color:#5b21b6">→ Packing</span>'};
+  const lbl={recepcion:'recepciones',cosecha:'cosechas',entrega:'entregas a cámara',despacho:'despachos a packing',devolucion:'devoluciones'};
+  const tag={recepcion:'<span class="tag ok">Recepción</span>',cosecha:'<span class="tag" style="background:#fce7f3;color:#9d174d">Cosecha</span>',entrega:'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Cámara</span>',despacho:'<span class="tag" style="background:#ede9fe;color:#5b21b6">→ Packing</span>',devolucion:'<span class="tag" style="background:#fef3c7;color:#92400e">↩ Devolución</span>'};
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const abrir=r=>r.ref[0]==='bin'?`verBinLog('${r.ref[1]}')`:`verParteCosecha('${r.ref[1]}')`;
   const nMas=rows.filter(r=>r.signo>0).length,nMenos=rows.filter(r=>r.signo<0).length;
@@ -7249,18 +7258,19 @@ function _hlComputeResumen(logs,bins,temporada,variedad){
   const vars=[...new Set(sel.map(l=>l.variedad))].map(v=>{const ls=sel.filter(l=>l.variedad===v);return {v,dias:new Set(ls.map(l=>l.fecha)).size,bines:sum(ls,l=>l.bines),varas:sum(ls,l=>l.tallos),jornadas:sum(ls,_hlPersonas)}});
   const binsAnio=bins.filter(b=>_hlAnio(b.fecha)===temporada);
   const binsRec=sum(binsAnio.filter(b=>(b.tipo||'recepcion')==='recepcion'),b=>b.cantidad);
+  const binsDev=sum(binsAnio.filter(b=>b.tipo==='devolucion'),b=>b.cantidad);
   const binsLlen=sum(enTemp,_hlUnidades);
   const binsEnt=sum(enTemp,_hlEntregadosUnid);
   const binsDesp=sum(binsAnio.filter(b=>b.tipo==='despacho'),b=>b.cantidad);
   const mejor=sel.reduce((m,l)=>((Number(l.bines)||0)>(Number(m?.bines)||0)||(!Number(m?.bines)&&(Number(l.tallos)||0)>(Number(m?.tallos)||0)))?l:m,null);
-  return {temporada,variedad,fechas,dias,totB,totV,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsLlen,binsEnt,binsDesp,mejor};
+  return {temporada,variedad,fechas,dias,totB,totV,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDev,binsLlen,binsEnt,binsDesp,mejor};
 }
 async function verResumenCosecha(temporada,variedad){
   const [logs,bins]=await Promise.all([getAll('harvestlogs'),getAll('binlogs')]);
   const r=_hlComputeResumen(logs,bins,temporada,variedad);
   if(!r){toast('Sin partes en esta temporada','warn');return}
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const vacios=r.binsRec-r.binsLlen,enHuerto=r.binsLlen-r.binsEnt,enCamara=r.binsEnt-r.binsDesp;
+  const vacios=r.binsRec-r.binsLlen-r.binsDev,enHuerto=r.binsLlen-r.binsEnt,enCamara=r.binsEnt-r.binsDesp;
   openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px"></i> Resumen de cosecha ${r.temporada}</h3>
       <div class="hl-res-meta">${(r.variedad&&r.variedad!=='todas')?esc(r.variedad)+' · ':''}${fmt(r.fechas[0])} → ${fmt(r.fechas[r.dias-1])} · ${r.dias} día${r.dias===1?'':'s'} de corte${r.mejor?` · mejor día ${harvestFmtCorto(r.mejor.fecha)}`:''}</div></div>
     <div class="hl-res-grid">
@@ -7285,7 +7295,7 @@ async function _hlCopiarResumen(temporada,variedad){
   t+=`Bins cosechados: ${r.totU} (${_hlNum(r.totB,1)} bines llenados)`+(r.totV?` · Varas: ${_hlNum(r.totV)}`:'')+'\n';
   if(r.prod!=null)t+=`${r.totV?'Varas':'Bines'}/${r.usaCort?'cortador':'persona'}/día: ${_hlNum(r.prod,r.totV?0:2)}\n`;
   t+=`Cuadrilla: ${_hlNum(r.jornadas)} jornadas`+(r.puestos.length?` (${r.puestos.map(([k,v])=>`${_hlNum(v)} ${k.toLowerCase()}`).join(', ')})`:'')+'\n';
-  t+=`Bins: ${_hlNum(r.binsRec-r.binsLlen)} vacíos en huerto · ${_hlNum(r.binsLlen)} cosechados (${_hlNum(r.binsLlen-r.binsEnt)} en huerto) · ${_hlNum(r.binsEnt-r.binsDesp)} en cámara · ${_hlNum(r.binsDesp)} despachados a packing\n`;
+  t+=`Bins: ${_hlNum(r.binsRec-r.binsLlen-r.binsDev)} vacíos en huerto · ${_hlNum(r.binsLlen)} cosechados (${_hlNum(r.binsLlen-r.binsEnt)} en huerto) · ${_hlNum(r.binsEnt-r.binsDesp)} en cámara · ${_hlNum(r.binsDesp)} despachados a packing · ${_hlNum(r.binsDev)} devueltos al arrendador\n`;
   t+=`_Santa Ana Peonías_`;
   navigator.clipboard.writeText(t).then(()=>toast('Resumen copiado ✓')).catch(()=>toast('No se pudo copiar','warn'));
 }
@@ -7384,10 +7394,20 @@ async function editBinLog(id,tipo){
     const ultimo=[...bins].filter(x=>(x.tipo||'recepcion')===tipo).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))[0];
     b={fecha:today(),cantidad:'',origen:ultimo?.origen||'',notas:'',tipo};
   }
-  const desp=tipo==='despacho';
+  const desp=tipo==='despacho',devol=tipo==='devolucion';
   const esc=s=>String(s||'').replace(/"/g,'&quot;');
-  /* Para despachos: referencia de cuánto hay en cámara */
+  /* Arrendadores conocidos (orígenes de recepciones) para autocompletar */
+  const arrendadores=[...new Set(bins.filter(x=>(x.tipo||'recepcion')!=='despacho').map(x=>(x.origen||'').trim()).filter(Boolean))];
+  if(!id&&devol&&!b.origen)b.origen=arrendadores[0]||'';
   let hint='';
+  if(devol){
+    const anio=_hlAnio(b.fecha)||new Date().getFullYear();
+    const logs=await getAll('harvestlogs');
+    const rec=bins.filter(x=>(x.tipo||'recepcion')==='recepcion'&&_hlAnio(x.fecha)===anio).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
+    const dev=bins.filter(x=>x.tipo==='devolucion'&&_hlAnio(x.fecha)===anio&&x.id!==id).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
+    const cos=logs.filter(l=>_hlAnio(l.fecha)===anio).reduce((s,l)=>s+_hlUnidades(l),0);
+    hint=`<div class="alert-box info" style="margin:0 0 10px"><i data-lucide="undo-2"></i><div class="ab-content">Vacíos en huerto ahora: <strong>${_hlNum(rec-cos-dev)} bins</strong>. Por devolver al arrendador: <strong>${_hlNum(rec-dev)} bins</strong> (${_hlNum(rec)} retirados − ${_hlNum(dev)} ya devueltos).</div></div>`;
+  }
   if(desp){
     const anio=_hlAnio(b.fecha)||new Date().getFullYear();
     const logs=await getAll('harvestlogs');
@@ -7395,15 +7415,15 @@ async function editBinLog(id,tipo){
     const otros=bins.filter(x=>x.tipo==='despacho'&&_hlAnio(x.fecha)===anio&&x.id!==id).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
     hint=`<div class="alert-box info" style="margin:0 0 10px"><i data-lucide="snowflake"></i><div class="ab-content">En cámara de frío ahora: <strong>${_hlNum(llen-otros)} bins</strong> (${_hlNum(llen)} entregados a cámara − ${_hlNum(otros)} ya despachados).</div></div>`;
   }
-  openModal(`<h3><i data-lucide="${desp?'truck':'package-plus'}" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} ${desp?'despacho a packing':'bins vacíos recibidos'}</h3>
+  openModal(`<h3><i data-lucide="${desp?'truck':(devol?'undo-2':'package-plus')}" style="width:18px;height:18px;vertical-align:-3px"></i> ${id?'Editar':'Registrar'} ${desp?'despacho a packing':(devol?'devolución de bins vacíos':'bins vacíos recibidos')}</h3>
     ${hint}
     <div class="form-grid">
       <div class="form-row"><label>Fecha *</label><input id="f-bl-fecha" type="date" value="${b.fecha||''}"></div>
       <div class="form-row"><label>Cantidad de bins *</label><div class="hl-stepper"><button type="button" onclick="_hlStep('f-bl-cant',-1)">−</button><input id="f-bl-cant" type="number" min="0" step="1" inputmode="numeric" value="${b.cantidad==null?'':b.cantidad}" placeholder="${desp?'ej. 4':'ej. 20'}" class="hl-big"><button type="button" onclick="_hlStep('f-bl-cant',1)">+</button></div></div>
-      <div class="form-row" style="grid-column:1/-1"><label>${desp?'Destino':'Origen'} <small style="color:var(--gris);font-weight:400">${desp?'(packing / exportador / transporte)':'(exportador / transporte)'}</small></label><input id="f-bl-origen" value="${esc(b.origen)}" placeholder="${desp?'ej. Packing South Peonies · camión 1':'ej. ASM · camión desde Curicó'}"></div>
+      <div class="form-row" style="grid-column:1/-1"><label>${desp?'Destino':(devol?'Devuelto a (arrendador)':'Origen (arrendador de los bins)')} <small style="color:var(--gris);font-weight:400">${desp?'(packing / exportador / transporte)':'(usa siempre el mismo nombre para que cuadre la cuenta)'}</small></label><input id="f-bl-origen" list="f-bl-arrendadores" value="${esc(b.origen)}" placeholder="${desp?'ej. Packing South Peonies · camión 1':'ej. ASM'}"><datalist id="f-bl-arrendadores">${arrendadores.map(a=>`<option value="${esc(a)}">`).join('')}</datalist></div>
     </div>
-    <div class="form-row"><label>Notas</label><textarea id="f-bl-notas" rows="2" placeholder="${desp?'ej. guía N° 1234 · salida 7:30':'ej. 2 bins con daño · guía N° 1234'}">${b.notas||''}</textarea></div>
-    <div class="form-row"><label>${desp?'Guía de despacho':'Guía / documento'} <small style="color:var(--gris);font-weight:400">(foto o PDF, opcional)</small></label>
+    <div class="form-row"><label>Notas</label><textarea id="f-bl-notas" rows="2" placeholder="${desp?'ej. guía N° 1234 · salida 7:30':(devol?'ej. camión del arrendador · guía N° 55 · 3 bins dañados':'ej. 2 bins con daño · guía N° 1234')}">${b.notas||''}</textarea></div>
+    <div class="form-row"><label>${desp?'Guía de despacho':(devol?'Guía de devolución':'Guía / documento')} <small style="color:var(--gris);font-weight:400">(foto o PDF, opcional)</small></label>
       ${b.archivo?`<div class="hl-adj" id="f-bl-adj-actual">${/^data:image/.test(b.archivo)?`<img src="${b.archivo}" onclick="viewImage(this.src)" alt="guía">`:`<span class="hl-adj-ico"><i data-lucide="file-text"></i></span>`}<div class="hl-adj-info"><strong>${esc(b.archivoNombre||'guía')}</strong><small>${b.archivoTipo==='application/pdf'?'PDF':'Imagen'} · ${((b.archivo.length*0.75)/1024).toFixed(0)} KB</small></div><button type="button" class="btn small ghost" onclick="verBinArchivo('${id}')"><i data-lucide="eye"></i>Ver</button><button type="button" class="btn small danger" title="Quitar adjunto" onclick="document.getElementById('f-bl-archivo-quitar').value='1';document.getElementById('f-bl-adj-actual').style.display='none'"><i data-lucide="x"></i></button></div>`:''}
       <input id="f-bl-archivo" type="file" accept="image/*,.pdf,application/pdf">
       <small style="color:var(--gris);font-size:11px">Las fotos se comprimen automáticamente. PDF hasta ~700 KB.</small>
@@ -7437,7 +7457,7 @@ async function saveBinLog(id){
     if(id){data.id=id;await put('binlogs',data)}
     else{data.createdBy=CURRENT_USER;data.createdAt=new Date().toISOString();await add('binlogs',data)}
   }catch(e){console.error('saveBinLog falló:',e);toast('Error al guardar: '+(e.message||e.code||'ver consola'),'warn');return}
-  closeModal();toast(data.tipo==='despacho'?'Despacho registrado':'Recepción de bins guardada');if(typeof currentPage!=='undefined'&&currentPage==='harvestlog')renderHarvestLog();
+  closeModal();toast(data.tipo==='despacho'?'Despacho registrado':(data.tipo==='devolucion'?'Devolución registrada':'Recepción de bins guardada'));if(typeof currentPage!=='undefined'){if(currentPage==='harvestlog')renderHarvestLog();if(currentPage==='bins')renderBins()}
 }
 /* Ficha de un movimiento de bins (clic en la fila) */
 async function verBinLog(id){
@@ -7446,11 +7466,12 @@ async function verBinLog(id){
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const creador=b.createdBy?userById(b.createdBy):null;
   const esImg=b.archivo&&/^data:image/.test(b.archivo);
-  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="${desp?'truck':'package-plus'}" style="width:18px;height:18px;vertical-align:-3px"></i> ${desp?'Despacho a packing':'Recepción de bins vacíos'}</h3>
-      <div class="hl-res-meta"><strong>${fmt(b.fecha)}</strong>${desp?'<span class="tag" style="background:#dbeafe;color:#1e40af;margin-left:8px">→ Packing</span>':'<span class="tag ok" style="margin-left:8px">Vacíos recibidos</span>'}</div></div>
+  const devol=b.tipo==='devolucion';
+  openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="${desp?'truck':(devol?'undo-2':'package-plus')}" style="width:18px;height:18px;vertical-align:-3px"></i> ${_hlMovNombre(b)}</h3>
+      <div class="hl-res-meta"><strong>${fmt(b.fecha)}</strong>${_hlMovTag(b,true)}</div></div>
     <div class="hl-res-grid">
-      <div class="hl-res"><div class="hl-res-lbl">Bins</div><div class="hl-res-val">${_hlNum(b.cantidad)}</div><div class="hl-res-sub">${desp?'salen de cámara':'entran al huerto'}</div></div>
-      <div class="hl-res" style="grid-column:span 2;text-align:left"><div class="hl-res-lbl">${desp?'Destino':'Origen'}</div><div class="hl-res-val" style="font-size:18px">${esc(b.origen)||'—'}</div><div class="hl-res-sub">${creador?`registrado por ${esc(creador.nombre)}`:''}${b.createdAt?` · ${new Date(b.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})}`:''}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Bins</div><div class="hl-res-val">${_hlNum(b.cantidad)}</div><div class="hl-res-sub">${desp?'salen de cámara a packing':(devol?'vacíos devueltos al arrendador':'vacíos que entran al huerto')}</div></div>
+      <div class="hl-res" style="grid-column:span 2;text-align:left"><div class="hl-res-lbl">${desp?'Destino':(devol?'Devuelto a':'Origen / arrendador')}</div><div class="hl-res-val" style="font-size:18px">${esc(b.origen)||'—'}</div><div class="hl-res-sub">${creador?`registrado por ${esc(creador.nombre)}`:''}${b.createdAt?` · ${new Date(b.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})}`:''}</div></div>
     </div>
     ${b.notas?`<div class="hl-res-sec"><div class="hl-res-sec-t">Notas</div><div class="hl-res-nota">${esc(b.notas)}</div></div>`:''}
     <div class="hl-res-sec"><div class="hl-res-sec-t">Guía ${b.archivo?`<span>${esc(b.archivoNombre||'')}</span>`:''}</div>
@@ -7469,7 +7490,7 @@ async function verBinArchivo(id){
   if(!w){descargarArchivo(b.archivo,b.archivoNombre||'guia.pdf')}
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-async function delBinLog(id){if(!confirm('¿Eliminar este movimiento de bins?'))return;await del('binlogs',id);toast('Eliminado');renderHarvestLog()}
+async function delBinLog(id){if(!confirm('¿Eliminar este movimiento de bins?'))return;await del('binlogs',id);toast('Eliminado');if(typeof currentPage!=='undefined'&&currentPage==='bins')renderBins();else renderHarvestLog()}
 
 /* Sincroniza los totales del diario con "Fecha de Cosecha": por variedad de la temporada,
    crea/actualiza el registro tipo cosecha con primer corte = min fecha, varas = suma, bines = suma, % export si hay.
@@ -7492,6 +7513,88 @@ async function syncHarvestLogToSeason(temporada){
     else{await add('harvests',{...patch,fechaPeak:null,fechaFin:null,estadoCorte:'marshmallow',notas:'Creado desde Cosecha diaria',createdBy:CURRENT_USER,createdAt:new Date().toISOString()});creados++}
   }
   toast(`Fecha de Cosecha actualizada (${creados} nuevo${creados===1?'':'s'}, ${actualizados} actualizado${actualizados===1?'':'s'})`);
+}
+
+/* ============================================================================
+   BINS — cuenta corriente con el arrendador + ubicación física.
+   Retirados (recepciones) − devueltos (devoluciones) [− despachos a packing si el packing es el arrendador]
+   = por devolver. Se concilia contra el stock físico (vacíos + llenos en huerto + en cámara) para detectar
+   bins perdidos o movimientos sin registrar. Todo se calcula desde los movimientos ya existentes.
+   ============================================================================ */
+let _bnTemp=null,_bnTipo='todos';
+function setBnTemp(t){_bnTemp=t;renderBins()}
+function setBnTipo(t){_bnTipo=t;renderBins()}
+async function getBinsCfg(){try{const c=await get('config','bins');return c||{}}catch(_){return {}}}
+async function setBinsDespachoDevuelve(v){try{await put('config',{id:'bins',despachoDevuelve:!!v})}catch(e){toast('No se pudo guardar','warn');return}renderBins()}
+async function renderBins(){
+  const [bins,logs,cfg]=await Promise.all([getAll('binlogs'),getAll('harvestlogs'),getBinsCfg()]);
+  const anoActual=new Date().getFullYear();
+  const temporadas=[...new Set([...bins.map(b=>_hlAnio(b.fecha)),...logs.map(l=>_hlAnio(l.fecha))].filter(Boolean))].sort((a,b)=>b-a);
+  if(_bnTemp==null)_bnTemp=temporadas.includes(anoActual)?anoActual:(temporadas[0]||anoActual);
+  const bt=bins.filter(b=>_hlAnio(b.fecha)===_bnTemp).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.createdAt||'').localeCompare(a.createdAt||''));
+  const lt=logs.filter(l=>_hlAnio(l.fecha)===_bnTemp);
+  const tipoDe=b=>b.tipo||'recepcion';
+  const rec=bt.filter(b=>tipoDe(b)==='recepcion'),dev=bt.filter(b=>tipoDe(b)==='devolucion'),desp=bt.filter(b=>tipoDe(b)==='despacho');
+  const sumQ=arr=>arr.reduce((s,b)=>s+(Number(b.cantidad)||0),0);
+  const nRec=sumQ(rec),nDev=sumQ(dev),nDesp=sumQ(desp);
+  const cos=lt.reduce((s,l)=>s+_hlUnidades(l),0),ent=lt.reduce((s,l)=>s+_hlEntregadosUnid(l),0);
+  const vacios=nRec-cos-nDev,llenos=cos-ent,camara=ent-nDesp;
+  const enPoder=vacios+llenos+camara;
+  const despCuenta=!!cfg.despachoDevuelve;
+  const porDevolver=nRec-nDev-(despCuenta?nDesp:0);
+  /* Conciliación: lo que debo según movimientos vs. lo que físicamente tengo (si los despachos no devuelven, los bins en packing siguen siendo míos frente al arrendador) */
+  const esperado=enPoder+(despCuenta?0:nDesp);
+  const diferencia=porDevolver-esperado;
+  /* Cuenta por arrendador */
+  const norm=x=>(x||'').trim().toLowerCase();
+  const cuentas={};
+  const add=(k,nombre)=>cuentas[k]||(cuentas[k]={nombre,rec:0,dev:0,desp:0,nRec:0,nDev:0,nDesp:0,ultimo:''});
+  rec.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.rec+=Number(b.cantidad)||0;c.nRec++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
+  dev.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.dev+=Number(b.cantidad)||0;c.nDev++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
+  if(despCuenta)desp.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.desp+=Number(b.cantidad)||0;c.nDesp++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
+  const cuentasArr=Object.values(cuentas).sort((a,b)=>(b.rec-b.dev-b.desp)-(a.rec-a.dev-a.desp));
+  const filt=_bnTipo==='todos'?bt:bt.filter(b=>tipoDe(b)===_bnTipo);
+  const chipT=t=>`<span class="chip ${_bnTemp===t?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setBnTemp(${t})">${t}</span>`;
+  const chipTipo=(k,l,n)=>`<span class="chip ${_bnTipo===k?'active':''}" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="setBnTipo('${k}')">${l} <strong>${n}</strong></span>`;
+  const hoyStr=today();
+  const fila=b=>`<tr class="hl-row-click" onclick="verBinLog('${b.id}')" title="Ver detalle"><td><strong>${fmt(b.fecha)}</strong></td><td>${_hlMovTag(b)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'<span style="color:var(--gris-m)">—</span>'}</td><td style="font-size:12px;color:var(--gris-d);max-width:280px">${b.notas||'—'}</td><td>${b.archivo?`<button class="btn small ghost" onclick="event.stopPropagation();verBinArchivo('${b.id}')" title="${(b.archivoNombre||'Ver guía').replace(/"/g,'&quot;')}"><i data-lucide="${b.archivoTipo==='application/pdf'?'file-text':'image'}"></i>Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`;
+  const card=b=>`<div class="hl-mov" onclick="verBinLog('${b.id}')"><div class="hl-mov-l"><strong>${fmt(b.fecha)}</strong><div>${_hlMovTag(b)}</div></div><div class="hl-mov-m"><div>${b.origen||'—'}</div>${b.notas?`<small>${b.notas}</small>`:''}</div><div class="hl-mov-r"><b>${_hlNum(b.cantidad)}</b><small>bins</small>${b.archivo?'<span title="Con guía">📎</span>':''}</div></div>`;
+  document.getElementById('main').innerHTML=`
+    <div class="page-header"><div><h2>Bins</h2><div class="sub">Cuenta con el arrendador y ubicación de los bins · <a onclick="nav('harvestlog')" style="color:var(--verde-d);cursor:pointer;font-weight:600">ir al registro diario →</a></div></div>
+    <div class="actions hl-actions"><button class="btn secondary hl-btn-sec" onclick="editBinLog(null,'devolucion')" title="Vacíos que vuelven al arrendador"><i data-lucide="undo-2"></i>Devolución</button><button class="btn ghost hl-btn-sec" onclick="editBinLog(null,'despacho')" title="Llenos que van al packing"><i data-lucide="truck"></i>Despacho a packing</button><button class="btn hl-btn-new" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Recepción de vacíos</button></div></div>
+    <div class="card" style="padding:12px 16px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="hl-lbl">Temporada</span>${[...new Set([anoActual,...temporadas])].sort((a,b)=>b-a).map(chipT).join('')}</div></div>
+    ${diferencia!==0&&nRec>0?`<div class="alert-box ${diferencia>0?'warn':'info'}" style="margin-bottom:14px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Descuadre de ${_hlNum(Math.abs(diferencia))} bin${Math.abs(diferencia)===1?'':'s'}:</strong> según los movimientos debes <strong>${_hlNum(porDevolver)}</strong> al arrendador, pero ${diferencia>0?'solo tienes':'tienes'} <strong>${_hlNum(esperado)}</strong> entre huerto, cámara${despCuenta?'':' y packing'}. ${diferencia>0?'Puede haber bins perdidos o dañados, o una recepción/devolución sin registrar.':'Hay más bins de los que figuran retirados: revisa si falta registrar una recepción.'}</div></div>`:''}
+    <div class="grid grid-4">
+      <div class="kpi hl-kpi-click" onclick="verTrazabilidadBins('vacios')" title="Ver recepciones"><div class="kpi-header"><div class="label">Retirados ${_bnTemp}</div><div class="kpi-icon"><i data-lucide="package-plus"></i></div></div><div class="value">${_hlNum(nRec)} <small>bins</small></div><div class="foot">${rec.length} recepci${rec.length===1?'ón':'ones'} · ${cuentasArr.filter(c=>c.rec>0).length} arrendador${cuentasArr.filter(c=>c.rec>0).length===1?'':'es'}</div></div>
+      <div class="kpi ok hl-kpi-click" onclick="verTrazabilidadBins('devueltos')" title="Ver devoluciones"><div class="kpi-header"><div class="label">Devueltos</div><div class="kpi-icon"><i data-lucide="undo-2"></i></div></div><div class="value">${_hlNum(nDev+(despCuenta?nDesp:0))} <small>bins</small></div><div class="foot">${dev.length} devoluci${dev.length===1?'ón':'ones'}${despCuenta?` · incluye ${_hlNum(nDesp)} despachados`:''}</div></div>
+      <div class="kpi ${porDevolver>0?'warn':'ok'}"><div class="kpi-header"><div class="label">Por devolver</div><div class="kpi-icon"><i data-lucide="${porDevolver>0?'clock':'check-circle'}"></i></div></div><div class="value">${_hlNum(porDevolver)} <small>bins</small></div><div class="foot">${porDevolver>0?'pendientes con el arrendador':'cuenta al día'}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">En nuestro poder</div><div class="kpi-icon"><i data-lucide="map-pin"></i></div></div><div class="value">${_hlNum(enPoder)} <small>bins</small></div><div class="foot">${_hlNum(vacios)} vacíos · ${_hlNum(llenos)} llenos en huerto · ${_hlNum(camara)} en cámara${despCuenta?'':` · ${_hlNum(nDesp)} en packing`}</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="landmark"></i>Cuenta por arrendador</h3><label class="rt-switch" style="font-size:12.5px"><input type="checkbox" ${despCuenta?'checked':''} onchange="setBinsDespachoDevuelve(this.checked)"><span>Los despachos a packing devuelven los bins al arrendador</span></label></div>
+      ${cuentasArr.length?`<div class="table-scroll" style="margin-top:10px"><table class="hl-bins-tabla"><thead><tr><th>Arrendador</th><th style="text-align:right">Retirados</th><th style="text-align:right">Devueltos</th>${despCuenta?'<th style="text-align:right">Despachados</th>':''}<th style="text-align:right">Por devolver</th><th>Último movimiento</th></tr></thead><tbody>${cuentasArr.map(c=>{const saldo=c.rec-c.dev-c.desp;return `<tr><td><strong>${c.nombre}</strong></td><td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.rec)} <small style="color:var(--gris)">(${c.nRec})</small></td><td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.dev)} <small style="color:var(--gris)">(${c.nDev})</small></td>${despCuenta?`<td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.desp)} <small style="color:var(--gris)">(${c.nDesp})</small></td>`:''}<td style="text-align:right;font-variant-numeric:tabular-nums"><strong style="color:${saldo>0?'#b45309':(saldo<0?'var(--alerta)':'var(--verde-d)')}">${_hlNum(saldo)}</strong></td><td style="font-size:12px;color:var(--gris)">${c.ultimo?fmt(c.ultimo):'—'}</td></tr>`}).join('')}</tbody><tfoot><tr><td style="text-align:right;color:var(--gris);font-size:12px">Total</td><td style="text-align:right"><strong>${_hlNum(nRec)}</strong></td><td style="text-align:right"><strong>${_hlNum(nDev)}</strong></td>${despCuenta?`<td style="text-align:right"><strong>${_hlNum(nDesp)}</strong></td>`:''}<td style="text-align:right"><strong>${_hlNum(porDevolver)}</strong></td><td></td></tr></tfoot></table></div>
+      <div class="hl-foot-note">Por devolver = retirados − devueltos${despCuenta?' − despachados a packing':''}. Para que la cuenta cuadre, escribe siempre el mismo nombre del arrendador en recepciones y devoluciones.</div>`:`<div class="hl-foot-note">Registra la primera recepción de bins vacíos indicando el arrendador (ej. ASM) y acá verás cuántos has retirado, devuelto y cuántos faltan por devolver.</div>`}
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 4px"><i data-lucide="map-pin"></i>Dónde están los bins <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">toca una etapa para ver su trazabilidad</span></h3>
+      <div class="hl-flow2">
+        <div class="hl-st hl-click-card ${vacios<0?'neg':''}" onclick="verTrazabilidadBins('vacios')"><span>Vacíos en huerto</span><b>${_hlNum(vacios)} <small>bins</small></b><i>disponibles</i></div>
+        <div class="hl-arr"><i data-lucide="scissors"></i></div>
+        <div class="hl-st hl-click-card ${llenos>0?'warn':''}" onclick="verTrazabilidadBins('huerto')"><span>Llenos en huerto</span><b>${_hlNum(llenos)} <small>bins</small></b><i>${llenos>0?'por trasladar':'todo trasladado'}</i></div>
+        <div class="hl-arr"><i data-lucide="snowflake"></i></div>
+        <div class="hl-st hl-click-card ${camara<0?'neg':''}" onclick="verTrazabilidadBins('camara')"><span>En cámara de frío</span><b>${_hlNum(camara)} <small>bins</small></b><i>${_hlNum(ent)} entregados</i></div>
+        <div class="hl-arr"><i data-lucide="truck"></i></div>
+        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')"><span>En packing</span><b>${_hlNum(nDesp)} <small>bins</small></b><i>${desp.length} despacho${desp.length===1?'':'s'}</i></div>
+        <div class="hl-arr"><i data-lucide="undo-2"></i></div>
+        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('devueltos')"><span>Devueltos</span><b>${_hlNum(nDev)} <small>bins</small></b><i>al arrendador</i></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px"><h3 style="margin:0"><i data-lucide="list"></i>Movimientos ${_bnTemp}</h3><div style="display:flex;gap:4px;flex-wrap:wrap">${chipTipo('todos','Todos',bt.length)}${chipTipo('recepcion','Recepciones',rec.length)}${chipTipo('devolucion','Devoluciones',dev.length)}${chipTipo('despacho','Despachos',desp.length)}</div></div>
+      <div class="hl-mov-list">${filt.length?filt.map(card).join(''):`<div class="hl-card-empty"><i data-lucide="package"></i><div>Sin movimientos</div></div>`}</div>
+      <div class="table-scroll hl-mov-table"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th>Movimiento</th><th style="text-align:right">Bins</th><th>Arrendador / destino</th><th>Notas</th><th>Guía</th><th></th></tr></thead><tbody>${filt.length?filt.map(fila).join(''):`<tr><td colspan="7" class="empty"><i data-lucide="package"></i><div>Sin movimientos en ${_bnTemp}</div></td></tr>`}</tbody></table></div>
+    </div>`;
+  lucideInit();
 }
 
 /* ============================================================================
