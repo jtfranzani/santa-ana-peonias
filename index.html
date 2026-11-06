@@ -1385,7 +1385,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.92';
+const APP_VERSION='2026.05.18.93';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -6775,8 +6775,11 @@ const _hlEntregadosUnid=l=>{if(Array.isArray(l.viajes)&&l.viajes.length)return _
 const _hlEntregadosBines=l=>{if(Array.isArray(l.viajes)&&l.viajes.length)return _hlViajesSum(l.viajes);if(Array.isArray(l.cortes)&&l.cortes.length)return 0;return _hlBinesDia(l)};
 const _hlPendienteUnid=l=>Math.max(0,_hlUnidades(l)-_hlEntregadosUnid(l));
 /* Tipos de movimiento de bins: recepcion (vacíos que llegan del arrendador), devolucion (vacíos que vuelven al arrendador), despacho (llenos a packing) */
-const _hlMovTag=(b,ml)=>{const st=ml?'margin-left:8px;':'';const t=b.tipo||'recepcion';return t==='despacho'?`<span class="tag" style="background:#dbeafe;color:#1e40af;${st}">→ Packing</span>`:(t==='devolucion'?`<span class="tag" style="background:#fef3c7;color:#92400e;${st}">↩ Devolución</span>`:`<span class="tag ok" style="${st}">Vacíos recibidos</span>`)};
+const _hlMovTag=(b,ml)=>{const st=ml?'margin-left:8px;':'';const t=b.tipo||'recepcion';return t==='despacho'?`<span class="tag" style="background:#dbeafe;color:#1e40af;${st}">→ Packing</span>`:(t==='devolucion'?`<span class="tag" style="background:#fef3c7;color:#92400e;${st}">↩ Devolución${_hlDevDesde(b)==='huerto'?' (huerto)':''}</span>`:`<span class="tag ok" style="${st}">Vacíos recibidos</span>`)};
 const _hlMovNombre=b=>{const t=b.tipo||'recepcion';return t==='despacho'?'Despacho a packing':(t==='devolucion'?'Devolución de bins vacíos':'Recepción de bins vacíos')};
+/* Devoluciones al arrendador: por defecto salen del PACKING (bins ya despachados y vaciados allá);
+   `desde:'huerto'` solo para vacíos sin usar que se devuelven directo del huerto. */
+const _hlDevDesde=b=>(b.desde==='huerto'?'huerto':'packing');
 /* Etiqueta corta de un arriendo/servicio asociado a un movimiento de bins */
 const _rtLabel=r=>r?`${_rtIcon(r.item)} ${r.item||'Servicio'}${r.proveedor?' · '+r.proveedor:''}${r.fecha?' · '+harvestFmtCorto(r.fecha):''}${(Number(r.tarifa)||Number(r.extras))?' · '+_rtCLP(_rtTotal(r)):''}`:'';
 const _rtLinkHTML=r=>r?`<span class="hl-rt-link" onclick="event.stopPropagation();verRental('${r.id}')" title="Ver arriendo / servicio">${_rtLabel(r)}</span>`:'';
@@ -6830,8 +6833,11 @@ async function renderHarvestLog(){
   const binsEnCamara=binsEntregados-binsDespachados;
   const diasTemp=[...new Set(enTemp.map(l=>l.fecha))].length;
   const devoluciones=binsTemp.filter(b=>b.tipo==='devolucion');
-  const binsDevueltos=devoluciones.reduce((s,b)=>s+(Number(b.cantidad)||0),0);
-  const binsSaldo=binsRecibidos-binsLlenados-binsDevueltos;               /* vacíos disponibles en el huerto */
+  const binsDevHuerto=devoluciones.filter(b=>_hlDevDesde(b)==='huerto').reduce((s,b)=>s+(Number(b.cantidad)||0),0);
+  const binsDevPacking=devoluciones.filter(b=>_hlDevDesde(b)==='packing').reduce((s,b)=>s+(Number(b.cantidad)||0),0);
+  const binsDevueltos=binsDevHuerto+binsDevPacking;
+  const binsEnPacking=binsDespachados-binsDevPacking;                     /* despachados que aún no vuelven al arrendador */
+  const binsSaldo=binsRecibidos-binsLlenados-binsDevHuerto;               /* vacíos disponibles en el huerto */
   /* Cuadrilla acumulada: jornadas-persona (suma de personas de cada parte), por puesto y por día */
   const jornadas=filt.reduce((s,l)=>s+_hlPersonas(l),0);
   const porFechaPers={};filt.forEach(l=>{const p=_hlPersonas(l);if(p>0)porFechaPers[l.fecha]=(porFechaPers[l.fecha]||0)+p});
@@ -6911,7 +6917,7 @@ async function renderHarvestLog(){
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="package"></i>Bins ${_hlTemp} <span class="hl-key ${binsEnCamara<0?'neg':''}">${_hlNum(binsEnCamara)} en cámara</span>${binsEnHuerto>0?`<span class="hl-key" style="background:#fef3c7;color:#b45309">${_hlNum(binsEnHuerto)} en huerto</span>`:''}</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small secondary" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Recepción</button><button class="btn small ghost" onclick="quickBinsCosechados()" title="Bins cosechados"><i data-lucide="scissors"></i>Cosechados</button><button class="btn small ghost" onclick="quickEntregaCamara()" title="Bins que van a cámara"><i data-lucide="snowflake"></i>Entrega</button><button class="btn small" onclick="editBinLog(null,'despacho')"><i data-lucide="truck"></i>Despacho</button></div></div>
         <div class="hl-flow2">
-          <div class="hl-st hl-click-card ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}" onclick="verTrazabilidadBins('vacios')" title="Ver trazabilidad"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsDevueltos?` · ${_hlNum(binsDevueltos)} devueltos`:''}${binsSaldo<0?' · faltan recepciones':''}</i></div>
+          <div class="hl-st hl-click-card ${binsSaldo<0?'neg':(binsRecibidos>0&&binsSaldo<=2?'warn':'')}" onclick="verTrazabilidadBins('vacios')" title="Ver trazabilidad"><span>Vacíos en huerto</span><b>${_hlNum(binsSaldo)} <small>bins</small></b><i>${_hlNum(binsRecibidos)} recibidos${binsDevHuerto?` · ${_hlNum(binsDevHuerto)} devueltos desde huerto`:''}${binsSaldo<0?' · faltan recepciones':''}</i></div>
           <div class="hl-arr"><i data-lucide="scissors"></i></div>
           <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('cosechados')" title="Ver trazabilidad"><span>Cosechados</span><b>${_hlNum(binsLlenados)} <small>bins</small></b><i>${diasTemp} día${diasTemp===1?'':'s'}${binsLlenados!==binsLlenadosTemp?` · ${_hlNum(binsLlenadosTemp,1)} bines`:''}</i></div>
           <div class="hl-arr"><i data-lucide="arrow-right"></i></div>
@@ -6919,7 +6925,7 @@ async function renderHarvestLog(){
           <div class="hl-arr"><i data-lucide="snowflake"></i></div>
           <div class="hl-st hl-click-card ${binsEnCamara<0?'neg':''}" onclick="verTrazabilidadBins('camara')" title="Ver trazabilidad"><span>En cámara de frío</span><b>${_hlNum(binsEnCamara)} <small>bins</small></b><i>${binsEnCamara<0?'revisa despachos':`${_hlNum(binsEntregados)} entregados − packing`}</i></div>
           <div class="hl-arr"><i data-lucide="truck"></i></div>
-          <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')" title="Ver trazabilidad"><span>Packing</span><b>${_hlNum(binsDespachados)} <small>bins</small></b><i>${despachos.length} despacho${despachos.length===1?'':'s'}</i></div>
+          <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')" title="Ver trazabilidad"><span>Packing</span><b>${_hlNum(binsDespachados)} <small>bins</small></b><i>${despachos.length} despacho${despachos.length===1?'':'s'}${binsDevPacking?` · ${_hlNum(binsDevPacking)} devueltos · ${_hlNum(binsEnPacking)} en packing`:''}</i></div>
         </div>
         ${binsTemp.length?fold('bins',`${binsTemp.length} movimiento${binsTemp.length===1?'':'s'}`)+foldBody('bins',`<div class="hl-mov-list">${binsTemp.map(movCard).join('')}</div><div class="table-scroll hl-mov-table"><table class="hl-bins-tabla"><thead><tr><th>Fecha</th><th>Movimiento</th><th style="text-align:right">Bins</th><th>Origen / destino</th><th>Notas</th><th>Guía</th><th></th></tr></thead><tbody>${binsTemp.map(b=>{const desp=b.tipo==='despacho';return `<tr class="hl-row-click" onclick="verBinLog('${b.id}')" title="Ver detalle del movimiento"><td><strong>${fmt(b.fecha)}</strong></td><td>${_hlMovTag(b)}</td><td style="text-align:right;font-variant-numeric:tabular-nums"><strong>${_hlNum(b.cantidad)}</strong></td><td>${b.origen||'—'}${b.rentalId&&rentalById[b.rentalId]?`<div style="font-size:10.5px">${_rtLinkHTML(rentalById[b.rentalId])}</div>`:''}</td><td style="font-size:12px;color:var(--gris-d);max-width:220px">${b.notas||'—'}</td><td>${b.archivo?`<button class="btn small ghost" onclick="event.stopPropagation();verBinArchivo('${b.id}')" title="${(b.archivoNombre||'Ver guía').replace(/"/g,'&quot;')}"><i data-lucide="${b.archivoTipo==='application/pdf'?'file-text':'image'}"></i>Ver</button>`:'<span style="color:var(--gris-m);font-size:11px">—</span>'}</td><td class="col-acciones"><button class="btn small ghost" onclick="event.stopPropagation();editBinLog('${b.id}')" title="Editar"><i data-lucide="pencil"></i></button><button class="btn small danger" onclick="event.stopPropagation();delBinLog('${b.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td></tr>`}).join('')}</tbody></table></div>`):`<div class="hl-foot-note">Registra la recepción de bins vacíos para llevar el saldo del huerto.</div>`}
       </div>
@@ -7082,7 +7088,8 @@ function _hlEventosBins(logs,bins,temporada){
   const ev=[];
   bins.filter(b=>_hlAnio(b.fecha)===temporada).forEach(b=>{
     const t=b.tipo||'recepcion';
-    ev.push({fecha:b.fecha,hora:'',orden:t==='despacho'?'23:59':(t==='devolucion'?'23:30':'00:00'),k:t,n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
+    const k=t==='devolucion'?(_hlDevDesde(b)==='huerto'?'devolucion_h':'devolucion_p'):t;
+    ev.push({fecha:b.fecha,hora:'',orden:t==='despacho'?'23:59':(t==='devolucion'?'23:30':'00:00'),k,n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
   });
   logs.filter(l=>_hlAnio(l.fecha)===temporada).forEach(l=>{
     const cortes=(l.cortes||[]).filter(c=>Number(c.bines)>0),viajes=(l.viajes||[]).filter(v=>Number(v.bines)>0);
@@ -7095,12 +7102,12 @@ function _hlEventosBins(logs,bins,temporada){
   return ev;
 }
 const HL_ETAPAS_BINS={
-  vacios:{t:'Vacíos en huerto',icon:'package',d:'Bins vacíos disponibles en el huerto: entran con las recepciones y salen cuando se llenan en la cosecha o se devuelven al arrendador.',mas:['recepcion'],menos:['cosecha','devolucion']},
-  devueltos:{t:'Devueltos al arrendador',icon:'undo-2',d:'Bins vacíos devueltos a la empresa que los presta.',mas:['devolucion'],menos:[]},
+  vacios:{t:'Vacíos en huerto',icon:'package',d:'Bins vacíos disponibles en el huerto: entran con las recepciones y salen cuando se llenan en la cosecha o se devuelven al arrendador.',mas:['recepcion'],menos:['cosecha','devolucion_h']},
+  devueltos:{t:'Devueltos al arrendador',icon:'undo-2',d:'Bins devueltos a la empresa que los presta: normalmente desde el packing (ya vaciados allá); desde el huerto solo vacíos sin usar.',mas:['devolucion_p','devolucion_h'],menos:[]},
   cosechados:{t:'Cosechados',icon:'scissors',d:'Bins llenados según los partes diarios. Un bin parcial cuenta como unidad física.',mas:['cosecha'],menos:[]},
   huerto:{t:'Llenos en huerto',icon:'arrow-right',d:'Bins cosechados que aún no se trasladan a la cámara de frío.',mas:['cosecha'],menos:['entrega']},
   camara:{t:'En cámara de frío',icon:'snowflake',d:'Entran con las entregas desde el huerto y salen con los despachos a packing.',mas:['entrega'],menos:['despacho']},
-  packing:{t:'Despachados a packing',icon:'truck',d:'Bins enviados al packing según los despachos registrados, con su guía.',mas:['despacho'],menos:[]}
+  packing:{t:'Packing',icon:'truck',d:'Bins enviados al packing (entradas) y los que desde allá se devolvieron al arrendador (salidas). El saldo es lo que sigue en el packing.',mas:['despacho'],menos:['devolucion_p']}
 };
 async function verTrazabilidadBins(etapa){
   const cfg=HL_ETAPAS_BINS[etapa];if(!cfg)return;
@@ -7109,8 +7116,8 @@ async function verTrazabilidadBins(etapa){
   const ev=_hlEventosBins(logs,bins,temporada).filter(e=>cfg.mas.includes(e.k)||cfg.menos.includes(e.k));
   let saldo=0;const rows=ev.map(e=>{const signo=cfg.mas.includes(e.k)?1:-1;saldo+=signo*e.n;return {...e,signo,saldo}});
   const totMas=rows.filter(r=>r.signo>0).reduce((s,r)=>s+r.n,0),totMenos=rows.filter(r=>r.signo<0).reduce((s,r)=>s+r.n,0);
-  const lbl={recepcion:'recepciones',cosecha:'cosechas',entrega:'entregas a cámara',despacho:'despachos a packing',devolucion:'devoluciones'};
-  const tag={recepcion:'<span class="tag ok">Recepción</span>',cosecha:'<span class="tag" style="background:#fce7f3;color:#9d174d">Cosecha</span>',entrega:'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Cámara</span>',despacho:'<span class="tag" style="background:#ede9fe;color:#5b21b6">→ Packing</span>',devolucion:'<span class="tag" style="background:#fef3c7;color:#92400e">↩ Devolución</span>'};
+  const lbl={recepcion:'recepciones',cosecha:'cosechas',entrega:'entregas a cámara',despacho:'despachos a packing',devolucion_p:'devoluciones desde packing',devolucion_h:'devoluciones desde huerto'};
+  const tag={recepcion:'<span class="tag ok">Recepción</span>',cosecha:'<span class="tag" style="background:#fce7f3;color:#9d174d">Cosecha</span>',entrega:'<span class="tag" style="background:#dbeafe;color:#1e40af">→ Cámara</span>',despacho:'<span class="tag" style="background:#ede9fe;color:#5b21b6">→ Packing</span>',devolucion_p:'<span class="tag" style="background:#fef3c7;color:#92400e">↩ Devolución (packing)</span>',devolucion_h:'<span class="tag" style="background:#fef3c7;color:#92400e">↩ Devolución (huerto)</span>'};
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const abrir=r=>r.ref[0]==='bin'?`verBinLog('${r.ref[1]}')`:`verParteCosecha('${r.ref[1]}')`;
   const nMas=rows.filter(r=>r.signo>0).length,nMenos=rows.filter(r=>r.signo<0).length;
@@ -7119,7 +7126,7 @@ async function verTrazabilidadBins(etapa){
     <div class="hl-res-grid">
       <div class="hl-res"><div class="hl-res-lbl">Entradas</div><div class="hl-res-val" style="color:var(--verde-d)">+${_hlNum(totMas)}</div><div class="hl-res-sub">${nMas} ${cfg.mas.map(k=>lbl[k]).join(' / ')}</div></div>
       ${cfg.menos.length?`<div class="hl-res"><div class="hl-res-lbl">Salidas</div><div class="hl-res-val" style="color:var(--alerta)">−${_hlNum(totMenos)}</div><div class="hl-res-sub">${nMenos} ${cfg.menos.map(k=>lbl[k]).join(' / ')}</div></div>`:''}
-      <div class="hl-res" ${cfg.menos.length?'':'style="grid-column:span 2"'}><div class="hl-res-lbl">${cfg.menos.length?'Saldo actual':'Total'}</div><div class="hl-res-val">${_hlNum(saldo)} <small style="font-size:12px;color:var(--gris)">bins</small></div><div class="hl-res-sub">${rows.length} movimiento${rows.length===1?'':'s'}</div></div>
+      <div class="hl-res" ${cfg.menos.length?'':'style="grid-column:span 2"'}><div class="hl-res-lbl">${cfg.menos.length?(etapa==='packing'?'Aún en packing':'Saldo actual'):'Total'}</div><div class="hl-res-val">${_hlNum(saldo)} <small style="font-size:12px;color:var(--gris)">bins</small></div><div class="hl-res-sub">${rows.length} movimiento${rows.length===1?'':'s'}</div></div>
     </div>
     <div class="hl-res-sec"><div class="hl-res-sec-t">Movimientos <span>más reciente primero · toca una fila para ver el origen</span></div>
       <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th><th>Hora</th><th>Movimiento</th><th class="n">Bins</th><th class="n">${cfg.menos.length?'Saldo':'Acumulado'}</th><th>Detalle</th></tr>
@@ -7265,18 +7272,19 @@ function _hlComputeResumen(logs,bins,temporada,variedad){
   const binsAnio=bins.filter(b=>_hlAnio(b.fecha)===temporada);
   const binsRec=sum(binsAnio.filter(b=>(b.tipo||'recepcion')==='recepcion'),b=>b.cantidad);
   const binsDev=sum(binsAnio.filter(b=>b.tipo==='devolucion'),b=>b.cantidad);
+  const binsDevH=sum(binsAnio.filter(b=>b.tipo==='devolucion'&&_hlDevDesde(b)==='huerto'),b=>b.cantidad);
   const binsLlen=sum(enTemp,_hlUnidades);
   const binsEnt=sum(enTemp,_hlEntregadosUnid);
   const binsDesp=sum(binsAnio.filter(b=>b.tipo==='despacho'),b=>b.cantidad);
   const mejor=sel.reduce((m,l)=>((Number(l.bines)||0)>(Number(m?.bines)||0)||(!Number(m?.bines)&&(Number(l.tallos)||0)>(Number(m?.tallos)||0)))?l:m,null);
-  return {temporada,variedad,fechas,dias,totB,totV,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDev,binsLlen,binsEnt,binsDesp,mejor};
+  return {temporada,variedad,fechas,dias,totB,totV,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDev,binsDevH,binsLlen,binsEnt,binsDesp,mejor};
 }
 async function verResumenCosecha(temporada,variedad){
   const [logs,bins]=await Promise.all([getAll('harvestlogs'),getAll('binlogs')]);
   const r=_hlComputeResumen(logs,bins,temporada,variedad);
   if(!r){toast('Sin partes en esta temporada','warn');return}
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const vacios=r.binsRec-r.binsLlen-r.binsDev,enHuerto=r.binsLlen-r.binsEnt,enCamara=r.binsEnt-r.binsDesp;
+  const vacios=r.binsRec-r.binsLlen-r.binsDevH,enHuerto=r.binsLlen-r.binsEnt,enCamara=r.binsEnt-r.binsDesp;
   openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="clipboard-list" style="width:18px;height:18px;vertical-align:-3px"></i> Resumen de cosecha ${r.temporada}</h3>
       <div class="hl-res-meta">${(r.variedad&&r.variedad!=='todas')?esc(r.variedad)+' · ':''}${fmt(r.fechas[0])} → ${fmt(r.fechas[r.dias-1])} · ${r.dias} día${r.dias===1?'':'s'} de corte${r.mejor?` · mejor día ${harvestFmtCorto(r.mejor.fecha)}`:''}</div></div>
     <div class="hl-res-grid">
@@ -7301,7 +7309,7 @@ async function _hlCopiarResumen(temporada,variedad){
   t+=`Bins cosechados: ${r.totU} (${_hlNum(r.totB,1)} bines llenados)`+(r.totV?` · Varas: ${_hlNum(r.totV)}`:'')+'\n';
   if(r.prod!=null)t+=`${r.totV?'Varas':'Bines'}/${r.usaCort?'cortador':'persona'}/día: ${_hlNum(r.prod,r.totV?0:2)}\n`;
   t+=`Cuadrilla: ${_hlNum(r.jornadas)} jornadas`+(r.puestos.length?` (${r.puestos.map(([k,v])=>`${_hlNum(v)} ${k.toLowerCase()}`).join(', ')})`:'')+'\n';
-  t+=`Bins: ${_hlNum(r.binsRec-r.binsLlen-r.binsDev)} vacíos en huerto · ${_hlNum(r.binsLlen)} cosechados (${_hlNum(r.binsLlen-r.binsEnt)} en huerto) · ${_hlNum(r.binsEnt-r.binsDesp)} en cámara · ${_hlNum(r.binsDesp)} despachados a packing · ${_hlNum(r.binsDev)} devueltos al arrendador\n`;
+  t+=`Bins: ${_hlNum(r.binsRec-r.binsLlen-r.binsDevH)} vacíos en huerto · ${_hlNum(r.binsLlen)} cosechados (${_hlNum(r.binsLlen-r.binsEnt)} en huerto) · ${_hlNum(r.binsEnt-r.binsDesp)} en cámara · ${_hlNum(r.binsDesp)} despachados a packing · ${_hlNum(r.binsDev)} devueltos al arrendador\n`;
   t+=`_Santa Ana Peonías_`;
   navigator.clipboard.writeText(t).then(()=>toast('Resumen copiado ✓')).catch(()=>toast('No se pudo copiar','warn'));
 }
@@ -7416,7 +7424,9 @@ async function editBinLog(id,tipo,draft){
     const rec=bins.filter(x=>(x.tipo||'recepcion')==='recepcion'&&_hlAnio(x.fecha)===anio).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
     const dev=bins.filter(x=>x.tipo==='devolucion'&&_hlAnio(x.fecha)===anio&&x.id!==id).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
     const cos=logs.filter(l=>_hlAnio(l.fecha)===anio).reduce((s,l)=>s+_hlUnidades(l),0);
-    hint=`<div class="alert-box info" style="margin:0 0 10px"><i data-lucide="undo-2"></i><div class="ab-content">Vacíos en huerto ahora: <strong>${_hlNum(rec-cos-dev)} bins</strong>. Por devolver al arrendador: <strong>${_hlNum(rec-dev)} bins</strong> (${_hlNum(rec)} retirados − ${_hlNum(dev)} ya devueltos).</div></div>`;
+    const devH=bins.filter(x=>x.tipo==='devolucion'&&_hlDevDesde(x)==='huerto'&&_hlAnio(x.fecha)===anio&&x.id!==id).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
+    const despT=bins.filter(x=>x.tipo==='despacho'&&_hlAnio(x.fecha)===anio).reduce((s,x)=>s+(Number(x.cantidad)||0),0);
+    hint=`<div class="alert-box info" style="margin:0 0 10px"><i data-lucide="undo-2"></i><div class="ab-content">En packing ahora: <strong>${_hlNum(despT-(dev-devH))} bins</strong> · vacíos en huerto: <strong>${_hlNum(rec-cos-devH)}</strong>. Por devolver al arrendador: <strong>${_hlNum(rec-dev)} bins</strong> (${_hlNum(rec)} retirados − ${_hlNum(dev)} ya devueltos).</div></div>`;
   }
   if(desp){
     const anio=_hlAnio(b.fecha)||new Date().getFullYear();
@@ -7442,6 +7452,7 @@ async function editBinLog(id,tipo,draft){
       <div style="display:flex;gap:6px;align-items:stretch"><select id="f-bl-rental" style="flex:1;min-width:0"><option value="">— ninguno —</option>${rentalsOpts.map(r=>`<option value="${r.id}" ${b.rentalId===r.id?'selected':''}>${_rtLabel(r).replace(/"/g,'&quot;')}</option>`).join('')}</select><button type="button" class="btn small" style="flex:0 0 auto" onclick="_blNuevoArriendo(${id?`'${id}'`:'null'})" title="Crear el arriendo o servicio ahora (camión, transporte…) y dejarlo asociado a este movimiento"><i data-lucide="plus"></i>Nuevo arriendo / servicio</button></div>
       <small style="color:var(--gris);font-size:11px">Elige uno existente o crea el del camión aquí mismo: vuelves a este formulario con el arriendo ya asociado y en Arriendos verás el costo por bin.</small>
     </div>
+    ${devol?`<div class="form-row"><label>¿Desde dónde se devuelven?</label><div class="hv-tipo-switch"><label class="hv-tipo-opt ${_hlDevDesde(b)==='packing'?'active':''}"><input type="radio" name="f-bl-desde" value="packing" ${_hlDevDesde(b)==='packing'?'checked':''} onchange="document.querySelectorAll('.hv-tipo-opt').forEach(l=>l.classList.toggle('active',l.querySelector('input').checked))"><strong>Desde el packing</strong><small>Bins ya despachados y vaciados allá. Descuentan de "en packing".</small></label><label class="hv-tipo-opt ${_hlDevDesde(b)==='huerto'?'active':''}"><input type="radio" name="f-bl-desde" value="huerto" ${_hlDevDesde(b)==='huerto'?'checked':''} onchange="document.querySelectorAll('.hv-tipo-opt').forEach(l=>l.classList.toggle('active',l.querySelector('input').checked))"><strong>Desde el huerto</strong><small>Vacíos sin usar que se devuelven directo. Descuentan de "vacíos en huerto".</small></label></div></div>`:''}
     <input type="hidden" id="f-bl-tipo" value="${tipo}">
     <input type="hidden" id="f-bl-archivo-quitar" value="0">
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveBinLog(${id?`'${id}'`:'null'})"><i data-lucide="check"></i>Guardar</button></div>`);
@@ -7469,6 +7480,7 @@ async function _blCrearArriendoDesdeFicha(id){
 }
 async function saveBinLog(id){
   const data={tipo:document.getElementById('f-bl-tipo').value||'recepcion',fecha:document.getElementById('f-bl-fecha').value||null,cantidad:parseInt(document.getElementById('f-bl-cant').value,10),origen:document.getElementById('f-bl-origen').value.trim(),notas:document.getElementById('f-bl-notas').value.trim(),rentalId:document.getElementById('f-bl-rental')?.value||null};
+  if(data.tipo==='devolucion')data.desde=document.querySelector('input[name="f-bl-desde"]:checked')?.value||'packing';
   if(!data.fecha){toast('Fecha requerida','warn');return}
   if(isNaN(data.cantidad)||data.cantidad<=0){toast('Cantidad de bins requerida','warn');return}
   /* Adjunto (guía): foto comprimida o PDF. `put` hace merge, así que si no se toca se conserva. */
@@ -7504,7 +7516,7 @@ async function verBinLog(id){
   openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="${desp?'truck':(devol?'undo-2':'package-plus')}" style="width:18px;height:18px;vertical-align:-3px"></i> ${_hlMovNombre(b)}</h3>
       <div class="hl-res-meta"><strong>${fmt(b.fecha)}</strong>${_hlMovTag(b,true)}</div></div>
     <div class="hl-res-grid">
-      <div class="hl-res"><div class="hl-res-lbl">Bins</div><div class="hl-res-val">${_hlNum(b.cantidad)}</div><div class="hl-res-sub">${desp?'salen de cámara a packing':(devol?'vacíos devueltos al arrendador':'vacíos que entran al huerto')}</div></div>
+      <div class="hl-res"><div class="hl-res-lbl">Bins</div><div class="hl-res-val">${_hlNum(b.cantidad)}</div><div class="hl-res-sub">${desp?'salen de cámara a packing':(devol?`devueltos al arrendador desde el ${_hlDevDesde(b)}`:'vacíos que entran al huerto')}</div></div>
       <div class="hl-res" style="grid-column:span 2;text-align:left"><div class="hl-res-lbl">${desp?'Destino':(devol?'Devuelto a':'Origen / arrendador')}</div><div class="hl-res-val" style="font-size:18px">${esc(b.origen)||'—'}</div><div class="hl-res-sub">${creador?`registrado por ${esc(creador.nombre)}`:''}${b.createdAt?` · ${new Date(b.createdAt).toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'})}`:''}</div></div>
     </div>
     ${b.notas?`<div class="hl-res-sec"><div class="hl-res-sec-t">Notas</div><div class="hl-res-nota">${esc(b.notas)}</div></div>`:''}
@@ -7574,19 +7586,21 @@ async function renderBins(){
   const sumQ=arr=>arr.reduce((s,b)=>s+(Number(b.cantidad)||0),0);
   const nRec=sumQ(rec),nDev=sumQ(dev),nDesp=sumQ(desp);
   const cos=lt.reduce((s,l)=>s+_hlUnidades(l),0),ent=lt.reduce((s,l)=>s+_hlEntregadosUnid(l),0);
-  const vacios=nRec-cos-nDev,llenos=cos-ent,camara=ent-nDesp;
+  const nDevH=sumQ(dev.filter(b=>_hlDevDesde(b)==='huerto')),nDevP=nDev-nDevH;
+  const vacios=nRec-cos-nDevH,llenos=cos-ent,camara=ent-nDesp,enPacking=nDesp-nDevP;
   const enPoder=vacios+llenos+camara;
   const despCuenta=!!cfg.despachoDevuelve;
-  const porDevolver=nRec-nDev-(despCuenta?nDesp:0);
+  /* Si el packing es el arrendador, los despachos ya devuelven; las devoluciones "desde packing" serían internas y no se cuentan dos veces */
+  const porDevolver=nRec-nDevH-(despCuenta?nDesp:nDevP);
   /* Conciliación: lo que debo según movimientos vs. lo que físicamente tengo (si los despachos no devuelven, los bins en packing siguen siendo míos frente al arrendador) */
-  const esperado=enPoder+(despCuenta?0:nDesp);
+  const esperado=enPoder+(despCuenta?0:enPacking);
   const diferencia=porDevolver-esperado;
   /* Cuenta por arrendador */
   const norm=x=>(x||'').trim().toLowerCase();
   const cuentas={};
   const add=(k,nombre)=>cuentas[k]||(cuentas[k]={nombre,rec:0,dev:0,desp:0,nRec:0,nDev:0,nDesp:0,ultimo:''});
   rec.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.rec+=Number(b.cantidad)||0;c.nRec++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
-  dev.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.dev+=Number(b.cantidad)||0;c.nDev++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
+  dev.forEach(b=>{if(despCuenta&&_hlDevDesde(b)==='packing')return;const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.dev+=Number(b.cantidad)||0;c.nDev++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
   if(despCuenta)desp.forEach(b=>{const k=norm(b.origen)||'_';const c=add(k,b.origen||'Sin arrendador');c.desp+=Number(b.cantidad)||0;c.nDesp++;if(b.fecha>c.ultimo)c.ultimo=b.fecha});
   const cuentasArr=Object.values(cuentas).sort((a,b)=>(b.rec-b.dev-b.desp)-(a.rec-a.dev-a.desp));
   const filt=_bnTipo==='todos'?bt:bt.filter(b=>tipoDe(b)===_bnTipo);
@@ -7600,16 +7614,17 @@ async function renderBins(){
     <div class="actions hl-actions"><button class="btn secondary hl-btn-sec" onclick="editBinLog(null,'devolucion')" title="Vacíos que vuelven al arrendador"><i data-lucide="undo-2"></i>Devolución</button><button class="btn ghost hl-btn-sec" onclick="editBinLog(null,'despacho')" title="Llenos que van al packing"><i data-lucide="truck"></i>Despacho a packing</button><button class="btn ghost hl-btn-sec" onclick="editRental()" title="Registrar el camión u otro servicio"><i data-lucide="receipt"></i>Nuevo arriendo</button><button class="btn hl-btn-new" onclick="editBinLog(null,'recepcion')"><i data-lucide="package-plus"></i>Recepción de vacíos</button></div></div>
     <div class="card" style="padding:12px 16px"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span class="hl-lbl">Temporada</span>${[...new Set([anoActual,...temporadas])].sort((a,b)=>b-a).map(chipT).join('')}</div></div>
     ${diferencia!==0&&nRec>0?`<div class="alert-box ${diferencia>0?'warn':'info'}" style="margin-bottom:14px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Descuadre de ${_hlNum(Math.abs(diferencia))} bin${Math.abs(diferencia)===1?'':'s'}:</strong> según los movimientos debes <strong>${_hlNum(porDevolver)}</strong> al arrendador, pero ${diferencia>0?'solo tienes':'tienes'} <strong>${_hlNum(esperado)}</strong> entre huerto, cámara${despCuenta?'':' y packing'}. ${diferencia>0?'Puede haber bins perdidos o dañados, o una recepción/devolución sin registrar.':'Hay más bins de los que figuran retirados: revisa si falta registrar una recepción.'}</div></div>`:''}
+    ${enPacking<0?`<div class="alert-box warn" style="margin-bottom:14px"><i data-lucide="alert-triangle"></i><div class="ab-content"><strong>Devolviste desde packing ${_hlNum(nDevP)} bins, pero solo hay ${_hlNum(nDesp)} despachados.</strong> Revisa si falta registrar un despacho a packing o si alguna devolución fue en realidad de vacíos desde el huerto (edítala y marca "Desde el huerto").</div></div>`:''}
     <div class="grid grid-4">
       <div class="kpi hl-kpi-click" onclick="verTrazabilidadBins('vacios')" title="Ver recepciones"><div class="kpi-header"><div class="label">Retirados ${_bnTemp}</div><div class="kpi-icon"><i data-lucide="package-plus"></i></div></div><div class="value">${_hlNum(nRec)} <small>bins</small></div><div class="foot">${rec.length} recepci${rec.length===1?'ón':'ones'} · ${cuentasArr.filter(c=>c.rec>0).length} arrendador${cuentasArr.filter(c=>c.rec>0).length===1?'':'es'}</div></div>
-      <div class="kpi ok hl-kpi-click" onclick="verTrazabilidadBins('devueltos')" title="Ver devoluciones"><div class="kpi-header"><div class="label">Devueltos</div><div class="kpi-icon"><i data-lucide="undo-2"></i></div></div><div class="value">${_hlNum(nDev+(despCuenta?nDesp:0))} <small>bins</small></div><div class="foot">${dev.length} devoluci${dev.length===1?'ón':'ones'}${despCuenta?` · incluye ${_hlNum(nDesp)} despachados`:''}</div></div>
+      <div class="kpi ok hl-kpi-click" onclick="verTrazabilidadBins('devueltos')" title="Ver devoluciones"><div class="kpi-header"><div class="label">Devueltos</div><div class="kpi-icon"><i data-lucide="undo-2"></i></div></div><div class="value">${_hlNum(nDevH+(despCuenta?nDesp:nDevP))} <small>bins</small></div><div class="foot">${dev.length} devoluci${dev.length===1?'ón':'ones'}${nDevP&&!despCuenta?` · ${_hlNum(nDevP)} desde packing`:''}${nDevH?` · ${_hlNum(nDevH)} desde huerto`:''}${despCuenta?` · incluye ${_hlNum(nDesp)} despachados`:''}</div></div>
       <div class="kpi ${porDevolver>0?'warn':'ok'}"><div class="kpi-header"><div class="label">Por devolver</div><div class="kpi-icon"><i data-lucide="${porDevolver>0?'clock':'check-circle'}"></i></div></div><div class="value">${_hlNum(porDevolver)} <small>bins</small></div><div class="foot">${porDevolver>0?'pendientes con el arrendador':'cuenta al día'}</div></div>
-      <div class="kpi info"><div class="kpi-header"><div class="label">En nuestro poder</div><div class="kpi-icon"><i data-lucide="map-pin"></i></div></div><div class="value">${_hlNum(enPoder)} <small>bins</small></div><div class="foot">${_hlNum(vacios)} vacíos · ${_hlNum(llenos)} llenos en huerto · ${_hlNum(camara)} en cámara${despCuenta?'':` · ${_hlNum(nDesp)} en packing`}</div></div>
+      <div class="kpi info"><div class="kpi-header"><div class="label">En nuestro poder</div><div class="kpi-icon"><i data-lucide="map-pin"></i></div></div><div class="value">${_hlNum(enPoder)} <small>bins</small></div><div class="foot">${_hlNum(vacios)} vacíos · ${_hlNum(llenos)} llenos en huerto · ${_hlNum(camara)} en cámara${despCuenta?'':` · ${_hlNum(enPacking)} en packing`}</div></div>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0"><i data-lucide="landmark"></i>Cuenta por arrendador</h3><label class="rt-switch" style="font-size:12.5px"><input type="checkbox" ${despCuenta?'checked':''} onchange="setBinsDespachoDevuelve(this.checked)"><span>Los despachos a packing devuelven los bins al arrendador</span></label></div>
       ${cuentasArr.length?`<div class="table-scroll" style="margin-top:10px"><table class="hl-bins-tabla"><thead><tr><th>Arrendador</th><th style="text-align:right">Retirados</th><th style="text-align:right">Devueltos</th>${despCuenta?'<th style="text-align:right">Despachados</th>':''}<th style="text-align:right">Por devolver</th><th>Último movimiento</th></tr></thead><tbody>${cuentasArr.map(c=>{const saldo=c.rec-c.dev-c.desp;return `<tr><td><strong>${c.nombre}</strong></td><td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.rec)} <small style="color:var(--gris)">(${c.nRec})</small></td><td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.dev)} <small style="color:var(--gris)">(${c.nDev})</small></td>${despCuenta?`<td style="text-align:right;font-variant-numeric:tabular-nums">${_hlNum(c.desp)} <small style="color:var(--gris)">(${c.nDesp})</small></td>`:''}<td style="text-align:right;font-variant-numeric:tabular-nums"><strong style="color:${saldo>0?'#b45309':(saldo<0?'var(--alerta)':'var(--verde-d)')}">${_hlNum(saldo)}</strong></td><td style="font-size:12px;color:var(--gris)">${c.ultimo?fmt(c.ultimo):'—'}</td></tr>`}).join('')}</tbody><tfoot><tr><td style="text-align:right;color:var(--gris);font-size:12px">Total</td><td style="text-align:right"><strong>${_hlNum(nRec)}</strong></td><td style="text-align:right"><strong>${_hlNum(nDev)}</strong></td>${despCuenta?`<td style="text-align:right"><strong>${_hlNum(nDesp)}</strong></td>`:''}<td style="text-align:right"><strong>${_hlNum(porDevolver)}</strong></td><td></td></tr></tfoot></table></div>
-      <div class="hl-foot-note">Por devolver = retirados − devueltos${despCuenta?' − despachados a packing':''}. Para que la cuenta cuadre, escribe siempre el mismo nombre del arrendador en recepciones y devoluciones.</div>`:`<div class="hl-foot-note">Registra la primera recepción de bins vacíos indicando el arrendador (ej. ASM) y acá verás cuántos has retirado, devuelto y cuántos faltan por devolver.</div>`}
+      <div class="hl-foot-note">Por devolver = retirados − devueltos${despCuenta?' − despachados a packing':''}. Las devoluciones salen del packing (bins ya despachados) salvo que se marquen "desde el huerto". Escribe siempre el mismo nombre del arrendador en recepciones y devoluciones.</div>`:`<div class="hl-foot-note">Registra la primera recepción de bins vacíos indicando el arrendador (ej. ASM) y acá verás cuántos has retirado, devuelto y cuántos faltan por devolver.</div>`}
     </div>
     <div class="card">
       <h3 style="margin:0 0 4px"><i data-lucide="map-pin"></i>Dónde están los bins <span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">toca una etapa para ver su trazabilidad</span></h3>
@@ -7620,9 +7635,9 @@ async function renderBins(){
         <div class="hl-arr"><i data-lucide="snowflake"></i></div>
         <div class="hl-st hl-click-card ${camara<0?'neg':''}" onclick="verTrazabilidadBins('camara')"><span>En cámara de frío</span><b>${_hlNum(camara)} <small>bins</small></b><i>${_hlNum(ent)} entregados</i></div>
         <div class="hl-arr"><i data-lucide="truck"></i></div>
-        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')"><span>En packing</span><b>${_hlNum(nDesp)} <small>bins</small></b><i>${desp.length} despacho${desp.length===1?'':'s'}</i></div>
+        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('packing')"><span>Packing</span><b>${_hlNum(nDesp)} <small>bins</small></b><i>${desp.length} despacho${desp.length===1?'':'s'}${nDevP?` · ${_hlNum(enPacking)} aún allá`:''}</i></div>
         <div class="hl-arr"><i data-lucide="undo-2"></i></div>
-        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('devueltos')"><span>Devueltos</span><b>${_hlNum(nDev)} <small>bins</small></b><i>al arrendador</i></div>
+        <div class="hl-st hl-click-card" onclick="verTrazabilidadBins('devueltos')"><span>Devueltos</span><b>${_hlNum(nDev)} <small>bins</small></b><i>al arrendador${nDevH&&nDevP?` · ${_hlNum(nDevP)} packing / ${_hlNum(nDevH)} huerto`:(nDevH?' · desde huerto':(nDevP?' · desde packing':''))}</i></div>
       </div>
     </div>
     <div class="card">
