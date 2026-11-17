@@ -101,6 +101,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans
 .hl-puestos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .hl-puesto label{display:block;font-size:11.5px;color:var(--texto-m);margin-bottom:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl-puesto input{width:100%;padding:8px 10px;font-size:16px;font-weight:700;text-align:center}
+.hl-puesto .f-hl-nombre{margin-top:6px;font-size:12.5px;font-weight:500;text-align:left;padding:7px 9px}
+.hl-nombres{font-size:10.5px;color:var(--gris);font-weight:400;white-space:normal}
 .hl-pers-total2{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1px dashed var(--gris-l);font-size:13px;color:var(--texto-m);text-align:right}
 .card .rt-switch{min-height:36px;padding:6px 10px}
 .hl-rt-link{display:inline-block;color:var(--verde-d);font-weight:600;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
@@ -1397,7 +1399,7 @@ const FIREBASE_CONFIG = {
 /* ============ VERSIÓN DE LA APLICACIÓN ============ */
 /* Incrementar este valor cada vez que se publique un cambio en GitHub.
    Formato sugerido: AAAA.MM.DD.N  (fecha + correlativo del día) */
-const APP_VERSION='2026.05.18.97';
+const APP_VERSION='2026.05.18.99';
 
 /* ============ USUARIOS ============ */
 const USERS=[
@@ -6822,6 +6824,15 @@ const _hlAnio=f=>parseLocalDate(f)?.getFullYear();
 const _hlPersonas=l=>{if(l.puestos&&typeof l.puestos==='object'){const s=Object.values(l.puestos).reduce((a,b)=>a+(Number(b)||0),0);if(s>0)return s}return Number(l.personas)||0};
 /* Cortadores: el puesto cuyo nombre contenga "cort". */
 const _hlCortadores=l=>{if(l.puestos&&typeof l.puestos==='object'){const k=Object.keys(l.puestos).find(k=>/cort/i.test(k));if(k&&Number(l.puestos[k])>0)return Number(l.puestos[k])}return 0};
+/* Puestos "con nombres" (jefa de campo, supervisoras, encargadas…): en el parte se anota quiénes fueron, en l.nombres[puesto]. */
+const HL_NOMBRES_RE=/jef|superv|encarg|capataz|l[ií]der/i;
+const _hlPuestoConNombres=k=>HL_NOMBRES_RE.test(k||'');
+/* "Vale, Dani y Cote (medio día)" → ['Vale','Dani','Cote'] */
+const _hlSplitNombres=s=>String(s||'').replace(/\([^)]*\)/g,'').split(/[,;\/·\n]|\s+y\s+|\s+e\s+/i).map(x=>x.trim()).filter(Boolean);
+const _hlNombresDe=(l,k)=>(l.nombres&&typeof l.nombres==='object'&&l.nombres[k])?String(l.nombres[k]).trim():'';
+/* Encargadas de una selección de partes → [{nombre, roles:{puesto:días}, total}] ordenado por días */
+function _hlEncargadas(sel){const por={};sel.forEach(l=>{if(!l.nombres||typeof l.nombres!=='object')return;Object.entries(l.nombres).forEach(([k,s])=>{if(!_hlPuestoConNombres(k))return;_hlSplitNombres(s).forEach(nm=>{const key=_hlNorm(nm);const o=por[key]||(por[key]={nombre:nm,roles:{},total:0});o.roles[k]=(o.roles[k]||0)+1;o.total++})})});return Object.values(por).sort((a,b)=>b.total-a.total)}
+const _hlEncargadasTxt=(arr,esc=x=>x)=>arr.map(p=>`${esc(p.nombre)}: ${Object.entries(p.roles).map(([k,n])=>`${n} día${n===1?'':'s'} ${esc(k.toLowerCase())}`).join(' + ')}`).join(' · ');
 /* Bins físicos que salen con un parte: un bin parcial cuenta como unidad (3,5 → 4). */
 /* Un parte puede llevar `cortes` (cosechas parciales: hora · bines) y `viajes` (entregas a cámara: hora · bins).
    - Bines cosechados del día = suma de cortes si existen; si no, el campo `bines`.
@@ -6935,7 +6946,7 @@ async function renderHarvestLog(){
   const diasOcultos=fechasDesc.slice(3);
   const regAbierto=!!(window._hlFolds&&window._hlFolds.reg);
   const extraCls=l=>fechasVisibles.has(l.fecha)?'':`hl-reg-extra${regAbierto?'':' hl-oculto'}`;
-  const filaParte=l=>{const b=Number(l.bines)||0,t=_hlVaras(l),tEst=_hlVarasEst(l),p=_hlPersonas(l),d=denomDe(l),u=_hlUnidades(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<tr class="${extraCls(l)}">
+  const filaParte=l=>{const b=Number(l.bines)||0,t=_hlVaras(l),tEst=_hlVarasEst(l),p=_hlPersonas(l),d=denomDe(l),u=_hlUnidades(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>{const nm=_hlNombresDe(l,k);return `${v} ${k.toLowerCase()}${nm?` (${nm})`:''}`}).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<tr class="${extraCls(l)}">
         <td class="hl-click" onclick="verParteCosecha('${l.id}')" title="Ver ficha del día"><strong>${fmt(l.fecha)}</strong>${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}${!tieneProd(l)?' <span class="tag warn" style="font-size:10px">por completar</span>':''}</td>
         <td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${l.variedad}</td>
         ${mostrarCuarteles?`<td>${bloquesTags({bloques:l.cuarteles||[]})}</td>`:''}
@@ -6946,7 +6957,7 @@ async function renderHarvestLog(){
         <td style="max-width:300px;font-size:12px;color:var(--gris-d)">${l.notas||'<span style="color:var(--gris-m)">—</span>'}</td>
         <td class="col-acciones">${!tieneProd(l)?`<button class="btn small" onclick="editHarvestLog('${l.id}')" title="Completar bines y varas"><i data-lucide="check"></i>Completar</button>`:`<button class="btn small ghost" onclick="editHarvestLog('${l.id}')" title="Editar"><i data-lucide="pencil"></i></button>`}<button class="btn small danger" onclick="delHarvestLog('${l.id}')" title="Eliminar"><i data-lucide="trash-2"></i></button></td>
       </tr>`};
-  const cardParte=l=>{const b=Number(l.bines)||0,t=_hlVaras(l),tEst=_hlVarasEst(l),p=_hlPersonas(l),d=denomDe(l),u=_hlUnidades(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>`${v} ${k.toLowerCase()}`).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<div class="hl-card ${extraCls(l)}" onclick="verParteCosecha('${l.id}')">
+  const cardParte=l=>{const b=Number(l.bines)||0,t=_hlVaras(l),tEst=_hlVarasEst(l),p=_hlPersonas(l),d=denomDe(l),u=_hlUnidades(l);const desglose=l.puestos?Object.entries(l.puestos).filter(([k,v])=>Number(v)>0).map(([k,v])=>{const nm=_hlNombresDe(l,k);return `${v} ${k.toLowerCase()}${nm?` (${nm})`:''}`}).join(' · '):'';const pr=d>0?(metricaVaras?(t?t/d:null):(b?b/d:null)):null;return `<div class="hl-card ${extraCls(l)}" onclick="verParteCosecha('${l.id}')">
         <div class="hl-card-head"><div class="hl-card-date">${fmt(l.fecha)}${l.fecha===hoyStr?' <span class="tag ok" style="font-size:10px">hoy</span>':''}${!tieneProd(l)?' <span class="tag warn" style="font-size:10px">por completar</span>':''}</div><div class="hl-card-var"><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${l.variedad}</div></div>
         <div class="hl-card-stats">
           <div><div class="v">${b?_hlNum(b,1):'—'}</div><div class="l">bines${_hlPendienteUnid(l)>0?` · ${_hlPendienteUnid(l)} en huerto`:((u&&u!==b)?` · ${u} bins`:'')}</div></div>
@@ -7009,7 +7020,7 @@ async function renderHarvestLog(){
       <div class="card" style="margin:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0;cursor:pointer" onclick="verDetalleCuadrilla(_hlTemp,_hlVar)" title="Ver cuadrilla día a día"><i data-lucide="users"></i>Cuadrilla ${_hlTemp}${_hlVar!=='todas'?` · ${_hlVar}`:''} <span class="hl-key">${diasCuad?_hlNum(jornadas/diasCuad,1):'—'} personas/día</span>${costoChip}<span style="color:var(--gris);font-weight:normal;font-size:12px;margin-left:6px">${_hlNum(jornadas)} jornadas en ${diasCuad} día${diasCuad===1?'':'s'}${diasCuad?` · máx ${persMax} · mín ${persMin}`:''}</span></h3><button class="btn small ghost" onclick="editHarvestPuestos(_hlTemp)" title="Puestos y tarifas"><i data-lucide="settings-2"></i>Puestos</button></div>
         ${puestosArr.length?`<div class="hl-puestos-resumen">${puestosArr.map(([k,v])=>{const pct=jornadas?Math.round(v/jornadas*100):0;return `<div class="hl-pr" onclick="verDetallePuesto(_hlTemp,_hlVar,${JSON.stringify(k).replace(/"/g,'&quot;')})" title="Ver detalle de ${k}"><div class="hl-pr-top"><span class="hl-pr-nom">${k}</span><span class="hl-pr-val">${_hlNum(v)} <small>jorn.</small></span></div><div class="hl-pr-bar"><div style="width:${pct}%"></div></div><div class="hl-pr-sub"><span>${diasCuad?_hlNum(v/diasCuad,1):0} por día · ${pct}%</span>${costo.porPuesto[k]>0?`<span class="hl-pr-cost">${_hlCLP(costo.porPuesto[k])}</span>`:(costo.faltan.includes(k)?`<span class="hl-pr-cost" style="color:var(--alerta)">sin tarifa</span>`:'')}</div></div>`}).join('')}</div>`:`<div class="hl-foot-note">Anota la cuadrilla por puesto en cada parte para ver el desglose.</div>`}
-        ${(puestosArr.length&&filasCuad.length)?fold('cuad','Día a día por puesto')+foldBody('cuad',`<div class="table-scroll"><table class="hl-bins-tabla hl-res-dias"><thead><tr><th>Fecha</th><th style="text-align:right">Total</th>${puestosCols.map(k=>`<th style="text-align:right">${k}</th>`).join('')}<th style="text-align:right">Bines</th><th style="text-align:right">Costo</th></tr></thead><tbody>${filasCuad.map(l=>{const c=_hlCostoParte(l,tar);return `<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong>${c.domingo?`<span class="hl-dom">dom ×${_hlNum(c.factor,2)}</span>`:''}</td><td style="text-align:right"><strong>${_hlPersonas(l)}</strong></td>${puestosCols.map(k=>`<td style="text-align:right">${(l.puestos&&Number(l.puestos[k])>0)?Number(l.puestos[k]):'<span style="color:var(--gris-m)">—</span>'}</td>`).join('')}<td style="text-align:right">${Number(l.bines)?_hlNum(l.bines,1):'—'}</td><td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap">${c.total?_hlCLP(c.total):'—'}</td></tr>`}).join('')}<tr class="hl-res-total"><td><strong>Total</strong></td><td style="text-align:right"><strong>${_hlNum(jornadas)}</strong></td>${puestosCols.map(k=>`<td style="text-align:right">${_hlNum(porPuesto[k])}</td>`).join('')}<td style="text-align:right">${_hlNum(filasCuad.reduce((s,l)=>s+(Number(l.bines)||0),0),1)}</td><td style="text-align:right;white-space:nowrap"><strong>${costo.total?_hlCLP(costo.total):'—'}</strong></td></tr></tbody></table></div>`):''}
+        ${(puestosArr.length&&filasCuad.length)?fold('cuad','Día a día por puesto')+foldBody('cuad',`<div class="table-scroll"><table class="hl-bins-tabla hl-res-dias"><thead><tr><th>Fecha</th><th style="text-align:right">Total</th>${puestosCols.map(k=>`<th style="text-align:right">${k}</th>`).join('')}<th style="text-align:right">Bines</th><th style="text-align:right">Costo</th></tr></thead><tbody>${filasCuad.map(l=>{const c=_hlCostoParte(l,tar);return `<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong>${c.domingo?`<span class="hl-dom">dom ×${_hlNum(c.factor,2)}</span>`:''}</td><td style="text-align:right"><strong>${_hlPersonas(l)}</strong></td>${puestosCols.map(k=>`<td style="text-align:right">${(l.puestos&&Number(l.puestos[k])>0)?Number(l.puestos[k]):'<span style="color:var(--gris-m)">—</span>'}${_hlNombresDe(l,k)?`<div class="hl-nombres">${_hlNombresDe(l,k)}</div>`:''}</td>`).join('')}<td style="text-align:right">${Number(l.bines)?_hlNum(l.bines,1):'—'}</td><td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap">${c.total?_hlCLP(c.total):'—'}</td></tr>`}).join('')}<tr class="hl-res-total"><td><strong>Total</strong></td><td style="text-align:right"><strong>${_hlNum(jornadas)}</strong></td>${puestosCols.map(k=>`<td style="text-align:right">${_hlNum(porPuesto[k])}</td>`).join('')}<td style="text-align:right">${_hlNum(filasCuad.reduce((s,l)=>s+(Number(l.bines)||0),0),1)}</td><td style="text-align:right;white-space:nowrap"><strong>${costo.total?_hlCLP(costo.total):'—'}</strong></td></tr></tbody></table></div>`):''}
       </div>
     </div>
   `;
@@ -7048,7 +7059,8 @@ function _hlCollectForm(){
   const g=k=>document.getElementById(k);
   if(!g('f-hl-fecha'))return null;
   const puestos={};document.querySelectorAll('.f-hl-puesto').forEach(i=>{puestos[i.getAttribute('data-puesto')]=i.value});
-  return {fecha:g('f-hl-fecha').value,variedad:g('f-hl-var').value,cuarteles:Array.from(document.querySelectorAll('.f-hl-chk:checked')).map(c=>c.value),bines:g('f-hl-bines').value,tallos:g('f-hl-tallos').value,tallosExport:g('f-hl-exp').value,horas:g('f-hl-horas').value,puestos,notas:g('f-hl-notas').value,cortes:((window._hlListas||{}).cortes||[]).map(v=>({...v})),viajes:((window._hlListas||{}).viajes||[]).map(v=>({...v}))};
+  const nombres={};document.querySelectorAll('.f-hl-nombre').forEach(i=>{nombres[i.getAttribute('data-puesto')]=i.value});
+  return {nombres,fecha:g('f-hl-fecha').value,variedad:g('f-hl-var').value,cuarteles:Array.from(document.querySelectorAll('.f-hl-chk:checked')).map(c=>c.value),bines:g('f-hl-bines').value,tallos:g('f-hl-tallos').value,tallosExport:g('f-hl-exp').value,horas:g('f-hl-horas').value,puestos,notas:g('f-hl-notas').value,cortes:((window._hlListas||{}).cortes||[]).map(v=>({...v})),viajes:((window._hlListas||{}).viajes||[]).map(v=>({...v}))};
 }
 async function editHarvestLog(id,draft){
   const [blocks,logs,puestos,cfgH]=await Promise.all([getAll('blocks'),getAll('harvestlogs'),getHarvestPuestos(),get('config','harvest').catch(()=>null)]);
@@ -7089,7 +7101,7 @@ async function editHarvestLog(id,draft){
       <div class="hl-viajes"><div class="hl-sec-t" style="margin:8px 0 6px"><i data-lucide="snowflake"></i>Entregas a cámara de frío <small>(una entrega da por cosechados esos bins)</small><span class="hl-total" id="f-hl-pend" style="margin-left:auto"></span><a class="hl-link" onclick="_hlListaAdd('viajes')">+ agregar</a></div><div id="f-hl-viajes"></div></div>
     </div>
     <div class="hl-sec"><div class="hl-sec-t"><i data-lucide="users"></i>Cuadrilla por puesto <a class="hl-link" onclick="_hlEditarPuestosDesdeForm(${id?`'${id}'`:'null'})">editar puestos</a><span class="hl-total" id="f-hl-pers-total">${totalPers} persona${totalPers===1?'':'s'}</span></div>
-      <div class="hl-puestos">${lista.map((k,i)=>`<div class="hl-puesto"><label for="f-hl-p-${i}">${esc(k)}</label><div class="hl-stepper sm"><button type="button" onclick="_hlStep('f-hl-p-${i}',-1)" aria-label="menos">−</button><input id="f-hl-p-${i}" class="f-hl-puesto" data-puesto="${esc(k)}" type="number" min="0" step="1" inputmode="numeric" value="${val(pv[k])}" placeholder="0" oninput="_hlSumPuestos()"><button type="button" onclick="_hlStep('f-hl-p-${i}',1)" aria-label="más">+</button></div></div>`).join('')}</div>
+      <div class="hl-puestos">${lista.map((k,i)=>`<div class="hl-puesto"><label for="f-hl-p-${i}">${esc(k)}</label><div class="hl-stepper sm"><button type="button" onclick="_hlStep('f-hl-p-${i}',-1)" aria-label="menos">−</button><input id="f-hl-p-${i}" class="f-hl-puesto" data-puesto="${esc(k)}" type="number" min="0" step="1" inputmode="numeric" value="${val(pv[k])}" placeholder="0" oninput="_hlSumPuestos()"><button type="button" onclick="_hlStep('f-hl-p-${i}',1)" aria-label="más">+</button></div>${_hlPuestoConNombres(k)?`<input type="text" id="f-hl-n-${i}" class="f-hl-nombre" data-puesto="${esc(k)}" value="${esc(_hlNombresDe(l,k))}" placeholder="¿quién? ej. Vale, Dani" autocomplete="off">`:''}</div>`).join('')}</div>
       <div class="hl-pers-total2" id="f-hl-pers-total2">Total cuadrilla: <strong>${totalPers}</strong> persona${totalPers===1?'':'s'}</div>
     </div>
     <div class="form-row" style="margin-top:12px"><label>Cuarteles</label>
@@ -7174,13 +7186,15 @@ async function saveMovimientoDia(){
 }
 /* ---- Trazabilidad de bins por etapa: libro de movimientos con saldo ----
    Eventos: recepción (+vacíos), cosecha (−vacíos, +cosechados, +llenos en huerto), entrega (−huerto, +cámara),
-   despacho (−cámara, +packing). Cada fila abre el parte o el movimiento de origen. */
+   despacho (−cámara, +packing). Cada fila abre el parte o el movimiento de origen.
+   Orden dentro del día: el DESPACHO a packing va primero (el camión sale con lo que ya estaba en cámara,
+   antes de que entre la cosecha del día); luego recepciones, cosechas y entregas por hora; al final devoluciones. */
 function _hlEventosBins(logs,bins,temporada){
   const ev=[];
   bins.filter(b=>_hlAnio(b.fecha)===temporada).forEach(b=>{
     const t=b.tipo||'recepcion';
     const k=t==='devolucion'?(_hlDevDesde(b)==='huerto'?'devolucion_h':'devolucion_p'):t;
-    ev.push({fecha:b.fecha,hora:'',orden:t==='despacho'?'23:59':(t==='devolucion'?'23:30':'00:00'),k,n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
+    ev.push({fecha:b.fecha,hora:'',orden:t==='despacho'?'00:00':(t==='devolucion'?'23:30':'00:01'),c:b.createdAt||'',k,n:Number(b.cantidad)||0,txt:`${b.origen||''}${b.notas?' · '+b.notas:''}`,ref:['bin',b.id],guia:!!b.archivo});
   });
   logs.filter(l=>_hlAnio(l.fecha)===temporada).forEach(l=>{
     const cortes=(l.cortes||[]).filter(c=>Number(c.bines)>0),viajes=(l.viajes||[]).filter(v=>Number(v.bines)>0);
@@ -7189,7 +7203,7 @@ function _hlEventosBins(logs,bins,temporada){
     if(viajes.length)viajes.forEach(v=>ev.push({fecha:l.fecha,hora:v.hora||'',orden:v.hora||'12:30',k:'entrega',n:Math.ceil(Number(v.bines)-1e-9),bines:Number(v.bines),txt:`${l.variedad}${v.nota?' · '+v.nota:''}`,ref:['parte',l.id]}));
     else if(!cortes.length&&Number(l.bines)>0)ev.push({fecha:l.fecha,hora:'',orden:'23:00',k:'entrega',n:_hlUnidades(l),bines:Number(l.bines),txt:`${l.variedad} · parte simple (se asume entregado el mismo día)`,ref:['parte',l.id]});
   });
-  ev.sort((a,b)=>(a.fecha+a.orden).localeCompare(b.fecha+b.orden));
+  ev.sort((a,b)=>(a.fecha+a.orden).localeCompare(b.fecha+b.orden)||String(a.c||'').localeCompare(String(b.c||'')));
   return ev;
 }
 const HL_ETAPAS_BINS={
@@ -7197,7 +7211,7 @@ const HL_ETAPAS_BINS={
   devueltos:{t:'Devueltos al arrendador',icon:'undo-2',d:'Bins devueltos a la empresa que los presta: normalmente desde el packing (ya vaciados allá); desde el huerto solo vacíos sin usar.',mas:['devolucion_p','devolucion_h'],menos:[]},
   cosechados:{t:'Cosechados',icon:'scissors',d:'Bins llenados según los partes diarios. Un bin parcial cuenta como unidad física.',mas:['cosecha'],menos:[]},
   huerto:{t:'Llenos en huerto',icon:'arrow-right',d:'Bins cosechados que aún no se trasladan a la cámara de frío.',mas:['cosecha'],menos:['entrega']},
-  camara:{t:'En cámara de frío',icon:'snowflake',d:'Entran con las entregas desde el huerto y salen con los despachos a packing.',mas:['entrega'],menos:['despacho']},
+  camara:{t:'En cámara de frío',icon:'snowflake',d:'Entran con las entregas desde el huerto y salen con los despachos a packing. El despacho se cuenta como lo primero del día.',mas:['entrega'],menos:['despacho']},
   packing:{t:'Packing',icon:'truck',d:'Bins enviados al packing (entradas) y los que desde allá se devolvieron al arrendador (salidas). El saldo es lo que sigue en el packing.',mas:['despacho'],menos:['devolucion_p']}
 };
 async function verTrazabilidadBins(etapa){
@@ -7213,6 +7227,7 @@ async function verTrazabilidadBins(etapa){
   const abrir=r=>r.ref[0]==='bin'?`verBinLog('${r.ref[1]}')`:`verParteCosecha('${r.ref[1]}')`;
   const nMas=rows.filter(r=>r.signo>0).length,nMenos=rows.filter(r=>r.signo<0).length;
   const otros=Object.keys(HL_ETAPAS_BINS).filter(k=>k!==etapa);
+  window._hlTraza={etapa,temporada,titulo:cfg.t,desc:cfg.d,conSalidas:cfg.menos.length>0,rows,totMas,totMenos,saldo,nMas,nMenos,lblMas:cfg.mas.map(k=>lbl[k]).join(' / '),lblMenos:cfg.menos.map(k=>lbl[k]).join(' / ')};
   openModal(`<div class="hl-res-head"><h3 style="margin:0"><i data-lucide="${cfg.icon}" style="width:18px;height:18px;vertical-align:-3px"></i> ${cfg.t} · ${temporada}</h3><div class="hl-res-meta">${cfg.d}</div></div>
     <div class="hl-res-grid">
       <div class="hl-res"><div class="hl-res-lbl">Entradas</div><div class="hl-res-val" style="color:var(--verde-d)">+${_hlNum(totMas)}</div><div class="hl-res-sub">${nMas} ${cfg.mas.map(k=>lbl[k]).join(' / ')}</div></div>
@@ -7225,8 +7240,73 @@ async function verTrazabilidadBins(etapa){
       </table></div>
     </div>
     <div class="hl-res-sec"><div class="hl-res-sec-t">Otras etapas</div><div style="display:flex;gap:6px;flex-wrap:wrap">${otros.map(k=>`<span class="chip" style="margin:0;padding:5px 11px;font-size:11.5px" onclick="verTrazabilidadBins('${k}')">${HL_ETAPAS_BINS[k].t}</span>`).join('')}</div></div>
-    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cerrar</button>${rows.length?`<button class="btn secondary" onclick="exportTrazabilidadPDF()" title="Descargar este libro de movimientos como reporte"><i data-lucide="download"></i>Descargar PDF</button>`:''}</div>`);
   lucideInit();
+}
+/* ---- Reporte PDF del libro de movimientos de una etapa (kardex de bins) ----
+   Orden cronológico (más antiguo primero) con saldo corrido, como una cartola. Usa el libro que está abierto en pantalla. */
+async function exportTrazabilidadPDF(){
+  const T=window._hlTraza;if(!T||!T.rows||!T.rows.length){toast('Nada que exportar','warn');return}
+  toast('Generando PDF…');
+  try{
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  }catch(err){toast('Sin conexión para cargar el generador de PDF','warn');return}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight(),M=14;
+  const verde=[47,93,58],verdeClaro=[238,245,239],gris=[110,110,110],linea=[201,216,204],rojo=[185,28,28],texto=[20,20,20];
+  /* La fuente estándar del PDF solo trae Latin-1: se reemplazan flechas, signos y emojis */
+  const lim=x=>String(x==null?'':x).replace(/→/g,'a').replace(/[−–—]/g,'-').replace(/≈/g,'~').replace(/…/g,'...').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[^\x09\x0A\x20-\xFF]/g,'').replace(/[ \t]+/g,' ').trim();
+  const movTxt={recepcion:'Recepción de vacíos',cosecha:'Cosecha',entrega:'Entrega a cámara',despacho:'Despacho a packing',devolucion_p:'Devolución (desde packing)',devolucion_h:'Devolución (desde huerto)'};
+  const fechas=T.rows.map(r=>r.fecha).sort();
+  const hoy=new Date();
+  /* Cabecera */
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...verde);doc.text('SANTA ANA PEONÍAS',M,M+2);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...gris);
+  doc.text(lim(`Generado ${hoy.toLocaleDateString('es-CL')} ${String(hoy.getHours()).padStart(2,'0')}:${String(hoy.getMinutes()).padStart(2,'0')}`),W-M,M+2,{align:'right'});
+  doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...texto);doc.text(lim(`${T.titulo} · Temporada ${T.temporada}`),M,M+11);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...gris);
+  const desc=doc.splitTextToSize(lim(T.desc),W-2*M);doc.text(desc,M,M+17);
+  let y=M+17+desc.length*4.2;
+  doc.text(lim(`Movimientos del ${fmt(fechas[0])} al ${fmt(fechas[fechas.length-1])} · orden cronológico con saldo corrido`),M,y);y+=3;
+  doc.setDrawColor(...verde);doc.setLineWidth(.6);doc.line(M,y,W-M,y);y+=5;
+  /* Tarjetas resumen */
+  const cajas=[{l:'ENTRADAS',v:`+${_hlNum(T.totMas)}`,s:`${T.nMas} ${T.lblMas}`,c:verde}];
+  if(T.conSalidas)cajas.push({l:'SALIDAS',v:`-${_hlNum(T.totMenos)}`,s:`${T.nMenos} ${T.lblMenos}`,c:rojo});
+  cajas.push({l:T.conSalidas?(T.etapa==='packing'?'AÚN EN PACKING':'SALDO ACTUAL'):'TOTAL',v:`${_hlNum(T.saldo)} bins`,s:`${T.rows.length} movimiento${T.rows.length===1?'':'s'}`,c:texto});
+  const gap=4,cw=(W-2*M-gap*(cajas.length-1))/cajas.length,ch=21;
+  cajas.forEach((c,i)=>{const x=M+i*(cw+gap);doc.setDrawColor(...linea);doc.setFillColor(250,251,250);doc.setLineWidth(.3);doc.roundedRect(x,y,cw,ch,2,2,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...gris);doc.text(c.l,x+cw/2,y+5.5,{align:'center'});
+    doc.setFontSize(16);doc.setTextColor(...c.c);doc.text(lim(c.v),x+cw/2,y+13,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...gris);doc.text(lim(c.s),x+cw/2,y+18,{align:'center'})});
+  y+=ch+6;
+  /* Tabla de movimientos */
+  const body=T.rows.map(r=>[fmt(r.fecha),r.hora||'-',movTxt[r.k]||r.k,`${r.signo>0?'+':'-'}${_hlNum(r.n)}${(r.bines&&r.bines!==r.n)?` (${_hlNum(r.bines,1)})`:''}`,_hlNum(r.saldo),lim(`${r.txt||''}${r.guia?' (guía adjunta)':''}`)||'-']);
+  doc.autoTable({
+    head:[['Fecha','Hora','Movimiento','Bins',T.conSalidas?'Saldo':'Acumulado','Detalle']],body,startY:y,margin:{left:M,right:M,top:M+4,bottom:M+6},
+    theme:'grid',
+    styles:{font:'helvetica',fontSize:8.5,cellPadding:{top:2,bottom:2,left:2,right:2},valign:'top',lineColor:linea,lineWidth:.2,textColor:texto,overflow:'linebreak'},
+    headStyles:{fillColor:verdeClaro,textColor:verde,fontStyle:'bold',fontSize:8,lineColor:linea},
+    alternateRowStyles:{fillColor:[250,251,250]},
+    columnStyles:{0:{cellWidth:24,fontStyle:'bold'},1:{cellWidth:13},2:{cellWidth:36},3:{cellWidth:19,halign:'right',fontStyle:'bold'},4:{cellWidth:19,halign:'right',fontStyle:'bold'},5:{cellWidth:'auto'}},
+    rowPageBreak:'avoid',
+    didParseCell:(d)=>{
+      if(d.section==='head'&&(d.column.index===3||d.column.index===4))d.cell.styles.halign='right';
+      if(d.section==='body'){const r=T.rows[d.row.index];if(!r)return;
+        if(d.column.index===3)d.cell.styles.textColor=r.signo>0?verde:rojo;
+        if(d.column.index===2&&r.signo<0)d.cell.styles.textColor=rojo;
+        if(d.column.index===5)d.cell.styles.textColor=[70,70,70];
+        if(d.column.index===4&&r.saldo<0)d.cell.styles.textColor=rojo}
+    }
+  });
+  /* Pie con numeración (se escribe al final para conocer el total de páginas) */
+  const n=doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...gris);doc.setDrawColor(...linea);doc.setLineWidth(.3);doc.line(M,H-M+2,W-M,H-M+2);
+    doc.text('Santa Ana Peonías · San Clemente, Región del Maule, Chile · Trazabilidad de bins',M,H-M+6);doc.text(`Página ${i} de ${n}`,W-M,H-M+6,{align:'right'})}
+  const slug=T.titulo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  doc.save(`Bins_${slug}_${T.temporada}_SantaAnaPeonias_${today()}.pdf`);
+  toast(`PDF descargado (${T.rows.length} movimientos)`);
 }
 /* ---- Editor de listas del parte (cortes y entregas) ---- */
 function _hlListaRender(k){
@@ -7288,6 +7368,8 @@ async function saveHarvestLog(id){
   const g=k=>document.getElementById(k);
   /* Puestos: guardamos TODOS los del formulario (incluido 0) para que el merge de Firestore sobreescriba valores antiguos */
   const puestos={};document.querySelectorAll('.f-hl-puesto').forEach(i=>{puestos[i.getAttribute('data-puesto')]=parseInt(i.value,10)||0});
+  /* Nombres de encargadas: se guardan todos (incluso vacíos) para que el merge borre los antiguos */
+  const nombres={};document.querySelectorAll('.f-hl-nombre').forEach(i=>{nombres[i.getAttribute('data-puesto')]=i.value.trim()});
   const personas=Object.values(puestos).reduce((a,b)=>a+b,0);
   const normLista=(arr)=>(arr||[]).map(v=>({hora:(v.hora||'').trim(),bines:parseFloat(String(v.bines||'').replace(',','.'))||0,nota:(v.nota||'').trim()})).filter(v=>v.bines>0||v.nota);
   const L=window._hlListas||{cortes:[],viajes:[]};
@@ -7310,7 +7392,7 @@ async function saveHarvestLog(id){
     tallos:g('f-hl-tallos').value!==''?parseInt(g('f-hl-tallos').value,10):null,
     tallosExport:parseInt(g('f-hl-exp').value,10)||null,
     horas:parseFloat(g('f-hl-horas').value)||null,
-    puestos,personas:personas||null,
+    puestos,personas:personas||null,nombres,
     notas:g('f-hl-notas').value.trim()
   };
   if(!data.fecha){toast('Fecha requerida','warn');return}
@@ -7328,7 +7410,7 @@ async function saveHarvestLog(id){
     /* Ya existe el parte de ese día: ofrecer completarlo con lo que se acaba de escribir (sin pisar con vacíos). */
     if(!confirm(`Ya existe un parte de ${data.variedad} el ${fmt(data.fecha)}. ¿Actualizarlo con estos datos?`))return;
     const merged={id:dup.id};
-    ['cuarteles','bines','tallos','tallosExport','horas','puestos','personas','notas','cortes','viajes'].forEach(k=>{const v=data[k];const vacio=v==null||v===''||(Array.isArray(v)&&!v.length)||(k==='puestos'&&!personas)||(k==='personas'&&!personas);if(!vacio)merged[k]=v});
+    ['cuarteles','bines','tallos','tallosExport','horas','puestos','personas','nombres','notas','cortes','viajes'].forEach(k=>{const v=data[k];const vacio=v==null||v===''||(Array.isArray(v)&&!v.length)||(k==='puestos'&&!personas)||(k==='personas'&&!personas)||(k==='nombres'&&!Object.values(v||{}).some(Boolean));if(!vacio)merged[k]=v});
     merged.updatedBy=CURRENT_USER;merged.updatedAt=new Date().toISOString();
     try{await put('harvestlogs',merged)}catch(e){console.error(e);toast('Error al guardar: '+(e.message||e.code||''),'warn');return}
     closeModal();toast('Parte del día actualizado');renderHarvestLog();return;
@@ -7358,7 +7440,7 @@ async function verParteCosecha(id){
       <div class="hl-res"><div class="hl-res-lbl">${t?'Varas':'Bines'} / ${c?'cortador':'persona'}</div><div class="hl-res-val">${prodVal!=null?_hlNum(prodVal,t?0:2):'—'}</div><div class="hl-res-sub">${denom?`${denom} ${c?'cortadores':'personas'}`:'sin cuadrilla'}</div></div>
     </div>
     <div class="hl-res-sec"><div class="hl-res-sec-t">Cuadrilla <span>${p} persona${p===1?'':'s'}${cst.total?` · ${_hlCLP(cst.total)}`:''}${(cst.domingo&&cst.total)?` <span class="hl-dom">dom ×${_hlNum(cst.factor,2)}</span>`:''}</span></div>
-      ${puestos.length?`<table class="hl-res-tabla">${puestos.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${v}</td><td class="bar"><div style="width:${Math.round(Number(v)/p*100)}%"></div></td><td class="pct">${Math.round(Number(v)/p*100)}%</td><td class="n" style="color:#92400e">${cst.porPuesto[k]?_hlCLP(cst.porPuesto[k]):(cst.faltan.includes(k)?'<span style="color:var(--alerta);font-weight:400;font-size:11px">sin tarifa</span>':'—')}</td></tr>`).join('')}</table>`:`<div class="hl-res-sub">Sin desglose por puesto${p?` · ${p} personas en total`:''}</div>`}
+      ${puestos.length?`<table class="hl-res-tabla">${puestos.map(([k,v])=>`<tr><td>${esc(k)}${_hlNombresDe(l,k)?`<div class="hl-nombres">${esc(_hlNombresDe(l,k))}</div>`:''}</td><td class="n">${v}</td><td class="bar"><div style="width:${Math.round(Number(v)/p*100)}%"></div></td><td class="pct">${Math.round(Number(v)/p*100)}%</td><td class="n" style="color:#92400e">${cst.porPuesto[k]?_hlCLP(cst.porPuesto[k]):(cst.faltan.includes(k)?'<span style="color:var(--alerta);font-weight:400;font-size:11px">sin tarifa</span>':'—')}</td></tr>`).join('')}</table>`:`<div class="hl-res-sub">Sin desglose por puesto${p?` · ${p} personas en total`:''}</div>`}
     </div>
     ${(Array.isArray(l.cortes)&&l.cortes.length)?`<div class="hl-res-sec"><div class="hl-res-sec-t">Bins cosechados durante el día <span>${_hlNum(_hlViajesSum(l.cortes),1)} bines · ${u} bins</span></div><table class="hl-res-tabla">${l.cortes.map(v=>`<tr><td style="white-space:nowrap">${esc(v.hora||'—')}</td><td class="n">${_hlNum(v.bines,1)} bines</td><td style="color:var(--gris)">${esc(v.nota||'')}</td></tr>`).join('')}</table></div>`:''}
     ${(Array.isArray(l.viajes)&&l.viajes.length)?`<div class="hl-res-sec"><div class="hl-res-sec-t">Entregas a cámara <span>${_hlNum(_hlViajesSum(l.viajes),1)} bines · ${_hlEntregadosUnid(l)} bins${_hlPendienteUnid(l)>0?` · <span style="color:#b45309">${_hlPendienteUnid(l)} en huerto</span>`:''}</span></div><table class="hl-res-tabla">${l.viajes.map(v=>`<tr><td style="white-space:nowrap">${esc(v.hora||'—')}</td><td class="n">${_hlNum(v.bines,1)} bines</td><td style="color:var(--gris)">${esc(v.nota||'')}</td></tr>`).join('')}</table></div>`:((Array.isArray(l.cortes)&&l.cortes.length&&_hlPendienteUnid(l)>0)?`<div class="hl-res-sec"><div class="hl-res-sec-t">Entregas a cámara <span style="color:#b45309">${_hlPendienteUnid(l)} bins en huerto por trasladar</span></div><div class="hl-res-sub">Aún sin entregas registradas.</div></div>`:'')}
@@ -7375,6 +7457,7 @@ function _hlComputeResumen(logs,bins,temporada,variedad,tar){
   const fechas=[...new Set(sel.map(l=>l.fecha))].sort();const dias=fechas.length;
   const totB=sum(sel,l=>l.bines),totV=sum(sel,_hlVaras),totU=sum(sel,_hlUnidades),totExp=sum(sel,l=>l.tallosExport);
   const nEst=sel.filter(_hlVarasEst).length;
+  const encargadas=_hlEncargadas(sel);
   const jornadas=sum(sel,_hlPersonas),jCort=sum(sel,_hlCortadores);
   const usaCort=jCort>0;const denom=usaCort?jCort:jornadas;
   const prod=denom?(totV?totV/denom:(totB?totB/denom:null)):null;
@@ -7389,7 +7472,7 @@ function _hlComputeResumen(logs,bins,temporada,variedad,tar){
   const binsEnt=sum(enTemp,_hlEntregadosUnid);
   const binsDesp=sum(binsAnio.filter(b=>b.tipo==='despacho'),b=>b.cantidad);
   const mejor=sel.reduce((m,l)=>((Number(l.bines)||0)>(Number(m?.bines)||0)||(!Number(m?.bines)&&_hlVaras(l)>(m?_hlVaras(m):0)))?l:m,null);
-  return {temporada,variedad,fechas,dias,totB,totV,nEst,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDev,binsDevH,binsLlen,binsEnt,binsDesp,mejor,costo:tar?_hlCostoSel(sel,tar):null};
+  return {temporada,variedad,fechas,dias,totB,totV,nEst,encargadas,totU,totExp,jornadas,jCort,usaCort,prod,puestos,vars,binsRec,binsDev,binsDevH,binsLlen,binsEnt,binsDesp,mejor,costo:tar?_hlCostoSel(sel,tar):null};
 }
 async function verResumenCosecha(temporada,variedad){
   const [logs,bins,tar]=await Promise.all([getAll('harvestlogs'),getAll('binlogs'),getHarvestTarifas(temporada)]);
@@ -7406,6 +7489,7 @@ async function verResumenCosecha(temporada,variedad){
     </div>
     <div class="hl-res-sec"><div class="hl-res-sec-t">Cuadrilla <span>${_hlNum(r.jornadas)} jornadas · ${_hlNum(r.jornadas/r.dias,1)}/día${(r.costo&&r.costo.total)?` · ${_hlCLP(r.costo.total)}`:''}</span></div>
       ${r.puestos.length?`<table class="hl-res-tabla">${r.puestos.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${_hlNum(v)}</td><td class="bar"><div style="width:${Math.round(v/r.jornadas*100)}%"></div></td><td class="pct">${_hlNum(v/r.dias,1)}/día</td><td class="n" style="color:#92400e">${(r.costo&&r.costo.porPuesto[k])?_hlCLP(r.costo.porPuesto[k]):'—'}</td></tr>`).join('')}</table>`:'<div class="hl-res-sub">Sin desglose por puesto.</div>'}
+      ${r.encargadas.length?`<div class="hl-res-sub" style="margin-top:5px">Encargadas · ${_hlEncargadasTxt(r.encargadas,esc)}</div>`:''}
       ${(r.costo&&r.costo.total)?`<div class="hl-res-sub" style="margin-top:5px">Costo cuadrilla a la fecha <strong style="color:#92400e">${_hlCLP(r.costo.total)}</strong>${r.totU?` · ${_hlCLP(r.costo.total/r.totU)} por bin`:''}${r.totV?` · ${_hlCLP(r.costo.total/r.totV)} por vara`:''}${r.costo.domingos?` · ${r.costo.domingos} domingo${r.costo.domingos===1?'':'s'} ×${_hlNum(tar.domingo,2)}`:''}${r.costo.faltan.length?` · <span style="color:var(--alerta)">sin tarifa: ${esc(r.costo.faltan.join(', '))}</span>`:''}</div>`:''}
     </div>
     ${r.vars.length>1?`<div class="hl-res-sec"><div class="hl-res-sec-t">Por variedad</div><table class="hl-res-tabla hl-res-vars"><tr><th></th><th>Días</th><th>Bines</th><th>Varas</th><th>Jornadas</th></tr>${r.vars.map(x=>`<tr><td><span class="hv-dot" style="background:${harvestColor(x.v)}"></span>${esc(x.v)}</td><td class="n">${x.dias}</td><td class="n">${_hlNum(x.bines,1)}</td><td class="n">${x.varas?_hlNum(x.varas):'—'}</td><td class="n">${_hlNum(x.jornadas)}</td></tr>`).join('')}</table></div>`:''}
@@ -7423,6 +7507,7 @@ async function _hlCopiarResumen(temporada,variedad){
   t+=`Bins cosechados: ${r.totU} (${_hlNum(r.totB,1)} bines llenados)`+(r.totV?` · Varas: ${r.nEst?'≈':''}${_hlNum(r.totV)}`:'')+'\n';
   if(r.prod!=null)t+=`${r.totV?'Varas':'Bines'}/${r.usaCort?'cortador':'persona'}/día: ${_hlNum(r.prod,r.totV?0:2)}\n`;
   t+=`Cuadrilla: ${_hlNum(r.jornadas)} jornadas`+(r.puestos.length?` (${r.puestos.map(([k,v])=>`${_hlNum(v)} ${k.toLowerCase()}`).join(', ')})`:'')+'\n';
+  if(r.encargadas.length)t+=`Encargadas: ${_hlEncargadasTxt(r.encargadas)}\n`;
   if(r.costo&&r.costo.total>0)t+=`Costo cuadrilla a la fecha: ${_hlCLP(r.costo.total)}${r.totU?` (${_hlCLP(r.costo.total/r.totU)} por bin)`:''}\n`;
   t+=`Bins: ${_hlNum(r.binsRec-r.binsLlen-r.binsDevH)} vacíos en huerto · ${_hlNum(r.binsLlen)} cosechados (${_hlNum(r.binsLlen-r.binsEnt)} en huerto) · ${_hlNum(r.binsEnt-r.binsDesp)} en cámara · ${_hlNum(r.binsDesp)} despachados a packing · ${_hlNum(r.binsDev)} devueltos al arrendador\n`;
   t+=`_Santa Ana Peonías_`;
@@ -7457,6 +7542,11 @@ async function verDetalleCuadrilla(temporada,variedad){
       ${puestos.map(k=>{const t=_hlTarifaDe(k,tar),c=costo.porPuesto[k]||0;return `<tr><td>${esc(k)}</td><td class="n">${_hlNum(tot[k])}</td><td class="n" style="font-weight:400;color:var(--gris-d)">${t!=null?_hlCLP(t):'<span style="color:var(--alerta)">sin tarifa</span>'}</td><td class="n">${c?_hlCLP(c):'—'}</td><td class="pct">${(c&&costo.total)?Math.round(c/costo.total*100)+'%':'—'}</td></tr>`}).join('')}
       </table><div class="hl-res-sub" style="margin-top:5px">Tarifa = valor total de un día por persona (costo empresa + transporte); domingo ×${_hlNum(tar.domingo,2)}. <a class="hl-link" onclick="editHarvestPuestos(${temporada})">editar tarifas</a></div>
     </div>
+    ${(()=>{const pn=puestos.filter(_hlPuestoConNombres);if(!pn.length)return '';const enc=_hlEncargadas(sel);const hay=sel.some(l=>pn.some(k=>_hlNombresDe(l,k)));return `<div class="hl-res-sec"><div class="hl-res-sec-t">${pn.map(k=>esc(k)).join(' y ')} por día <span>${hay?`${enc.length} persona${enc.length===1?'':'s'}`:'anota los nombres en cada parte'}</span></div>
+      ${hay?`<div style="font-size:12px;color:var(--gris-d);margin-bottom:6px">${_hlEncargadasTxt(enc,esc)}</div>`:''}
+      <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th>${pn.map(k=>`<th>${esc(k)}</th>`).join('')}</tr>
+      ${sel.map(l=>`<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong></td>${pn.map(k=>{const n=(l.puestos&&Number(l.puestos[k])>0)?Number(l.puestos[k]):0;const nm=_hlNombresDe(l,k);return `<td>${n||nm?`<strong>${n||_hlSplitNombres(nm).length}</strong> <span style="color:${nm?'var(--texto)':'var(--gris)'}">${nm?esc(nm):'sin nombre'}</span>`:'<span style="color:var(--gris-m)">—</span>'}</td>`}).join('')}</tr>`).join('')}
+      </table></div></div>`})()}
     <div class="hl-res-sec"><div class="hl-res-sec-t">Día a día <span>toca una fila para ver el parte</span></div>
       <div class="table-scroll"><table class="hl-res-tabla hl-res-dias"><tr><th>Fecha</th>${(variedad&&variedad!=='todas')?'':'<th>Variedad</th>'}<th class="n">Total</th>${puestos.map(k=>`<th class="n">${esc(k)}</th>`).join('')}<th class="n">Bines</th><th class="n">Varas</th><th class="n">Costo</th></tr>
       ${sel.map(l=>{const c=_hlCostoParte(l,tar);return `<tr class="hl-row-click" onclick="verParteCosecha('${l.id}')"><td><strong>${fmt(l.fecha)}</strong>${c.domingo?`<span class="hl-dom">dom ×${_hlNum(c.factor,2)}</span>`:''}</td>${(variedad&&variedad!=='todas')?'':`<td><span class="hv-dot" style="background:${harvestColor(l.variedad)}"></span>${esc(l.variedad)}</td>`}<td class="n">${_hlPersonas(l)}</td>${puestos.map(k=>`<td class="n">${(l.puestos&&Number(l.puestos[k])>0)?Number(l.puestos[k]):'<span style="color:var(--gris-m);font-weight:400">—</span>'}</td>`).join('')}<td class="n">${Number(l.bines)?_hlNum(l.bines,1):'—'}</td><td class="n">${_hlVaras(l)?`${_hlVarasEst(l)?'≈':''}${_hlNum(_hlVaras(l))}`:'—'}</td><td class="n">${c.total?_hlCLP(c.total):'—'}</td></tr>`}).join('')}
